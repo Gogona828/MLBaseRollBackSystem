@@ -1,0 +1,74 @@
+# =========================
+# Visual Studio
+# =========================
+# Visual Studio 2015/2017/2019/2022 cache/options directory
+.vs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results (C++ / C#)
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Generated files
+*.aps
+*.ncb
+*.opendb
+*.sdf
+*.cache
+*.ilk
+*.pdb
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+
+# =========================
+# Python & Machine Learning
+# =========================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# OS generated files
+# =========================
+Thumbs.db
+ehthumbs.db
+.DS_Store
+Desktop.ini
+
+# =========================
+# NuGet Packages
+# =========================
+packages/
+*.nuget.props
+*.nuget.targets
