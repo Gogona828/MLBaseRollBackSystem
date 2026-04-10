@@ -18,8 +18,21 @@ public class NetworkInputSender : MonoBehaviour
 
     private void Update()
     {
-        if (frameClock == null || transport == null || !transport.IsStarted)
+        if (frameClock == null)
         {
+            Debug.LogWarning("[NetworkInputSender] frameClock is null");
+            return;
+        }
+
+        if (transport == null)
+        {
+            Debug.LogWarning("[NetworkInputSender] transport is null");
+            return;
+        }
+
+        if (!transport.IsStarted)
+        {
+            Debug.LogWarning("[NetworkInputSender] transport is not started");
             return;
         }
 
@@ -30,6 +43,8 @@ public class NetworkInputSender : MonoBehaviour
 
         InputPacket packet = new InputPacket(playerId, frame, inputBits);
         transport.Send(packet);
+
+        Debug.Log($"[SEND] player={playerId}, frame={frame}, bits={inputBits}, readable={InputEncoder.ToReadableString(inputBits)}");
 
         frameClock.Tick();
     }

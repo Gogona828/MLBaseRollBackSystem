@@ -10,6 +10,7 @@ public class UdpP2PTransport : MonoBehaviour
     [SerializeField] private string remoteIp = "127.0.0.1";
     [SerializeField] private int localPort = 5000;
     [SerializeField] private int remotePort = 5001;
+    [SerializeField] private bool autoStartOnAwake = true;
 
     private UdpClient sender;
     private UdpClient receiver;
@@ -27,22 +28,38 @@ public class UdpP2PTransport : MonoBehaviour
         this.remotePort = remotePort;
     }
 
+    private void Awake()
+    {
+        if (autoStartOnAwake)
+        {
+            StartTransport();
+        }
+    }
+
     public void StartTransport()
     {
         if (started)
         {
+            Debug.Log("[UdpP2PTransport] Already started");
             return;
         }
 
-        remoteEndPoint = new IPEndPoint(IPAddress.Parse(remoteIp), remotePort);
+        try
+        {
+            remoteEndPoint = new IPEndPoint(IPAddress.Parse(remoteIp), remotePort);
 
-        sender = new UdpClient();
-        receiver = new UdpClient(localPort);
+            sender = new UdpClient();
+            receiver = new UdpClient(localPort);
 
-        started = true;
-        BeginReceive();
+            started = true;
+            BeginReceive();
 
-        Debug.Log($"[UdpP2PTransport] Started local={localPort}, remote={remoteIp}:{remotePort}");
+            Debug.Log($"[UdpP2PTransport] Started local={localPort}, remote={remoteIp}:{remotePort}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[UdpP2PTransport] StartTransport failed: {e}");
+        }
     }
 
     public void StopTransport()
@@ -79,6 +96,7 @@ public class UdpP2PTransport : MonoBehaviour
     {
         if (!started)
         {
+            Debug.LogWarning("[UdpP2PTransport] Send skipped because transport is not started");
             return;
         }
 
@@ -129,6 +147,8 @@ public class UdpP2PTransport : MonoBehaviour
 
             InputPacket packet = InputPacketSerializer.Deserialize(data);
             receivedPackets.Enqueue(packet);
+
+            Debug.Log($"[UdpP2PTransport] Received packet from {any.Address}:{any.Port} frame={packet.frame} player={packet.playerId} bits={packet.inputBits}");
         }
         catch (ObjectDisposedException)
         {
