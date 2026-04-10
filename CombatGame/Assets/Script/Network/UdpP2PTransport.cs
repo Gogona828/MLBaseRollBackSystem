@@ -1,0 +1,153 @@
+using System;
+using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Sockets;
+using UnityEngine;
+
+public class UdpP2PTransport : MonoBehaviour
+{
+    [Header("Connection")]
+    [SerializeField] private string remoteIp = "127.0.0.1";
+    [SerializeField] private int localPort = 5000;
+    [SerializeField] private int remotePort = 5001;
+
+    private UdpClient sender;
+    private UdpClient receiver;
+    private IPEndPoint remoteEndPoint;
+    private bool started = false;
+
+    private readonly ConcurrentQueue<InputPacket> receivedPackets = new ConcurrentQueue<InputPacket>();
+
+    public bool IsStarted => started;
+
+    public void Configure(string remoteIp, int localPort, int remotePort)
+    {
+        this.remoteIp = remoteIp;
+        this.localPort = localPort;
+        this.remotePort = remotePort;
+    }
+
+    public void StartTransport()
+    {
+        if (started)
+        {
+            return;
+        }
+
+        remoteEndPoint = new IPEndPoint(IPAddress.Parse(remoteIp), remotePort);
+
+        sender = new UdpClient();
+        receiver = new UdpClient(localPort);
+
+        started = true;
+        BeginReceive();
+
+        Debug.Log($"[UdpP2PTransport] Started local={localPort}, remote={remoteIp}:{remotePort}");
+    }
+
+    public void StopTransport()
+    {
+        if (!started)
+        {
+            return;
+        }
+
+        started = false;
+
+        try
+        {
+            sender?.Close();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[UdpP2PTransport] sender close failed: {e.Message}");
+        }
+
+        try
+        {
+            receiver?.Close();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[UdpP2PTransport] receiver close failed: {e.Message}");
+        }
+
+        Debug.Log("[UdpP2PTransport] Stopped");
+    }
+
+    public void Send(InputPacket packet)
+    {
+        if (!started)
+        {
+            return;
+        }
+
+        try
+        {
+            byte[] bytes = InputPacketSerializer.Serialize(packet);
+            sender.Send(bytes, bytes.Length, remoteEndPoint);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[UdpP2PTransport] Send failed: {e}");
+        }
+    }
+
+    public bool TryDequeue(out InputPacket packet)
+    {
+        return receivedPackets.TryDequeue(out packet);
+    }
+
+    private void BeginReceive()
+    {
+        if (!started || receiver == null)
+        {
+            return;
+        }
+
+        try
+        {
+            receiver.BeginReceive(OnReceive, null);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[UdpP2PTransport] BeginReceive failed: {e}");
+        }
+    }
+
+    private void OnReceive(IAsyncResult ar)
+    {
+        if (!started || receiver == null)
+        {
+            return;
+        }
+
+        try
+        {
+            IPEndPoint any = new IPEndPoint(IPAddress.Any, 0);
+            byte[] data = receiver.EndReceive(ar, ref any);
+
+            InputPacket packet = InputPacketSerializer.Deserialize(data);
+            receivedPackets.Enqueue(packet);
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[UdpP2PTransport] Receive failed: {e}");
+        }
+        finally
+        {
+            if (started)
+            {
+                BeginReceive();
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        StopTransport();
+    }
+}
