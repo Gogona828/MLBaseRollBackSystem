@@ -9,13 +9,20 @@ public class NetworkPacketDispatcher : MonoBehaviour
 
     private void Update()
     {
-        if (transport == null || !transport.IsStarted)
+        if (transport == null)
+        {
+            Debug.LogWarning("[NetworkPacketDispatcher] transport is null");
+            return;
+        }
+
+        if (!transport.IsStarted)
         {
             return;
         }
 
         while (transport.TryDequeue(out NetworkPacket packet))
         {
+            Debug.Log($"[NetworkPacketDispatcher] Dispatching {packet.packetType} player={packet.playerId} frame={packet.frame}");
             Dispatch(packet);
         }
     }
@@ -30,12 +37,20 @@ public class NetworkPacketDispatcher : MonoBehaviour
                 {
                     sessionManager.HandlePacket(packet);
                 }
+                else
+                {
+                    Debug.LogWarning("[NetworkPacketDispatcher] sessionManager is null");
+                }
                 break;
 
             case NetworkPacketType.Input:
                 if (inputReceiver != null)
                 {
                     inputReceiver.HandlePacket(packet);
+                }
+                else
+                {
+                    Debug.LogWarning("[NetworkPacketDispatcher] inputReceiver is null");
                 }
                 break;
         }
