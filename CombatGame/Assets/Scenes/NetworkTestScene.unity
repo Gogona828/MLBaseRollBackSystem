@@ -122,6 +122,56 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &193657451
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 193657453}
+  - component: {fileID: 193657452}
+  m_Layer: 0
+  m_Name: NetworkSession
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &193657452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 193657451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 892c22c8eba6d0443a46fb66f7955569, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerId: 0
+  transport: {fileID: 1437072109}
+  frameClock: {fileID: 917588936}
+  helloIntervalSeconds: 0.5
+  readyIntervalSeconds: 0.5
+  startDelaySeconds: 1
+--- !u!4 &193657453
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 193657451}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &917588935
 GameObject:
   m_ObjectHideFlags: 0
@@ -158,6 +208,53 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 917588935}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1051985582
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1051985584}
+  - component: {fileID: 1051985583}
+  m_Layer: 0
+  m_Name: NetworkDispatcher
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1051985583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051985582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8db030989853b93438d6127c4da232a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  transport: {fileID: 1437072109}
+  sessionManager: {fileID: 193657452}
+  inputReceiver: {fileID: 1611089939}
+--- !u!4 &1051985584
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051985582}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -214,53 +311,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1606600530
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1606600532}
-  - component: {fileID: 1606600531}
-  m_Layer: 0
-  m_Name: NetworkBattleInputBridgeTester
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1606600531
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1606600530}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8215071dcbccde418a0e0806e8c68e6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isLocalPlayerP1: 1
-  frameClock: {fileID: 917588936}
-  networkInputReceiver: {fileID: 1611089939}
---- !u!4 &1606600532
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1606600530}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1611089936
 GameObject:
   m_ObjectHideFlags: 0
@@ -305,7 +355,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5d445009d384024dbc47d1ac618a86a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transport: {fileID: 1437072109}
 --- !u!1 &1661312864
 GameObject:
   m_ObjectHideFlags: 0
@@ -433,6 +482,7 @@ MonoBehaviour:
   attackKey: 32
   frameClock: {fileID: 917588936}
   transport: {fileID: 1437072109}
+  sessionManager: {fileID: 193657452}
 --- !u!4 &1712931744
 Transform:
   m_ObjectHideFlags: 0
@@ -455,6 +505,7 @@ SceneRoots:
   - {fileID: 1661312867}
   - {fileID: 1437072110}
   - {fileID: 917588937}
-  - {fileID: 1712931744}
+  - {fileID: 193657453}
   - {fileID: 1611089938}
-  - {fileID: 1606600532}
+  - {fileID: 1051985584}
+  - {fileID: 1712931744}

@@ -17,7 +17,7 @@ public class UdpP2PTransport : MonoBehaviour
     private IPEndPoint remoteEndPoint;
     private bool started = false;
 
-    private readonly ConcurrentQueue<InputPacket> receivedPackets = new ConcurrentQueue<InputPacket>();
+    private readonly ConcurrentQueue<NetworkPacket> receivedPackets = new ConcurrentQueue<NetworkPacket>();
 
     public bool IsStarted => started;
 
@@ -92,7 +92,7 @@ public class UdpP2PTransport : MonoBehaviour
         Debug.Log("[UdpP2PTransport] Stopped");
     }
 
-    public void Send(InputPacket packet)
+    public void Send(NetworkPacket packet)
     {
         if (!started)
         {
@@ -102,7 +102,7 @@ public class UdpP2PTransport : MonoBehaviour
 
         try
         {
-            byte[] bytes = InputPacketSerializer.Serialize(packet);
+            byte[] bytes = NetworkPacketSerializer.Serialize(packet);
             sender.Send(bytes, bytes.Length, remoteEndPoint);
         }
         catch (Exception e)
@@ -111,7 +111,7 @@ public class UdpP2PTransport : MonoBehaviour
         }
     }
 
-    public bool TryDequeue(out InputPacket packet)
+    public bool TryDequeue(out NetworkPacket packet)
     {
         return receivedPackets.TryDequeue(out packet);
     }
@@ -145,10 +145,8 @@ public class UdpP2PTransport : MonoBehaviour
             IPEndPoint any = new IPEndPoint(IPAddress.Any, 0);
             byte[] data = receiver.EndReceive(ar, ref any);
 
-            InputPacket packet = InputPacketSerializer.Deserialize(data);
+            NetworkPacket packet = NetworkPacketSerializer.Deserialize(data);
             receivedPackets.Enqueue(packet);
-
-            Debug.Log($"[UdpP2PTransport] Received packet from {any.Address}:{any.Port} frame={packet.frame} player={packet.playerId} bits={packet.inputBits}");
         }
         catch (ObjectDisposedException)
         {

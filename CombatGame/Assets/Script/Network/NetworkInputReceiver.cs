@@ -1,24 +1,22 @@
 using UnityEngine;
 
-public class NetworkInputReceiver : MonoBehaviour
+public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 {
-    [SerializeField] private UdpP2PTransport transport;
-
     private RemoteInputBuffer remoteInputBuffer = new RemoteInputBuffer();
 
     public RemoteInputBuffer Buffer => remoteInputBuffer;
 
-    private void Update()
+    public void HandlePacket(NetworkPacket packet)
     {
-        if (transport == null)
+        if (packet.packetType != NetworkPacketType.Input)
         {
             return;
         }
 
-        while (transport.TryDequeue(out InputPacket packet))
-        {
-            remoteInputBuffer.Store(packet);
-        }
+        InputPacket inputPacket = new InputPacket(packet.playerId, packet.frame, packet.inputBits);
+        remoteInputBuffer.Store(inputPacket);
+
+        Debug.Log($"[NetworkInputReceiver] Stored input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}");
     }
 
     public bool TryGetRemoteInput(int frame, out byte inputBits)

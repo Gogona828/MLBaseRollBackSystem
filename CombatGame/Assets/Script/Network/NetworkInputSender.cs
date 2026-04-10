@@ -13,6 +13,7 @@ public class NetworkInputSender : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkFrameClock frameClock;
     [SerializeField] private UdpP2PTransport transport;
+    [SerializeField] private NetworkSessionManager sessionManager;
 
     public byte LastLocalInputBits { get; private set; }
 
@@ -30,9 +31,19 @@ public class NetworkInputSender : MonoBehaviour
             return;
         }
 
+        if (sessionManager == null)
+        {
+            Debug.LogWarning("[NetworkInputSender] sessionManager is null");
+            return;
+        }
+
         if (!transport.IsStarted)
         {
-            Debug.LogWarning("[NetworkInputSender] transport is not started");
+            return;
+        }
+
+        if (!sessionManager.Running)
+        {
             return;
         }
 
@@ -41,7 +52,13 @@ public class NetworkInputSender : MonoBehaviour
 
         LastLocalInputBits = inputBits;
 
-        InputPacket packet = new InputPacket(playerId, frame, inputBits);
+        NetworkPacket packet = new NetworkPacket(
+            NetworkPacketType.Input,
+            playerId,
+            frame,
+            inputBits
+        );
+
         transport.Send(packet);
 
         Debug.Log($"[SEND] player={playerId}, frame={frame}, bits={inputBits}, readable={InputEncoder.ToReadableString(inputBits)}");
