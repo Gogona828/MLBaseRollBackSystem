@@ -75,8 +75,17 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
 
     private void UpdateWaitingForReady()
     {
+        helloTimer += Time.deltaTime;
         readyTimer += Time.deltaTime;
 
+        // WaitingForReady 中も Hello を送り続ける
+        if (helloTimer >= helloIntervalSeconds)
+        {
+            helloTimer = 0f;
+            SendHello();
+        }
+
+        // Ready も定期送信する
         if (!localReadySent || readyTimer >= readyIntervalSeconds)
         {
             readyTimer = 0f;
@@ -109,10 +118,35 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
             case NetworkPacketType.Hello:
                 PeerHelloReceived = true;
                 Debug.Log($"[NetworkSessionManager] Received Hello from player {packet.playerId}");
+
+                if (State == NetworkSessionState.WaitingForPeer)
+                {
+                    State = NetworkSessionState.WaitingForReady;
+                    readyTimer = 0f;
+                    startTimer = 0f;
+                    Debug.Log("[NetworkSessionManager] Transition to WaitingForReady by Hello.");
+                }
                 break;
 
             case NetworkPacketType.Ready:
                 PeerReadyReceived = true;
+
+                // Ready が届くということは、相手は起動済み・通信可能
+                // なので Hello も受信済み相当として扱う
+                if (!PeerHelloReceived)
+                {
+                    PeerHelloReceived = true;
+                    Debug.Log("[NetworkSessionManager] Treat Ready as implicit Hello.");
+                }
+
+                if (State == NetworkSessionState.WaitingForPeer)
+                {
+                    State = NetworkSessionState.WaitingForReady;
+                    readyTimer = 0f;
+                    startTimer = 0f;
+                    Debug.Log("[NetworkSessionManager] Transition to WaitingForReady by Ready.");
+                }
+
                 Debug.Log($"[NetworkSessionManager] Received Ready from player {packet.playerId}");
                 break;
         }
