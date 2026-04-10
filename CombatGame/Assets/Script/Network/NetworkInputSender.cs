@@ -8,7 +8,7 @@ public class NetworkInputSender : MonoBehaviour
     [Header("Local Keys")]
     [SerializeField] private KeyCode leftKey = KeyCode.A;
     [SerializeField] private KeyCode rightKey = KeyCode.D;
-    [SerializeField] private KeyCode attackKey = KeyCode.J;
+    [SerializeField] private KeyCode attackKey = KeyCode.Space;
 
     [Header("References")]
     [SerializeField] private NetworkFrameClock frameClock;
