@@ -30,6 +30,8 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
         {
             frameClock.ResetClock();
         }
+
+        FileLogger.WriteLine($"[NetworkSessionManager] Start playerId={playerId} state={State}");
     }
 
     private void Update()
@@ -69,7 +71,7 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
             State = NetworkSessionState.WaitingForReady;
             readyTimer = 0f;
             startTimer = 0f;
-            Debug.Log("[NetworkSessionManager] Peer hello received. Enter WaitingForReady.");
+            FileLogger.WriteLine("[NetworkSessionManager] Peer hello received. Enter WaitingForReady.");
         }
     }
 
@@ -78,14 +80,12 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
         helloTimer += Time.deltaTime;
         readyTimer += Time.deltaTime;
 
-        // WaitingForReady 中も Hello を送り続ける
         if (helloTimer >= helloIntervalSeconds)
         {
             helloTimer = 0f;
             SendHello();
         }
 
-        // Ready も定期送信する
         if (!localReadySent || readyTimer >= readyIntervalSeconds)
         {
             readyTimer = 0f;
@@ -106,37 +106,37 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
                     frameClock.ResetClock();
                 }
 
-                Debug.Log("[NetworkSessionManager] Running started. Frame clock reset to 0.");
+                FileLogger.WriteLine("[NetworkSessionManager] Running started. Frame clock reset to 0.");
             }
         }
     }
 
     public void HandlePacket(NetworkPacket packet)
     {
+        FileLogger.WriteLine($"[NetworkSessionManager] HandlePacket type={packet.packetType} from player={packet.playerId}");
+
         switch (packet.packetType)
         {
             case NetworkPacketType.Hello:
                 PeerHelloReceived = true;
-                Debug.Log($"[NetworkSessionManager] Received Hello from player {packet.playerId}");
+                FileLogger.WriteLine($"[NetworkSessionManager] Received Hello from player {packet.playerId}");
 
                 if (State == NetworkSessionState.WaitingForPeer)
                 {
                     State = NetworkSessionState.WaitingForReady;
                     readyTimer = 0f;
                     startTimer = 0f;
-                    Debug.Log("[NetworkSessionManager] Transition to WaitingForReady by Hello.");
+                    FileLogger.WriteLine("[NetworkSessionManager] Transition to WaitingForReady by Hello.");
                 }
                 break;
 
             case NetworkPacketType.Ready:
                 PeerReadyReceived = true;
 
-                // Ready が届くということは、相手は起動済み・通信可能
-                // なので Hello も受信済み相当として扱う
                 if (!PeerHelloReceived)
                 {
                     PeerHelloReceived = true;
-                    Debug.Log("[NetworkSessionManager] Treat Ready as implicit Hello.");
+                    FileLogger.WriteLine("[NetworkSessionManager] Treat Ready as implicit Hello.");
                 }
 
                 if (State == NetworkSessionState.WaitingForPeer)
@@ -144,10 +144,10 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
                     State = NetworkSessionState.WaitingForReady;
                     readyTimer = 0f;
                     startTimer = 0f;
-                    Debug.Log("[NetworkSessionManager] Transition to WaitingForReady by Ready.");
+                    FileLogger.WriteLine("[NetworkSessionManager] Transition to WaitingForReady by Ready.");
                 }
 
-                Debug.Log($"[NetworkSessionManager] Received Ready from player {packet.playerId}");
+                FileLogger.WriteLine($"[NetworkSessionManager] Received Ready from player {packet.playerId}");
                 break;
         }
     }
@@ -156,13 +156,13 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
     {
         NetworkPacket packet = new NetworkPacket(NetworkPacketType.Hello, playerId, -1, 0);
         transport.Send(packet);
-        Debug.Log("[NetworkSessionManager] Sent Hello");
+        FileLogger.WriteLine("[NetworkSessionManager] Sent Hello");
     }
 
     private void SendReady()
     {
         NetworkPacket packet = new NetworkPacket(NetworkPacketType.Ready, playerId, -1, 0);
         transport.Send(packet);
-        Debug.Log("[NetworkSessionManager] Sent Ready");
+        FileLogger.WriteLine("[NetworkSessionManager] Sent Ready");
     }
 }

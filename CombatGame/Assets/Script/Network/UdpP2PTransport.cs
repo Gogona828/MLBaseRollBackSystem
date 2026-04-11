@@ -104,7 +104,7 @@ public class UdpP2PTransport : MonoBehaviour
         {
             byte[] bytes = NetworkPacketSerializer.Serialize(packet);
             sender.Send(bytes, bytes.Length, remoteEndPoint);
-            Debug.Log($"[UdpP2PTransport] Sent {packet.packetType} to {remoteIp}:{remotePort} player={packet.playerId} frame={packet.frame}");
+            FileLogger.WriteLine($"[UdpP2PTransport] Sent {packet.packetType} to {remoteIp}:{remotePort} player={packet.playerId} frame={packet.frame}");
         }
         catch (Exception e)
         {
@@ -149,7 +149,7 @@ public class UdpP2PTransport : MonoBehaviour
             NetworkPacket packet = NetworkPacketSerializer.Deserialize(data);
             receivedPackets.Enqueue(packet);
 
-            Debug.Log($"[UdpP2PTransport] Received {packet.packetType} from {any.Address}:{any.Port} player={packet.playerId} frame={packet.frame}");
+            FileLogger.WriteLine($"[UdpP2PTransport] Received {packet.packetType} from {any.Address}:{any.Port} player={packet.playerId} frame={packet.frame}");
         }
         catch (ObjectDisposedException)
         {

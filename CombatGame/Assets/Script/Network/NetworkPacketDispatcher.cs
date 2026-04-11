@@ -11,7 +11,7 @@ public class NetworkPacketDispatcher : MonoBehaviour
     {
         if (transport == null)
         {
-            Debug.LogWarning("[NetworkPacketDispatcher] transport is null");
+            FileLogger.WriteLine("[NetworkPacketDispatcher] transport is null");
             return;
         }
 
@@ -22,7 +22,7 @@ public class NetworkPacketDispatcher : MonoBehaviour
 
         while (transport.TryDequeue(out NetworkPacket packet))
         {
-            Debug.Log($"[NetworkPacketDispatcher] Dispatching {packet.packetType} player={packet.playerId} frame={packet.frame}");
+            FileLogger.WriteLine($"[NetworkPacketDispatcher] Dispatching {packet.packetType} player={packet.playerId} frame={packet.frame}");
             Dispatch(packet);
         }
     }
@@ -39,7 +39,7 @@ public class NetworkPacketDispatcher : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning("[NetworkPacketDispatcher] sessionManager is null");
+                    FileLogger.WriteLine("[NetworkPacketDispatcher] sessionManager is null");
                 }
                 break;
 
@@ -50,7 +50,7 @@ public class NetworkPacketDispatcher : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning("[NetworkPacketDispatcher] inputReceiver is null");
+                    FileLogger.WriteLine("[NetworkPacketDispatcher] inputReceiver is null");
                 }
                 break;
         }
