@@ -12,17 +12,21 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
     [Header("Handshake Timing")]
     [SerializeField] private float helloIntervalSeconds = 0.5f;
     [SerializeField] private float readyIntervalSeconds = 0.5f;
-    [SerializeField] private float startDelaySeconds = 1.0f;
+
+    [Header("Start Sync")]
+    [SerializeField] private int startDelayFrames = 60;
 
     public NetworkSessionState State { get; private set; } = NetworkSessionState.WaitingForPeer;
     public bool Running => State == NetworkSessionState.Running;
     public bool PeerHelloReceived { get; private set; }
     public bool PeerReadyReceived { get; private set; }
+    public bool StartReceived { get; private set; }
 
     private float helloTimer = 0f;
     private float readyTimer = 0f;
-    private float startTimer = 0f;
     private bool localReadySent = false;
+    private bool localStartSent = false;
+    private int countdownFrames = -1;
 
     private void Start()
     {
@@ -51,6 +55,10 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
                 UpdateWaitingForReady();
                 break;
 
+            case NetworkSessionState.WaitingForStart:
+                UpdateWaitingForStart();
+                break;
+
             case NetworkSessionState.Running:
                 break;
         }
@@ -70,7 +78,6 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
         {
             State = NetworkSessionState.WaitingForReady;
             readyTimer = 0f;
-            startTimer = 0f;
             FileLogger.WriteLine("[NetworkSessionManager] Peer hello received. Enter WaitingForReady.");
         }
     }
@@ -95,19 +102,38 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
 
         if (PeerReadyReceived)
         {
-            startTimer += Time.deltaTime;
-
-            if (startTimer >= startDelaySeconds)
+            // P1 が開始指示を出す
+            if (playerId == 0 && !localStartSent)
             {
-                State = NetworkSessionState.Running;
-
-                if (frameClock != null)
-                {
-                    frameClock.ResetClock();
-                }
-
-                FileLogger.WriteLine("[NetworkSessionManager] Running started. Frame clock reset to 0.");
+                SendStart(startDelayFrames);
+                localStartSent = true;
+                StartReceived = true;
+                countdownFrames = startDelayFrames;
+                State = NetworkSessionState.WaitingForStart;
+                FileLogger.WriteLine($"[NetworkSessionManager] Sent Start with delayFrames={startDelayFrames}. Enter WaitingForStart.");
             }
+        }
+    }
+
+    private void UpdateWaitingForStart()
+    {
+        if (countdownFrames < 0)
+        {
+            return;
+        }
+
+        countdownFrames--;
+
+        if (countdownFrames <= 0)
+        {
+            State = NetworkSessionState.Running;
+
+            if (frameClock != null)
+            {
+                frameClock.ResetClock();
+            }
+
+            FileLogger.WriteLine("[NetworkSessionManager] Running started. Frame clock reset to 0.");
         }
     }
 
@@ -125,7 +151,6 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
                 {
                     State = NetworkSessionState.WaitingForReady;
                     readyTimer = 0f;
-                    startTimer = 0f;
                     FileLogger.WriteLine("[NetworkSessionManager] Transition to WaitingForReady by Hello.");
                 }
                 break;
@@ -143,26 +168,39 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
                 {
                     State = NetworkSessionState.WaitingForReady;
                     readyTimer = 0f;
-                    startTimer = 0f;
                     FileLogger.WriteLine("[NetworkSessionManager] Transition to WaitingForReady by Ready.");
                 }
 
                 FileLogger.WriteLine($"[NetworkSessionManager] Received Ready from player {packet.playerId}");
+                break;
+
+            case NetworkPacketType.Start:
+                StartReceived = true;
+                countdownFrames = packet.startDelayFrames;
+                State = NetworkSessionState.WaitingForStart;
+                FileLogger.WriteLine($"[NetworkSessionManager] Received Start from player {packet.playerId} delayFrames={packet.startDelayFrames}. Enter WaitingForStart.");
                 break;
         }
     }
 
     private void SendHello()
     {
-        NetworkPacket packet = new NetworkPacket(NetworkPacketType.Hello, playerId, -1, 0);
+        NetworkPacket packet = new NetworkPacket(NetworkPacketType.Hello, playerId, -1, 0, 0);
         transport.Send(packet);
         FileLogger.WriteLine("[NetworkSessionManager] Sent Hello");
     }
 
     private void SendReady()
     {
-        NetworkPacket packet = new NetworkPacket(NetworkPacketType.Ready, playerId, -1, 0);
+        NetworkPacket packet = new NetworkPacket(NetworkPacketType.Ready, playerId, -1, 0, 0);
         transport.Send(packet);
         FileLogger.WriteLine("[NetworkSessionManager] Sent Ready");
+    }
+
+    private void SendStart(int delayFrames)
+    {
+        NetworkPacket packet = new NetworkPacket(NetworkPacketType.Start, playerId, -1, 0, delayFrames);
+        transport.Send(packet);
+        FileLogger.WriteLine($"[NetworkSessionManager] Sent Start delayFrames={delayFrames}");
     }
 }

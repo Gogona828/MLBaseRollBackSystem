@@ -12,6 +12,7 @@ public static class NetworkPacketSerializer
             writer.Write(packet.playerId);
             writer.Write(packet.frame);
             writer.Write(packet.inputBits);
+            writer.Write(packet.startDelayFrames);
             writer.Flush();
             return ms.ToArray();
         }
@@ -26,8 +27,9 @@ public static class NetworkPacketSerializer
             int playerId = reader.ReadInt32();
             int frame = reader.ReadInt32();
             byte inputBits = reader.ReadByte();
+            int startDelayFrames = reader.ReadInt32();
 
-            return new NetworkPacket(packetType, playerId, frame, inputBits);
+            return new NetworkPacket(packetType, playerId, frame, inputBits, startDelayFrames);
         }
     }
 }

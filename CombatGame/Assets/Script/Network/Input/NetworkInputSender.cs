@@ -19,21 +19,8 @@ public class NetworkInputSender : MonoBehaviour
 
     private void Update()
     {
-        if (frameClock == null)
+        if (frameClock == null || transport == null || sessionManager == null)
         {
-            Debug.LogWarning("[NetworkInputSender] frameClock is null");
-            return;
-        }
-
-        if (transport == null)
-        {
-            Debug.LogWarning("[NetworkInputSender] transport is null");
-            return;
-        }
-
-        if (sessionManager == null)
-        {
-            Debug.LogWarning("[NetworkInputSender] sessionManager is null");
             return;
         }
 
@@ -56,12 +43,12 @@ public class NetworkInputSender : MonoBehaviour
             NetworkPacketType.Input,
             playerId,
             frame,
-            inputBits
+            inputBits,
+            0
         );
 
         transport.Send(packet);
-
-        Debug.Log($"[SEND] player={playerId}, frame={frame}, bits={inputBits}, readable={InputEncoder.ToReadableString(inputBits)}");
+        FileLogger.WriteLine($"[NetworkInputSender] Sent Input frame={frame} bits={inputBits}");
 
         frameClock.Tick();
     }
