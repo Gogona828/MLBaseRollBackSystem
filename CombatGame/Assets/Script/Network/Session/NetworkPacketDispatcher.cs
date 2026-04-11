@@ -33,6 +33,7 @@ public class NetworkPacketDispatcher : MonoBehaviour
         {
             case NetworkPacketType.Hello:
             case NetworkPacketType.Ready:
+            case NetworkPacketType.Start:
                 if (sessionManager != null)
                 {
                     sessionManager.HandlePacket(packet);

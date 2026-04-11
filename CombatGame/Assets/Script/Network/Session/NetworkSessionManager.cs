@@ -102,7 +102,6 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
 
         if (PeerReadyReceived)
         {
-            // P1 が開始指示を出す
             if (playerId == 0 && !localStartSent)
             {
                 SendStart(startDelayFrames);
