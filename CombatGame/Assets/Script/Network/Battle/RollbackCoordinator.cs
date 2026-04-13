@@ -7,6 +7,10 @@ public class RollbackCoordinator : MonoBehaviour
     [SerializeField] private NetworkSessionManager sessionManager;
     [SerializeField] private RollbackStateTester player1StateTester;
     [SerializeField] private RollbackStateTester player2StateTester;
+    [SerializeField] private RollbackObservationMonitor rollbackObservationMonitor;
+
+    [Header("Role")]
+    [SerializeField] private bool localPlayerIsP1 = true;
 
     [Header("Snapshot Settings")]
     [SerializeField] private int snapshotCapacity = 300;
@@ -81,6 +85,12 @@ public class RollbackCoordinator : MonoBehaviour
             pendingRequest.TargetFrame,
             resumeFrameExclusive
         );
+
+        if (rollbackObservationMonitor != null)
+        {
+            float confirmedRemotePosX = rollbackObservationMonitor.GetObservedRemotePosX(localPlayerIsP1);
+            rollbackObservationMonitor.ObserveWarpOnRollback(pendingRequest.TargetFrame, confirmedRemotePosX);
+        }
 
         FileLogger.WriteLine($"[RollbackCoordinator] Restored snapshot {snapshot}");
         FileLogger.WriteLine($"[RollbackCoordinator] Created resimulation request {PendingResimulationRequest}");

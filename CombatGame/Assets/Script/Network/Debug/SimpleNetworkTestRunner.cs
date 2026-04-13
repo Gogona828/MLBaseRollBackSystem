@@ -8,6 +8,7 @@ public class SimpleNetworkTestRunner : MonoBehaviour
     [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
     [SerializeField] private AutoRollbackTrigger autoRollbackTrigger;
     [SerializeField] private RollbackResimulationRunner rollbackResimulationRunner;
+    [SerializeField] private RollbackObservationMonitor rollbackObservationMonitor;
 
     [Header("Test Settings")]
     [SerializeField] private float testDurationSeconds = 8f;
@@ -65,7 +66,8 @@ public class SimpleNetworkTestRunner : MonoBehaviour
             networkInputReceiver,
             predictionMismatchDetector,
             autoRollbackTrigger,
-            rollbackResimulationRunner
+            rollbackResimulationRunner,
+            rollbackObservationMonitor
         );
 
         FileLogger.WriteLine($"[SimpleNetworkTestRunner] TEST FINISHED | {summary}");
