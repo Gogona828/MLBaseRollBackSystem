@@ -250,7 +250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5d445009d384024dbc47d1ac618a86a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fixedInputDelayFrames: 0
+  fixedInputDelayFrames: 5
   predictionMismatchDetector: {fileID: 910968105}
 --- !u!4 &530243501
 Transform:

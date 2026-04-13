@@ -68,6 +68,16 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     {
         return remoteInputBuffer.TryGetInput(frame, out inputBits);
     }
+    
+    public int GetPendingDelayedInputCount()
+    {
+        if (delaySimulator == null)
+        {
+            return 0;
+        }
+
+        return delaySimulator.GetPendingCount();
+    }
 
     public void ClearBuffer()
     {
