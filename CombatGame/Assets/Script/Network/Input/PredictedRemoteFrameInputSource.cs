@@ -27,7 +27,6 @@ public class PredictedRemoteFrameInputSource : IFrameInputSource
         if (remoteInputBuffer != null && remoteInputBuffer.TryGetInput(frame, out byte confirmedBits))
         {
             predictor?.OnConfirmedInput(frame, confirmedBits);
-            mismatchDetector?.ConfirmIfPredicted(frame, confirmedBits);
 
             LastReadUsedPrediction = false;
             LastReadBits = confirmedBits;
@@ -54,7 +53,6 @@ public class PredictedRemoteFrameInputSource : IFrameInputSource
     public void ResetPredictor()
     {
         predictor?.Reset();
-        mismatchDetector?.Reset();
 
         LastReadUsedPrediction = false;
         LastReadFrame = -1;

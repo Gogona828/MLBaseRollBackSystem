@@ -1,25 +1,15 @@
 using UnityEngine;
 
-public class PredictionMismatchDetector
+public class PredictionMismatchDetector : MonoBehaviour
 {
-    private readonly PredictionHistoryBuffer historyBuffer;
+    private PredictionHistoryBuffer historyBuffer = new PredictionHistoryBuffer();
 
     public int TotalPredictions { get; private set; }
     public int TotalHits { get; private set; }
     public int TotalMisses { get; private set; }
 
-    public PredictionMismatchDetector(PredictionHistoryBuffer historyBuffer)
-    {
-        this.historyBuffer = historyBuffer;
-    }
-
     public void RecordPrediction(int frame, byte predictedBits)
     {
-        if (historyBuffer == null)
-        {
-            return;
-        }
-
         if (historyBuffer.HasPredictionForFrame(frame))
         {
             return;
@@ -34,11 +24,6 @@ public class PredictionMismatchDetector
 
     public void ConfirmIfPredicted(int frame, byte confirmedBits)
     {
-        if (historyBuffer == null)
-        {
-            return;
-        }
-
         if (!historyBuffer.TryConfirmPrediction(frame, confirmedBits, out PredictionRecord record))
         {
             return;
@@ -58,12 +43,12 @@ public class PredictionMismatchDetector
         }
     }
 
-    public void Reset()
+    public void ResetDetector()
     {
         TotalPredictions = 0;
         TotalHits = 0;
         TotalMisses = 0;
-        historyBuffer?.Clear();
+        historyBuffer.Clear();
     }
 
     public string GetSummary()

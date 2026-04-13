@@ -8,6 +8,7 @@ public class PredictedInputTester : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkInputReceiver networkInputReceiver;
     [SerializeField] private NetworkSessionManager sessionManager;
+    [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
 
     [Header("Logging")]
     [SerializeField] private int logIntervalFrames = 30;
@@ -17,9 +18,6 @@ public class PredictedInputTester : MonoBehaviour
     private NetworkBattleInputRouter router;
     private NetworkBattleInputBridge bridge;
     private IRemoteInputPredictor predictor;
-
-    private PredictionHistoryBuffer predictionHistoryBuffer;
-    private PredictionMismatchDetector mismatchDetector;
 
     private int lastLoggedFrame = -1;
 
@@ -37,16 +35,19 @@ public class PredictedInputTester : MonoBehaviour
             return;
         }
 
+        if (predictionMismatchDetector == null)
+        {
+            FileLogger.WriteLine("[PredictedInputTester] predictionMismatchDetector is null");
+            return;
+        }
+
         localSource = new LocalFrameInputSource();
         predictor = new LastInputPredictor();
-
-        predictionHistoryBuffer = new PredictionHistoryBuffer();
-        mismatchDetector = new PredictionMismatchDetector(predictionHistoryBuffer);
 
         predictedRemoteSource = new PredictedRemoteFrameInputSource(
             networkInputReceiver.Buffer,
             predictor,
-            mismatchDetector
+            predictionMismatchDetector
         );
 
         if (isLocalPlayerP1)
@@ -95,8 +96,8 @@ public class PredictedInputTester : MonoBehaviour
         FrameInputState p1 = bridge.GetP1InputState(frame);
         FrameInputState p2 = bridge.GetP2InputState(frame);
 
-        string summary = mismatchDetector != null
-            ? mismatchDetector.GetSummary()
+        string summary = predictionMismatchDetector != null
+            ? predictionMismatchDetector.GetSummary()
             : "predictions=0, hits=0, misses=0";
 
         FileLogger.WriteLine(
@@ -107,5 +108,6 @@ public class PredictedInputTester : MonoBehaviour
     {
         lastLoggedFrame = -1;
         predictedRemoteSource?.ResetPredictor();
+        predictionMismatchDetector?.ResetDetector();
     }
 }

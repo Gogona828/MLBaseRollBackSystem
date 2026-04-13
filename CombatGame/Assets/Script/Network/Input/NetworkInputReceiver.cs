@@ -6,6 +6,9 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     [Header("Delay Simulation")]
     [SerializeField] private int fixedInputDelayFrames = 0;
 
+    [Header("Prediction")]
+    [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
+
     private RemoteInputBuffer remoteInputBuffer = new RemoteInputBuffer();
     private InputDelaySimulator delaySimulator;
 
@@ -33,6 +36,11 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
             FileLogger.WriteLine(
                 $"[NetworkInputReceiver] Released delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}");
+
+            if (predictionMismatchDetector != null)
+            {
+                predictionMismatchDetector.ConfirmIfPredicted(packet.frame, packet.inputBits);
+            }
         }
     }
 
