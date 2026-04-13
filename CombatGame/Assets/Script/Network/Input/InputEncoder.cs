@@ -70,4 +70,26 @@ public static class InputEncoder
 
         return sb.ToString().TrimEnd();
     }
+    
+    public static byte ToBits(bool left, bool right, bool attack)
+    {
+        byte bits = 0;
+
+        if (left)
+        {
+            bits |= 1;
+        }
+
+        if (right)
+        {
+            bits |= 2;
+        }
+
+        if (attack)
+        {
+            bits |= 4;
+        }
+
+        return bits;
+    }
 }

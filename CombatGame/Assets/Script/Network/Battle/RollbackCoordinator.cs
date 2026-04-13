@@ -1,0 +1,88 @@
+using UnityEngine;
+
+public class RollbackCoordinator : MonoBehaviour
+{
+    [Header("References")]
+    [SerializeField] private NetworkFrameClock frameClock;
+    [SerializeField] private NetworkSessionManager sessionManager;
+    [SerializeField] private RollbackStateTester player1StateTester;
+    [SerializeField] private RollbackStateTester player2StateTester;
+
+    [Header("Snapshot Settings")]
+    [SerializeField] private int snapshotCapacity = 300;
+
+    private SnapshotRingBuffer snapshotRingBuffer;
+    private RollbackRequest pendingRequest = RollbackRequest.Invalid();
+
+    private void Awake()
+    {
+        snapshotRingBuffer = new SnapshotRingBuffer(snapshotCapacity);
+    }
+
+    public void SaveSnapshotForFrame(int frame)
+    {
+        if (player1StateTester == null || player2StateTester == null)
+        {
+            return;
+        }
+
+        BattleStateSnapshot snapshot = new BattleStateSnapshot(
+            frame,
+            player1StateTester.SimulatedPosX,
+            player2StateTester.SimulatedPosX,
+            player1StateTester.Facing,
+            player2StateTester.Facing,
+            player1StateTester.StateId,
+            player2StateTester.StateId
+        );
+
+        snapshotRingBuffer.Store(snapshot);
+
+        FileLogger.WriteLine($"[RollbackCoordinator] Saved snapshot {snapshot}");
+    }
+
+    public void RequestRollback(int targetFrame)
+    {
+        pendingRequest = new RollbackRequest(targetFrame);
+        FileLogger.WriteLine($"[RollbackCoordinator] Rollback requested targetFrame={targetFrame}");
+    }
+
+    public void ProcessRollbackIfNeeded()
+    {
+        if (!pendingRequest.IsValid)
+        {
+            return;
+        }
+
+        if (!snapshotRingBuffer.TryGetSnapshot(pendingRequest.TargetFrame, out BattleStateSnapshot snapshot))
+        {
+            FileLogger.WriteLine($"[RollbackCoordinator] Snapshot not found for frame={pendingRequest.TargetFrame}");
+            pendingRequest = RollbackRequest.Invalid();
+            return;
+        }
+
+        player1StateTester.RestoreState(snapshot.P1PosX, snapshot.P1Facing, snapshot.P1StateId);
+        player2StateTester.RestoreState(snapshot.P2PosX, snapshot.P2Facing, snapshot.P2StateId);
+
+        FileLogger.WriteLine($"[RollbackCoordinator] Restored snapshot {snapshot}");
+
+        pendingRequest = RollbackRequest.Invalid();
+    }
+
+    public bool TryGetSnapshot(int frame, out BattleStateSnapshot snapshot)
+    {
+        if (snapshotRingBuffer == null)
+        {
+            snapshot = default;
+            return false;
+        }
+
+        return snapshotRingBuffer.TryGetSnapshot(frame, out snapshot);
+    }
+
+    public void ResetCoordinator()
+    {
+        snapshotRingBuffer?.Clear();
+        pendingRequest = RollbackRequest.Invalid();
+    }
+}

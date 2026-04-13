@@ -110,4 +110,26 @@ public class PredictedInputTester : MonoBehaviour
         predictedRemoteSource?.ResetPredictor();
         predictionMismatchDetector?.ResetDetector();
     }
+    
+    public byte GetP1InputBitsForSimulation(int frame)
+    {
+        if (bridge == null)
+        {
+            return 0;
+        }
+
+        FrameInputState state = bridge.GetP1InputState(frame);
+        return InputEncoder.ToBits(state.Left, state.Right, state.Attack);
+    }
+
+    public byte GetP2InputBitsForSimulation(int frame)
+    {
+        if (bridge == null)
+        {
+            return 0;
+        }
+
+        FrameInputState state = bridge.GetP2InputState(frame);
+        return InputEncoder.ToBits(state.Left, state.Right, state.Attack);
+    }
 }

@@ -8,6 +8,9 @@ public class NetworkSimulationStepController : MonoBehaviour
     [SerializeField] private NetworkInputReceiver inputReceiver;
     [SerializeField] private NetworkInputSender inputSender;
     [SerializeField] private PredictedInputTester predictedInputTester;
+    
+    [SerializeField] private RollbackDebugTester rollbackDebugTester;
+    [SerializeField] private RollbackCoordinator rollbackCoordinator;
 
     private void FixedUpdate()
     {
@@ -23,25 +26,32 @@ public class NetworkSimulationStepController : MonoBehaviour
 
         int currentFrame = frameClock.CurrentFrame;
 
-        // 1. 遅延入力を解放
         if (inputReceiver != null)
         {
             inputReceiver.ProcessDelayedInputsForCurrentStep();
         }
 
-        // 2. 現在フレームのローカル入力を送信
         if (inputSender != null)
         {
             inputSender.ProcessSendForFrame(currentFrame);
         }
 
-        // 3. ひとつ前のフレームを読む
+        if (rollbackDebugTester != null)
+        {
+            rollbackDebugTester.ProcessSimulationForFrame(currentFrame);
+            rollbackDebugTester.ProcessDebugRollbackRequest();
+        }
+
         if (predictedInputTester != null)
         {
             predictedInputTester.ProcessTestReadForFrame(currentFrame - 1);
         }
 
-        // 4. 最後にフレームを進める
+        if (rollbackCoordinator != null)
+        {
+            rollbackCoordinator.ProcessRollbackIfNeeded();
+        }
+
         frameClock.Tick();
     }
 }
