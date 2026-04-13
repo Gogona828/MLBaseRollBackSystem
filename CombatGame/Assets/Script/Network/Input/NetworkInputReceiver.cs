@@ -17,7 +17,7 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         delaySimulator = new InputDelaySimulator(fixedInputDelayFrames);
     }
 
-    private void Update()
+    public void ProcessDelayedInputsForCurrentStep()
     {
         if (delaySimulator == null)
         {

@@ -11,7 +11,6 @@ public class NetworkInputSender : MonoBehaviour
     [SerializeField] private KeyCode attackKey = KeyCode.Space;
 
     [Header("References")]
-    [SerializeField] private NetworkFrameClock frameClock;
     [SerializeField] private UdpP2PTransport transport;
     [SerializeField] private NetworkSessionManager sessionManager;
 
@@ -19,9 +18,9 @@ public class NetworkInputSender : MonoBehaviour
 
     public byte LastLocalInputBits { get; private set; }
 
-    private void Update()
+    public void ProcessSendForFrame(int frame)
     {
-        if (frameClock == null || transport == null || sessionManager == null)
+        if (transport == null || sessionManager == null)
         {
             return;
         }
@@ -36,9 +35,11 @@ public class NetworkInputSender : MonoBehaviour
             return;
         }
 
-        int frame = frameClock.CurrentFrame;
+        if (frame < 0)
+        {
+            return;
+        }
 
-        // 同じ frame を複数回送らない
         if (frame == lastSentFrame)
         {
             return;

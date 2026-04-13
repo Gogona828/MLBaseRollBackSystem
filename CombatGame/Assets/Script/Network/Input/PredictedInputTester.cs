@@ -6,7 +6,6 @@ public class PredictedInputTester : MonoBehaviour
     [SerializeField] private bool isLocalPlayerP1 = true;
 
     [Header("References")]
-    [SerializeField] private NetworkFrameClock frameClock;
     [SerializeField] private NetworkInputReceiver networkInputReceiver;
     [SerializeField] private NetworkSessionManager sessionManager;
 
@@ -23,12 +22,6 @@ public class PredictedInputTester : MonoBehaviour
 
     private void Start()
     {
-        if (frameClock == null)
-        {
-            FileLogger.WriteLine("[PredictedInputTester] frameClock is null");
-            return;
-        }
-
         if (networkInputReceiver == null)
         {
             FileLogger.WriteLine("[PredictedInputTester] networkInputReceiver is null");
@@ -62,28 +55,28 @@ public class PredictedInputTester : MonoBehaviour
         bridge = new NetworkBattleInputBridge(router);
     }
 
-    private void Update()
+    public void ProcessTestReadForFrame(int frame)
     {
-        if (bridge == null || frameClock == null || sessionManager == null)
+        if (bridge == null || sessionManager == null)
         {
             return;
         }
 
-        // 開始前は読まない
         if (!sessionManager.Running)
         {
             return;
         }
 
-        int frame = frameClock.CurrentFrame;
+        if (frame < 0)
+        {
+            return;
+        }
 
-        // 同じ frame を何度も読まない
         if (frame == lastLoggedFrame)
         {
             return;
         }
 
-        // ログ間引き
         if (logIntervalFrames > 1 && frame % logIntervalFrames != 0)
         {
             return;
