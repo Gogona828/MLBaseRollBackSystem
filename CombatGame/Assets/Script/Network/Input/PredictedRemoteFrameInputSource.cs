@@ -4,6 +4,7 @@ public class PredictedRemoteFrameInputSource : IFrameInputSource
 {
     private readonly RemoteInputBuffer remoteInputBuffer;
     private readonly IRemoteInputPredictor predictor;
+    private readonly PredictionMismatchDetector mismatchDetector;
 
     public bool LastReadUsedPrediction { get; private set; }
     public int LastReadFrame { get; private set; }
@@ -11,10 +12,12 @@ public class PredictedRemoteFrameInputSource : IFrameInputSource
 
     public PredictedRemoteFrameInputSource(
         RemoteInputBuffer remoteInputBuffer,
-        IRemoteInputPredictor predictor)
+        IRemoteInputPredictor predictor,
+        PredictionMismatchDetector mismatchDetector)
     {
         this.remoteInputBuffer = remoteInputBuffer;
         this.predictor = predictor;
+        this.mismatchDetector = mismatchDetector;
     }
 
     public byte GetInputBits(int frame)
@@ -24,6 +27,7 @@ public class PredictedRemoteFrameInputSource : IFrameInputSource
         if (remoteInputBuffer != null && remoteInputBuffer.TryGetInput(frame, out byte confirmedBits))
         {
             predictor?.OnConfirmedInput(frame, confirmedBits);
+            mismatchDetector?.ConfirmIfPredicted(frame, confirmedBits);
 
             LastReadUsedPrediction = false;
             LastReadBits = confirmedBits;
@@ -35,6 +39,8 @@ public class PredictedRemoteFrameInputSource : IFrameInputSource
         }
 
         byte predictedBits = predictor != null ? predictor.PredictInputBits(frame) : (byte)0;
+
+        mismatchDetector?.RecordPrediction(frame, predictedBits);
 
         LastReadUsedPrediction = true;
         LastReadBits = predictedBits;
@@ -48,6 +54,8 @@ public class PredictedRemoteFrameInputSource : IFrameInputSource
     public void ResetPredictor()
     {
         predictor?.Reset();
+        mismatchDetector?.Reset();
+
         LastReadUsedPrediction = false;
         LastReadFrame = -1;
         LastReadBits = 0;

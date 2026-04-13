@@ -18,6 +18,9 @@ public class PredictedInputTester : MonoBehaviour
     private NetworkBattleInputBridge bridge;
     private IRemoteInputPredictor predictor;
 
+    private PredictionHistoryBuffer predictionHistoryBuffer;
+    private PredictionMismatchDetector mismatchDetector;
+
     private int lastLoggedFrame = -1;
 
     private void Start()
@@ -36,9 +39,14 @@ public class PredictedInputTester : MonoBehaviour
 
         localSource = new LocalFrameInputSource();
         predictor = new LastInputPredictor();
+
+        predictionHistoryBuffer = new PredictionHistoryBuffer();
+        mismatchDetector = new PredictionMismatchDetector(predictionHistoryBuffer);
+
         predictedRemoteSource = new PredictedRemoteFrameInputSource(
             networkInputReceiver.Buffer,
-            predictor
+            predictor,
+            mismatchDetector
         );
 
         if (isLocalPlayerP1)
@@ -87,8 +95,12 @@ public class PredictedInputTester : MonoBehaviour
         FrameInputState p1 = bridge.GetP1InputState(frame);
         FrameInputState p2 = bridge.GetP2InputState(frame);
 
+        string summary = mismatchDetector != null
+            ? mismatchDetector.GetSummary()
+            : "predictions=0, hits=0, misses=0";
+
         FileLogger.WriteLine(
-            $"[PredictedInputTester] frame={frame} | P1=({p1}) | P2=({p2}) | remoteUsedPrediction={predictedRemoteSource.LastReadUsedPrediction} | remoteBits={predictedRemoteSource.LastReadBits}");
+            $"[PredictedInputTester] frame={frame} | P1=({p1}) | P2=({p2}) | remoteUsedPrediction={predictedRemoteSource.LastReadUsedPrediction} | remoteBits={predictedRemoteSource.LastReadBits} | {summary}");
     }
 
     public void ResetTesterState()
