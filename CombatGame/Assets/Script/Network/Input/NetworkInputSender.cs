@@ -13,6 +13,10 @@ public class NetworkInputSender : MonoBehaviour
     [Header("References")]
     [SerializeField] private UdpP2PTransport transport;
     [SerializeField] private NetworkSessionManager sessionManager;
+    [SerializeField] private DebugAutoInputSequence debugAutoInputSequence;
+
+    [Header("Debug")]
+    [SerializeField] private bool useDebugAutoInput = false;
 
     private int lastSentFrame = -1;
 
@@ -45,7 +49,17 @@ public class NetworkInputSender : MonoBehaviour
             return;
         }
 
-        byte inputBits = InputEncoder.ReadLocalInputBits(leftKey, rightKey, attackKey);
+        byte inputBits;
+
+        if (useDebugAutoInput && debugAutoInputSequence != null)
+        {
+            inputBits = debugAutoInputSequence.GetBits();
+        }
+        else
+        {
+            inputBits = InputEncoder.ReadLocalInputBits(leftKey, rightKey, attackKey);
+        }
+
         LastLocalInputBits = inputBits;
 
         NetworkPacket packet = new NetworkPacket(
