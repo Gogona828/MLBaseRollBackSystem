@@ -3,6 +3,7 @@ using UnityEngine;
 public class PredictionMismatchDetector : MonoBehaviour
 {
     private PredictionHistoryBuffer historyBuffer = new PredictionHistoryBuffer();
+    private PredictionMissInfo latestMissInfo = PredictionMissInfo.Invalid();
 
     public int TotalPredictions { get; private set; }
     public int TotalHits { get; private set; }
@@ -38,9 +39,29 @@ public class PredictionMismatchDetector : MonoBehaviour
         else if (record.ResultState == PredictionResultState.Miss)
         {
             TotalMisses++;
+
+            latestMissInfo = new PredictionMissInfo(
+                frame,
+                record.PredictedBits,
+                confirmedBits
+            );
+
             FileLogger.WriteLine(
                 $"[PredictionMismatchDetector] MISS frame={frame}, predicted={record.PredictedBits}, confirmed={confirmedBits}");
         }
+    }
+
+    public bool TryConsumeLatestMiss(out PredictionMissInfo missInfo)
+    {
+        if (!latestMissInfo.IsValid)
+        {
+            missInfo = PredictionMissInfo.Invalid();
+            return false;
+        }
+
+        missInfo = latestMissInfo;
+        latestMissInfo = PredictionMissInfo.Invalid();
+        return true;
     }
 
     public void ResetDetector()
@@ -49,6 +70,7 @@ public class PredictionMismatchDetector : MonoBehaviour
         TotalHits = 0;
         TotalMisses = 0;
         historyBuffer.Clear();
+        latestMissInfo = PredictionMissInfo.Invalid();
     }
 
     public string GetSummary()
