@@ -8,12 +8,18 @@ public class PredictedInputTester : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkFrameClock frameClock;
     [SerializeField] private NetworkInputReceiver networkInputReceiver;
+    [SerializeField] private NetworkSessionManager sessionManager;
+
+    [Header("Logging")]
+    [SerializeField] private int logIntervalFrames = 30;
 
     private IFrameInputSource localSource;
     private PredictedRemoteFrameInputSource predictedRemoteSource;
     private NetworkBattleInputRouter router;
     private NetworkBattleInputBridge bridge;
     private IRemoteInputPredictor predictor;
+
+    private int lastLoggedFrame = -1;
 
     private void Start()
     {
@@ -26,6 +32,12 @@ public class PredictedInputTester : MonoBehaviour
         if (networkInputReceiver == null)
         {
             FileLogger.WriteLine("[PredictedInputTester] networkInputReceiver is null");
+            return;
+        }
+
+        if (sessionManager == null)
+        {
+            FileLogger.WriteLine("[PredictedInputTester] sessionManager is null");
             return;
         }
 
@@ -52,22 +64,43 @@ public class PredictedInputTester : MonoBehaviour
 
     private void Update()
     {
-        if (bridge == null || frameClock == null)
+        if (bridge == null || frameClock == null || sessionManager == null)
+        {
+            return;
+        }
+
+        // 開始前は読まない
+        if (!sessionManager.Running)
         {
             return;
         }
 
         int frame = frameClock.CurrentFrame;
 
-        if (frame % 30 != 0)
+        // 同じ frame を何度も読まない
+        if (frame == lastLoggedFrame)
         {
             return;
         }
+
+        // ログ間引き
+        if (logIntervalFrames > 1 && frame % logIntervalFrames != 0)
+        {
+            return;
+        }
+
+        lastLoggedFrame = frame;
 
         FrameInputState p1 = bridge.GetP1InputState(frame);
         FrameInputState p2 = bridge.GetP2InputState(frame);
 
         FileLogger.WriteLine(
             $"[PredictedInputTester] frame={frame} | P1=({p1}) | P2=({p2}) | remoteUsedPrediction={predictedRemoteSource.LastReadUsedPrediction} | remoteBits={predictedRemoteSource.LastReadBits}");
+    }
+
+    public void ResetTesterState()
+    {
+        lastLoggedFrame = -1;
+        predictedRemoteSource?.ResetPredictor();
     }
 }

@@ -15,6 +15,8 @@ public class NetworkInputSender : MonoBehaviour
     [SerializeField] private UdpP2PTransport transport;
     [SerializeField] private NetworkSessionManager sessionManager;
 
+    private int lastSentFrame = -1;
+
     public byte LastLocalInputBits { get; private set; }
 
     private void Update()
@@ -35,8 +37,14 @@ public class NetworkInputSender : MonoBehaviour
         }
 
         int frame = frameClock.CurrentFrame;
-        byte inputBits = InputEncoder.ReadLocalInputBits(leftKey, rightKey, attackKey);
 
+        // 同じ frame を複数回送らない
+        if (frame == lastSentFrame)
+        {
+            return;
+        }
+
+        byte inputBits = InputEncoder.ReadLocalInputBits(leftKey, rightKey, attackKey);
         LastLocalInputBits = inputBits;
 
         NetworkPacket packet = new NetworkPacket(
@@ -48,8 +56,14 @@ public class NetworkInputSender : MonoBehaviour
         );
 
         transport.Send(packet);
-        FileLogger.WriteLine($"[NetworkInputSender] Sent Input frame={frame} bits={inputBits}");
+        lastSentFrame = frame;
 
-        frameClock.Tick();
+        FileLogger.WriteLine($"[NetworkInputSender] Sent Input frame={frame} bits={inputBits}");
+    }
+
+    public void ResetSenderState()
+    {
+        lastSentFrame = -1;
+        LastLocalInputBits = 0;
     }
 }
