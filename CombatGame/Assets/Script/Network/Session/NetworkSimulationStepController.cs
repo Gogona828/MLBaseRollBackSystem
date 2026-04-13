@@ -11,6 +11,7 @@ public class NetworkSimulationStepController : MonoBehaviour
     [SerializeField] private RollbackDebugTester rollbackDebugTester;
     [SerializeField] private RollbackCoordinator rollbackCoordinator;
     [SerializeField] private AutoRollbackTrigger autoRollbackTrigger;
+    [SerializeField] private RollbackResimulationRunner rollbackResimulationRunner;
 
     private void FixedUpdate()
     {
@@ -37,7 +38,7 @@ public class NetworkSimulationStepController : MonoBehaviour
             inputReceiver.ProcessDelayedInputsForCurrentStep();
         }
 
-        // 2. miss があれば自動 rollback request
+        // 2. miss があれば auto rollback request
         if (autoRollbackTrigger != null)
         {
             autoRollbackTrigger.ProcessAutoRollback();
@@ -49,13 +50,19 @@ public class NetworkSimulationStepController : MonoBehaviour
             rollbackCoordinator.ProcessRollbackIfNeeded();
         }
 
-        // 4. 現在フレームのローカル入力送信
+        // 4. rollback 後の再シミュレーション
+        if (rollbackResimulationRunner != null)
+        {
+            rollbackResimulationRunner.ProcessResimulationIfNeeded();
+        }
+
+        // 5. 現在フレームのローカル入力送信
         if (inputSender != null)
         {
             inputSender.ProcessSendForFrame(currentFrame);
         }
 
-        // 5. rollback した step では simulation を進めない
+        // 6. rollback がなかったときだけ通常 simulation
         if (rollbackDebugTester != null)
         {
             if (rollbackCoordinator == null || !rollbackCoordinator.DidRollbackThisStep)
@@ -71,13 +78,13 @@ public class NetworkSimulationStepController : MonoBehaviour
             rollbackDebugTester.ProcessDebugRollbackRequest();
         }
 
-        // 6. tester
+        // 7. tester
         if (predictedInputTester != null)
         {
             predictedInputTester.ProcessTestReadForFrame(currentFrame - 1);
         }
 
-        // 7. frame を進める
+        // 8. frame を進める
         frameClock.Tick();
     }
 }

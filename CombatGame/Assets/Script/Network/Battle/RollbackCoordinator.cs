@@ -15,6 +15,8 @@ public class RollbackCoordinator : MonoBehaviour
     private RollbackRequest pendingRequest = RollbackRequest.Invalid();
 
     public bool DidRollbackThisStep { get; private set; }
+    public RollbackResimulationRequest PendingResimulationRequest { get; private set; } =
+        RollbackResimulationRequest.Invalid();
 
     private void Awake()
     {
@@ -24,6 +26,7 @@ public class RollbackCoordinator : MonoBehaviour
     public void BeginStep()
     {
         DidRollbackThisStep = false;
+        PendingResimulationRequest = RollbackResimulationRequest.Invalid();
     }
 
     public void SaveSnapshotForFrame(int frame)
@@ -68,14 +71,34 @@ public class RollbackCoordinator : MonoBehaviour
             return;
         }
 
+        int resumeFrameExclusive = frameClock != null ? frameClock.CurrentFrame : pendingRequest.TargetFrame + 1;
+
         player1StateTester.RestoreState(snapshot.P1PosX, snapshot.P1Facing, snapshot.P1StateId);
         player2StateTester.RestoreState(snapshot.P2PosX, snapshot.P2Facing, snapshot.P2StateId);
 
         DidRollbackThisStep = true;
+        PendingResimulationRequest = new RollbackResimulationRequest(
+            pendingRequest.TargetFrame,
+            resumeFrameExclusive
+        );
 
         FileLogger.WriteLine($"[RollbackCoordinator] Restored snapshot {snapshot}");
+        FileLogger.WriteLine($"[RollbackCoordinator] Created resimulation request {PendingResimulationRequest}");
 
         pendingRequest = RollbackRequest.Invalid();
+    }
+
+    public bool TryConsumeResimulationRequest(out RollbackResimulationRequest request)
+    {
+        if (!PendingResimulationRequest.IsValid)
+        {
+            request = RollbackResimulationRequest.Invalid();
+            return false;
+        }
+
+        request = PendingResimulationRequest;
+        PendingResimulationRequest = RollbackResimulationRequest.Invalid();
+        return true;
     }
 
     public bool TryGetSnapshot(int frame, out BattleStateSnapshot snapshot)
@@ -93,6 +116,7 @@ public class RollbackCoordinator : MonoBehaviour
     {
         snapshotRingBuffer?.Clear();
         pendingRequest = RollbackRequest.Invalid();
+        PendingResimulationRequest = RollbackResimulationRequest.Invalid();
         DidRollbackThisStep = false;
     }
 }
