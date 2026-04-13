@@ -14,9 +14,16 @@ public class RollbackCoordinator : MonoBehaviour
     private SnapshotRingBuffer snapshotRingBuffer;
     private RollbackRequest pendingRequest = RollbackRequest.Invalid();
 
+    public bool DidRollbackThisStep { get; private set; }
+
     private void Awake()
     {
         snapshotRingBuffer = new SnapshotRingBuffer(snapshotCapacity);
+    }
+
+    public void BeginStep()
+    {
+        DidRollbackThisStep = false;
     }
 
     public void SaveSnapshotForFrame(int frame)
@@ -64,6 +71,8 @@ public class RollbackCoordinator : MonoBehaviour
         player1StateTester.RestoreState(snapshot.P1PosX, snapshot.P1Facing, snapshot.P1StateId);
         player2StateTester.RestoreState(snapshot.P2PosX, snapshot.P2Facing, snapshot.P2StateId);
 
+        DidRollbackThisStep = true;
+
         FileLogger.WriteLine($"[RollbackCoordinator] Restored snapshot {snapshot}");
 
         pendingRequest = RollbackRequest.Invalid();
@@ -84,5 +93,6 @@ public class RollbackCoordinator : MonoBehaviour
     {
         snapshotRingBuffer?.Clear();
         pendingRequest = RollbackRequest.Invalid();
+        DidRollbackThisStep = false;
     }
 }

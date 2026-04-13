@@ -645,7 +645,7 @@ MonoBehaviour:
   predictionMismatchDetector: {fileID: 910968105}
   testDurationSeconds: 5
   autoStartWhenRunning: 1
-  autoQuitPlayModeInEditor: 1
+  autoQuitPlayModeInEditor: 0
 --- !u!4 &1306210846
 Transform:
   m_ObjectHideFlags: 0

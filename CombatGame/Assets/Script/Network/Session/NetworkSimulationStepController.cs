@@ -26,44 +26,58 @@ public class NetworkSimulationStepController : MonoBehaviour
 
         int currentFrame = frameClock.CurrentFrame;
 
+        if (rollbackCoordinator != null)
+        {
+            rollbackCoordinator.BeginStep();
+        }
+
         // 1. 遅延入力を解放
         if (inputReceiver != null)
         {
             inputReceiver.ProcessDelayedInputsForCurrentStep();
         }
 
-        // 2. miss があれば自動 rollback request を出す
+        // 2. miss があれば自動 rollback request
         if (autoRollbackTrigger != null)
         {
             autoRollbackTrigger.ProcessAutoRollback();
         }
 
-        // 3. rollback request があれば復元
+        // 3. rollback 実行
         if (rollbackCoordinator != null)
         {
             rollbackCoordinator.ProcessRollbackIfNeeded();
         }
 
-        // 4. 現在フレームのローカル入力を送信
+        // 4. 現在フレームのローカル入力送信
         if (inputSender != null)
         {
             inputSender.ProcessSendForFrame(currentFrame);
         }
 
-        // 5. rollback 用の簡易状態を更新して snapshot 保存
+        // 5. rollback した step では simulation を進めない
         if (rollbackDebugTester != null)
         {
-            rollbackDebugTester.ProcessSimulationForFrame(currentFrame);
+            if (rollbackCoordinator == null || !rollbackCoordinator.DidRollbackThisStep)
+            {
+                rollbackDebugTester.ProcessSimulationForFrame(currentFrame);
+            }
+            else
+            {
+                FileLogger.WriteLine(
+                    $"[NetworkSimulationStepController] Skipped simulation for frame={currentFrame} because rollback occurred this step.");
+            }
+
             rollbackDebugTester.ProcessDebugRollbackRequest();
         }
 
-        // 6. ひとつ前の frame を tester が読む
+        // 6. tester
         if (predictedInputTester != null)
         {
             predictedInputTester.ProcessTestReadForFrame(currentFrame - 1);
         }
 
-        // 7. 最後に frame を進める
+        // 7. frame を進める
         frameClock.Tick();
     }
 }
