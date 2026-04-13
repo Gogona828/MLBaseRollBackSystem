@@ -3,7 +3,9 @@ using UnityEngine;
 public class PredictionMismatchDetector : MonoBehaviour
 {
     private PredictionHistoryBuffer historyBuffer = new PredictionHistoryBuffer();
-    private PredictionMissInfo latestMissInfo = PredictionMissInfo.Invalid();
+
+    private PredictionMissInfo earliestPendingMissInfo = PredictionMissInfo.Invalid();
+    private int lastConsumedMissFrame = -1;
 
     public int TotalPredictions { get; private set; }
     public int TotalHits { get; private set; }
@@ -40,27 +42,54 @@ public class PredictionMismatchDetector : MonoBehaviour
         {
             TotalMisses++;
 
-            latestMissInfo = new PredictionMissInfo(
+            PredictionMissInfo missInfo = new PredictionMissInfo(
                 frame,
                 record.PredictedBits,
                 confirmedBits
             );
+
+            RegisterPendingMiss(missInfo);
 
             FileLogger.WriteLine(
                 $"[PredictionMismatchDetector] MISS frame={frame}, predicted={record.PredictedBits}, confirmed={confirmedBits}");
         }
     }
 
-    public bool TryConsumeLatestMiss(out PredictionMissInfo missInfo)
+    private void RegisterPendingMiss(PredictionMissInfo missInfo)
     {
-        if (!latestMissInfo.IsValid)
+        if (!missInfo.IsValid)
+        {
+            return;
+        }
+
+        if (missInfo.Frame <= lastConsumedMissFrame)
+        {
+            return;
+        }
+
+        if (!earliestPendingMissInfo.IsValid)
+        {
+            earliestPendingMissInfo = missInfo;
+            return;
+        }
+
+        if (missInfo.Frame < earliestPendingMissInfo.Frame)
+        {
+            earliestPendingMissInfo = missInfo;
+        }
+    }
+
+    public bool TryConsumeEarliestPendingMiss(out PredictionMissInfo missInfo)
+    {
+        if (!earliestPendingMissInfo.IsValid)
         {
             missInfo = PredictionMissInfo.Invalid();
             return false;
         }
 
-        missInfo = latestMissInfo;
-        latestMissInfo = PredictionMissInfo.Invalid();
+        missInfo = earliestPendingMissInfo;
+        lastConsumedMissFrame = missInfo.Frame;
+        earliestPendingMissInfo = PredictionMissInfo.Invalid();
         return true;
     }
 
@@ -69,8 +98,10 @@ public class PredictionMismatchDetector : MonoBehaviour
         TotalPredictions = 0;
         TotalHits = 0;
         TotalMisses = 0;
+
         historyBuffer.Clear();
-        latestMissInfo = PredictionMissInfo.Invalid();
+        earliestPendingMissInfo = PredictionMissInfo.Invalid();
+        lastConsumedMissFrame = -1;
     }
 
     public string GetSummary()

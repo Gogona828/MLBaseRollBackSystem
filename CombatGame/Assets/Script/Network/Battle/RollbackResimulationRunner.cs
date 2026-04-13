@@ -8,6 +8,10 @@ public class RollbackResimulationRunner : MonoBehaviour
     [SerializeField] private RollbackStateTester player2StateTester;
     [SerializeField] private PredictedInputTester predictedInputTester;
 
+    public int TotalResimulations { get; private set; }
+    public int TotalResimulatedFrames { get; private set; }
+    public int LastResimulationFrameCount { get; private set; }
+
     public void ProcessResimulationIfNeeded()
     {
         if (rollbackCoordinator == null ||
@@ -30,6 +34,8 @@ public class RollbackResimulationRunner : MonoBehaviour
 
         FileLogger.WriteLine($"[RollbackResimulationRunner] Start resimulation {request}");
 
+        int resimulatedFrameCount = 0;
+
         for (int frame = request.TargetFrame; frame < request.ResumeFrameExclusive; frame++)
         {
             byte p1Bits = predictedInputTester.GetP1InputBitsForSimulation(frame);
@@ -40,10 +46,24 @@ public class RollbackResimulationRunner : MonoBehaviour
 
             rollbackCoordinator.SaveSnapshotForFrame(frame);
 
+            resimulatedFrameCount++;
+            TotalResimulatedFrames++;
+
             FileLogger.WriteLine(
                 $"[RollbackResimulationRunner] Resimulated frame={frame}, p1Bits={p1Bits}, p2Bits={p2Bits}");
         }
 
-        FileLogger.WriteLine($"[RollbackResimulationRunner] Finished resimulation {request}");
+        LastResimulationFrameCount = resimulatedFrameCount;
+        TotalResimulations++;
+
+        FileLogger.WriteLine(
+            $"[RollbackResimulationRunner] Finished resimulation {request}, resimulatedFrameCount={resimulatedFrameCount}");
+    }
+
+    public void ResetRunner()
+    {
+        TotalResimulations = 0;
+        TotalResimulatedFrames = 0;
+        LastResimulationFrameCount = 0;
     }
 }

@@ -692,6 +692,8 @@ MonoBehaviour:
   sessionManager: {fileID: 1319977}
   networkInputReceiver: {fileID: 530243500}
   predictionMismatchDetector: {fileID: 910968105}
+  autoRollbackTrigger: {fileID: 1830830588}
+  rollbackResimulationRunner: {fileID: 766074475}
   testDurationSeconds: 8
   autoStartWhenRunning: 1
   autoQuitPlayModeInEditor: 0
@@ -1086,8 +1088,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   predictionMismatchDetector: {fileID: 910968105}
   rollbackCoordinator: {fileID: 209991332}
+  frameClock: {fileID: 1764990854}
   enableAutoRollback: 1
   rollbackSafetyOffsetFrames: 0
+  rollbackCooldownFrames: 6
 --- !u!4 &1830830589
 Transform:
   m_ObjectHideFlags: 0
