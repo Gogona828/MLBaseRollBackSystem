@@ -316,7 +316,7 @@ namespace Footsies
                 return lastRoundP1Input[currentReplayingInputIndex];
             }
 
-            var time = Time.fixedTime - roundStartTime;
+            float time = GetDeterministicInputTime();
 
             FootsiesInputFrame frameInput = battleInputRouter != null
                 ? battleInputRouter.GetPlayer1Input()
@@ -339,7 +339,7 @@ namespace Footsies
                 return lastRoundP2Input[currentReplayingInputIndex];
             }
 
-            var time = Time.fixedTime - roundStartTime;
+            float time = GetDeterministicInputTime();
 
             InputData p2Input = new InputData();
 
@@ -568,6 +568,11 @@ namespace Footsies
                 roundState = _roundState,
                 fighter1RoundWon = fighter1RoundWon,
                 fighter2RoundWon = fighter2RoundWon,
+                currentRecordingInputIndex = currentRecordingInputIndex,
+                currentReplayingInputIndex = currentReplayingInputIndex,
+                lastRoundMaxRecordingInput = lastRoundMaxRecordingInput,
+                isReplayingLastRoundInput = isReplayingLastRoundInput,
+                isDebugPause = isDebugPause,
                 fighter1 = fighter1 != null ? fighter1.CaptureSnapshot() : null,
                 fighter2 = fighter2 != null ? fighter2.CaptureSnapshot() : null
             };
@@ -588,6 +593,12 @@ namespace Footsies
             fighter1RoundWon = snapshot.fighter1RoundWon;
             fighter2RoundWon = snapshot.fighter2RoundWon;
 
+            currentRecordingInputIndex = snapshot.currentRecordingInputIndex;
+            currentReplayingInputIndex = snapshot.currentReplayingInputIndex;
+            lastRoundMaxRecordingInput = snapshot.lastRoundMaxRecordingInput;
+            isReplayingLastRoundInput = snapshot.isReplayingLastRoundInput;
+            isDebugPause = snapshot.isDebugPause;
+
             if (fighter1 != null && snapshot.fighter1 != null)
             {
                 fighter1.RestoreSnapshot(snapshot.fighter1);
@@ -602,6 +613,21 @@ namespace Footsies
 
             UpdatePushCharacterVsCharacter();
             UpdatePushCharacterVsBackground();
+        }
+        
+        private float GetDeterministicInputTime()
+        {
+            if (_roundState != RoundStateType.Fight)
+            {
+                return 0f;
+            }
+
+            if (frameCount < 0)
+            {
+                return 0f;
+            }
+
+            return frameCount * Time.fixedDeltaTime;
         }
     }
 }

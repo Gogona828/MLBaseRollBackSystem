@@ -40,10 +40,18 @@ namespace Footsies
             }
 
             FootsiesBattleSnapshot snapshot = battleStateBridge.CaptureSnapshot();
+            if (snapshot == null)
+            {
+                FileLogger.WriteLine(
+                    $"[FootsiesBattleRollbackCoordinator] SaveSnapshot skipped because captured snapshot is null. frame={frameClock.CurrentFrame}");
+                return;
+            }
+
             snapshotRingBuffer.Store(frameClock.CurrentFrame, snapshot);
 
             FileLogger.WriteLine(
-                $"[FootsiesBattleRollbackCoordinator] Saved snapshot frame={frameClock.CurrentFrame}");
+                $"[FootsiesBattleRollbackCoordinator] Saved snapshot frame={frameClock.CurrentFrame}, " +
+                $"{FootsiesBattleSnapshotDebugFormatter.BuildSummary(snapshot)}");
         }
 
         public void RequestRollback(int targetFrame)
@@ -85,7 +93,8 @@ namespace Footsies
             LastRollbackRestoreToFrame = currentFrame;
 
             FileLogger.WriteLine(
-                $"[FootsiesBattleRollbackCoordinator] Restored snapshot frame={pendingRollbackFrame}");
+                $"[FootsiesBattleRollbackCoordinator] Restored snapshot frame={pendingRollbackFrame}, " +
+                $"{FootsiesBattleSnapshotDebugFormatter.BuildSummary(snapshot)}");
 
             pendingRollbackFrame = -1;
         }
