@@ -1019,7 +1019,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   battleCore: {fileID: 1856329101}
   p1:
-    root: {fileID: 224105486919568959}
+    root: {fileID: 1161087942}
     image: {fileID: 114247125778860937}
     followX: 1
     followY: 0
@@ -1040,7 +1040,7 @@ MonoBehaviour:
     lastSprite: {fileID: 0}
     lastFaceRight: 0
   p2:
-    root: {fileID: 224646878411892339}
+    root: {fileID: 1759473874}
     image: {fileID: 114789658773448839}
     followX: 1
     followY: 0

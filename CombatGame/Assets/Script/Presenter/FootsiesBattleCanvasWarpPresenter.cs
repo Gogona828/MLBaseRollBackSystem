@@ -25,18 +25,17 @@ namespace Footsies
             [Header("Shake")]
             public float shakeScale = 1f;
 
-            [Header("Facing")]
-            public bool flipImageByLocalScale = true;
-
             [Header("Origin")]
             public bool useCurrentRootAsOrigin = true;
             public Vector2 manualRootOrigin = Vector2.zero;
 
             [HideInInspector] public Vector2 baseRootAnchoredPosition;
             [HideInInspector] public Vector2 baseImageAnchoredPosition;
+            [HideInInspector] public Vector3 baseImageLocalEulerAngles;
             [HideInInspector] public bool initialized;
+            [HideInInspector] public bool initialGameFaceRight;
             [HideInInspector] public Sprite lastSprite;
-            [HideInInspector] public bool lastFaceRight = true;
+            [HideInInspector] public bool lastFaceRight;
         }
 
         [Header("Core")]
@@ -50,8 +49,8 @@ namespace Footsies
 
         private void Awake()
         {
-            InitializeBinding(p1);
-            InitializeBinding(p2);
+            InitializeBinding(p1, true);
+            InitializeBinding(p2, false);
         }
 
         private void LateUpdate()
@@ -65,7 +64,7 @@ namespace Footsies
             UpdateBinding(battleCore.fighter2, p2);
         }
 
-        private void InitializeBinding(FighterCanvasBinding binding)
+        private void InitializeBinding(FighterCanvasBinding binding, bool initialGameFaceRight)
         {
             if (binding == null || binding.root == null)
             {
@@ -79,12 +78,16 @@ namespace Footsies
             if (binding.imageRect != null)
             {
                 binding.baseImageAnchoredPosition = binding.imageRect.anchoredPosition;
+                binding.baseImageLocalEulerAngles = binding.imageRect.localEulerAngles;
             }
             else
             {
                 binding.baseImageAnchoredPosition = Vector2.zero;
+                binding.baseImageLocalEulerAngles = Vector3.zero;
             }
 
+            binding.initialGameFaceRight = initialGameFaceRight;
+            binding.lastFaceRight = initialGameFaceRight;
             binding.initialized = true;
         }
 
@@ -97,7 +100,7 @@ namespace Footsies
 
             if (!binding.initialized)
             {
-                InitializeBinding(binding);
+                return;
             }
 
             Vector2 rootTarget = BuildRootTarget(fighter, binding);
@@ -120,25 +123,7 @@ namespace Footsies
                 }
             }
 
-            if (binding.flipImageByLocalScale)
-            {
-                RectTransform flipTarget = binding.imageRect != null ? binding.imageRect : binding.root;
-                bool faceRight = fighter.isFaceRight;
-
-                if (faceRight != binding.lastFaceRight)
-                {
-                    Vector3 scale = flipTarget.localScale;
-                    float absX = Mathf.Abs(scale.x);
-                    if (absX <= 0.0001f)
-                    {
-                        absX = 1f;
-                    }
-
-                    scale.x = faceRight ? absX : -absX;
-                    flipTarget.localScale = scale;
-                    binding.lastFaceRight = faceRight;
-                }
-            }
+            UpdateFacingByYRotation(fighter, binding);
         }
 
         private Vector2 BuildRootTarget(Fighter fighter, FighterCanvasBinding binding)
@@ -166,14 +151,59 @@ namespace Footsies
             return target;
         }
 
+        private void UpdateFacingByYRotation(Fighter fighter, FighterCanvasBinding binding)
+        {
+            RectTransform targetRect = binding.imageRect != null ? binding.imageRect : binding.root;
+            if (targetRect == null)
+            {
+                return;
+            }
+
+            bool currentFaceRight = fighter.isFaceRight;
+            if (currentFaceRight == binding.lastFaceRight)
+            {
+                return;
+            }
+
+            Vector3 euler = binding.baseImageLocalEulerAngles;
+
+            // 初期のゲーム向きと同じなら初期回転を使う
+            // 逆向きなら Y を 180 足す
+            if (currentFaceRight != binding.initialGameFaceRight)
+            {
+                euler.y += 180f;
+            }
+
+            targetRect.localEulerAngles = NormalizeEuler(euler);
+            binding.lastFaceRight = currentFaceRight;
+        }
+
+        private Vector3 NormalizeEuler(Vector3 euler)
+        {
+            euler.x = NormalizeAngle(euler.x);
+            euler.y = NormalizeAngle(euler.y);
+            euler.z = NormalizeAngle(euler.z);
+            return euler;
+        }
+
+        private float NormalizeAngle(float angle)
+        {
+            angle %= 360f;
+            if (angle < 0f)
+            {
+                angle += 360f;
+            }
+            return angle;
+        }
+
         [ContextMenu("Reinitialize Root Origins From Current UI")]
         public void ReinitializeRootOriginsFromCurrentUI()
         {
-            ReinitOne(p1);
-            ReinitOne(p2);
+            ReinitOne(p1, true);
+            ReinitOne(p2, false);
         }
 
-        private void ReinitOne(FighterCanvasBinding binding)
+        private void ReinitOne(FighterCanvasBinding binding, bool initialGameFaceRight)
         {
             if (binding == null || binding.root == null)
             {
@@ -185,8 +215,11 @@ namespace Footsies
             if (binding.imageRect != null)
             {
                 binding.baseImageAnchoredPosition = binding.imageRect.anchoredPosition;
+                binding.baseImageLocalEulerAngles = binding.imageRect.localEulerAngles;
             }
 
+            binding.initialGameFaceRight = initialGameFaceRight;
+            binding.lastFaceRight = initialGameFaceRight;
             binding.initialized = true;
         }
     }
