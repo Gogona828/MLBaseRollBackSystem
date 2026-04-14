@@ -550,6 +550,51 @@ namespace Footsies
             else
                 return p1FrameLeft - p2FrameLeft;
         }
-    }
+        
+        public FootsiesBattleSnapshot CaptureSnapshot()
+        {
+            return new FootsiesBattleSnapshot
+            {
+                frameCount = frameCount,
+                roundStartTime = roundStartTime,
+                timer = timer,
+                roundState = _roundState,
+                fighter1RoundWon = fighter1RoundWon,
+                fighter2RoundWon = fighter2RoundWon,
+                fighter1 = fighter1 != null ? fighter1.CaptureSnapshot() : null,
+                fighter2 = fighter2 != null ? fighter2.CaptureSnapshot() : null
+            };
+        }
 
+        public void RestoreSnapshot(FootsiesBattleSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            frameCount = snapshot.frameCount;
+            roundStartTime = snapshot.roundStartTime;
+            timer = snapshot.timer;
+            _roundState = snapshot.roundState;
+
+            fighter1RoundWon = snapshot.fighter1RoundWon;
+            fighter2RoundWon = snapshot.fighter2RoundWon;
+
+            if (fighter1 != null && snapshot.fighter1 != null)
+            {
+                fighter1.RestoreSnapshot(snapshot.fighter1);
+            }
+
+            if (fighter2 != null && snapshot.fighter2 != null)
+            {
+                fighter2.RestoreSnapshot(snapshot.fighter2);
+            }
+
+            _fighters.ForEach((f) => f.UpdateBoxes());
+
+            UpdatePushCharacterVsCharacter();
+            UpdatePushCharacterVsBackground();
+        }
+    }
 }

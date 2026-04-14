@@ -528,6 +528,77 @@ namespace Footsies
             }
         }
         
+        public FootsiesFighterSnapshot CaptureSnapshot()
+        {
+            return new FootsiesFighterSnapshot
+            {
+                position = position,
+                velocityX = velocity_x,
+                isFaceRight = isFaceRight,
+                vitalHealth = vitalHealth,
+                guardHealth = guardHealth,
+                currentActionID = currentActionID,
+                currentActionFrame = currentActionFrame,
+                currentActionHitCount = currentActionHitCount,
+                currentHitStunFrame = currentHitStunFrame,
+                isInputBackward = isInputBackward,
+                isReserveProximityGuard = isReserveProximityGuard,
+                bufferActionID = bufferActionID,
+                reserveDamageActionID = reserveDamageActionID,
+                spriteShakePosition = spriteShakePosition,
+                hasWon = hasWon,
+                input = (int[])input.Clone(),
+                inputDown = (int[])inputDown.Clone(),
+                inputUp = (int[])inputUp.Clone()
+            };
+        }
+
+        public void RestoreSnapshot(FootsiesFighterSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            position = snapshot.position;
+            velocity_x = snapshot.velocityX;
+            isFaceRight = snapshot.isFaceRight;
+
+            vitalHealth = snapshot.vitalHealth;
+            guardHealth = snapshot.guardHealth;
+
+            currentActionID = snapshot.currentActionID;
+            currentActionFrame = snapshot.currentActionFrame;
+            currentActionHitCount = snapshot.currentActionHitCount;
+            currentHitStunFrame = snapshot.currentHitStunFrame;
+
+            isInputBackward = snapshot.isInputBackward;
+            isReserveProximityGuard = snapshot.isReserveProximityGuard;
+
+            bufferActionID = snapshot.bufferActionID;
+            reserveDamageActionID = snapshot.reserveDamageActionID;
+
+            spriteShakePosition = snapshot.spriteShakePosition;
+            hasWon = snapshot.hasWon;
+
+            if (snapshot.input != null)
+            {
+                input = (int[])snapshot.input.Clone();
+            }
+
+            if (snapshot.inputDown != null)
+            {
+                inputDown = (int[])snapshot.inputDown.Clone();
+            }
+
+            if (snapshot.inputUp != null)
+            {
+                inputUp = (int[])snapshot.inputUp.Clone();
+            }
+
+            UpdateBoxes();
+        }
+        
         private bool canCancelAttack()
         {
             if (fighterData.canCancelOnWhiff)
