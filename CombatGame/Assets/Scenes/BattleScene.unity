@@ -580,6 +580,91 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 199929777}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &814611508
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 814611510}
+  - component: {fileID: 814611509}
+  m_Layer: 0
+  m_Name: BattleSceneRuntimeConfigurator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &814611509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 814611508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84c438f5ac09d0443acaf072d6933443, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  useOverrideMachineNameInEditor: 0
+  overrideMachineName: PCA
+  machineProfiles:
+  - machineName: MSI
+    machineLabel: PCA
+    localPlayerId: 0
+    startDelayFrames: 60
+    remoteIp: 192.168.0.161
+    localPort: 5100
+    remotePort: 5101
+    enableDebugAutoInput: 1
+    leftKey: 97
+    rightKey: 100
+    attackKey: 32
+    useFixedDelayForTest: 1
+    fixedDelayFramesForTest: 2
+  - machineName: mklab03
+    machineLabel: PCB
+    localPlayerId: 1
+    startDelayFrames: 60
+    remoteIp: 192.168.0.121
+    localPort: 5101
+    remotePort: 5100
+    enableDebugAutoInput: 0
+    leftKey: 276
+    rightKey: 275
+    attackKey: 13
+    useFixedDelayForTest: 1
+    fixedDelayFramesForTest: 2
+  transport: {fileID: 1948372533}
+  sessionManager: {fileID: 1948372535}
+  fileLoggerBootstrap: {fileID: 1948372537}
+  inputSender: {fileID: 1948372538}
+  inputReceiver: {fileID: 1948372539}
+  inputRouter: {fileID: 2065654612}
+  footsiesP1NetworkInputSource: {fileID: 192827124}
+  footsiesP2NetworkInputSource: {fileID: 392893572}
+  footsiesP1PredictedRemoteInputSource: {fileID: 867329790}
+  footsiesP2PredictedRemoteInputSource: {fileID: 1483423052}
+  debugAutoInputSequence: {fileID: 1210230555}
+  resetDebugSequenceOnConfigure: 1
+--- !u!4 &814611510
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 814611508}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &823842451
 GameObject:
   m_ObjectHideFlags: 0
@@ -1292,6 +1377,8 @@ MonoBehaviour:
     spikeChance: 0.08
     spikeExtraMin: 3
     spikeExtraMax: 6
+  forceFixedDelayForTest: 0
+  forcedFixedDelayFrames: 2
   predictionMismatchDetector: {fileID: 1272376372}
   inputHistory: {fileID: 886560970}
 --- !u!114 &1948372540
@@ -1418,3 +1505,4 @@ SceneRoots:
   - {fileID: 886560971}
   - {fileID: 445552244}
   - {fileID: 1210230554}
+  - {fileID: 814611510}

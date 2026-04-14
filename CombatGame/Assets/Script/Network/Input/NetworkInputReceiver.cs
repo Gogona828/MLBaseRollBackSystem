@@ -8,6 +8,10 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     [SerializeField] private int fixedInputDelayFrames = 2;
     [SerializeField] private VariableInputDelayProfile variableDelayProfile = new VariableInputDelayProfile();
 
+    [Header("Temporary Test Override")]
+    [SerializeField] private bool forceFixedDelayForTest = false;
+    [SerializeField] private int forcedFixedDelayFrames = 2;
+
     [Header("Prediction")]
     [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
 
@@ -19,12 +23,28 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     public RemoteInputBuffer Buffer => remoteInputBuffer;
     public int FixedInputDelayFrames => fixedInputDelayFrames;
-    
+
     [SerializeField] private Footsies.FootsiesBattleInputHistory inputHistory;
 
     private void Awake()
     {
         delaySimulator = new InputDelaySimulator();
+    }
+
+    public void UseFixedDelayForTest(int delayFrames)
+    {
+        forceFixedDelayForTest = true;
+        forcedFixedDelayFrames = Mathf.Max(0, delayFrames);
+
+        FileLogger.WriteLine(
+            $"[NetworkInputReceiver] UseFixedDelayForTest delayFrames={forcedFixedDelayFrames}");
+    }
+
+    public void UseSceneConfiguredDelayMode()
+    {
+        forceFixedDelayForTest = false;
+
+        FileLogger.WriteLine("[NetworkInputReceiver] UseSceneConfiguredDelayMode");
     }
 
     public void ProcessDelayedInputsForCurrentStep()
@@ -40,7 +60,7 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         {
             InputPacket packet = releasedPackets[i];
             remoteInputBuffer.Store(packet);
-            
+
             if (inputHistory != null)
             {
                 inputHistory.StoreInput(packet.playerId, packet.frame, packet.inputBits);
@@ -79,6 +99,21 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
             delaySimulator = new InputDelaySimulator();
         }
 
+        int delayFrames = ResolveDelayFrames();
+
+        delaySimulator.Enqueue(inputPacket, delayFrames);
+
+        FileLogger.WriteLine(
+            $"[NetworkInputReceiver] Enqueued delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}, delay={delayFrames}");
+    }
+
+    private int ResolveDelayFrames()
+    {
+        if (forceFixedDelayForTest)
+        {
+            return Mathf.Max(0, forcedFixedDelayFrames);
+        }
+
         int delayFrames = fixedInputDelayFrames;
 
         if (useVariableDelay && variableDelayProfile != null)
@@ -86,10 +121,7 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
             delayFrames = variableDelayProfile.SampleDelayFrames();
         }
 
-        delaySimulator.Enqueue(inputPacket, delayFrames);
-
-        FileLogger.WriteLine(
-            $"[NetworkInputReceiver] Enqueued delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}, delay={delayFrames}");
+        return Mathf.Max(0, delayFrames);
     }
 
     public bool TryGetRemoteInput(int frame, out byte inputBits)

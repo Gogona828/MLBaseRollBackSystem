@@ -18,6 +18,17 @@ namespace Footsies
         private byte lastPredictedBits = 0;
         private int lastPredictionFrame = -1;
 
+        public void ConfigureRemotePlayer(int remotePlayerId, bool useLastConfirmedAsPrediction)
+        {
+            this.remotePlayerId = remotePlayerId;
+            this.useLastConfirmedAsPrediction = useLastConfirmedAsPrediction;
+            this.lastPredictedBits = 0;
+            this.lastPredictionFrame = -1;
+
+            FileLogger.WriteLine(
+                $"[FootsiesPredictedRemoteInputSource] ConfigureRemotePlayer remotePlayerId={remotePlayerId}, useLastConfirmedAsPrediction={useLastConfirmedAsPrediction}");
+        }
+
         public FootsiesInputFrame GetCurrentInput()
         {
             if (networkInputReceiver == null || frameClock == null)
@@ -54,7 +65,7 @@ namespace Footsies
 
             return FootsiesInputFrame.FromBits(predictedBits);
         }
-        
+
         public FootsiesInputFrame GetInputForFrame(int frame)
         {
             if (networkInputReceiver != null && networkInputReceiver.TryGetRemoteInput(frame, out byte confirmedBits))
@@ -81,7 +92,7 @@ namespace Footsies
 
             return FootsiesInputFrame.FromBits(fallbackBits);
         }
-        
+
         public FootsiesInputFrame GetInput()
         {
             int frame = frameClock != null ? frameClock.CurrentFrame : 0;

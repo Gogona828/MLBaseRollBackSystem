@@ -20,16 +20,47 @@ public class NetworkInputSender : MonoBehaviour
 
     [Header("Local Preview")]
     [SerializeField] private bool updateLocalBitsWithoutSending = true;
-    
+
     [SerializeField] private Footsies.FootsiesBattleInputHistory inputHistory;
 
     private int lastSentFrame = -1;
 
     public byte LastLocalInputBits { get; private set; }
 
+    public void ConfigureRuntime(
+        int playerId,
+        KeyCode leftKey,
+        KeyCode rightKey,
+        KeyCode attackKey,
+        bool useDebugAutoInput)
+    {
+        this.playerId = playerId;
+        this.leftKey = leftKey;
+        this.rightKey = rightKey;
+        this.attackKey = attackKey;
+        this.useDebugAutoInput = useDebugAutoInput;
+
+        ResetSenderState();
+
+        if (debugAutoInputSequence != null)
+        {
+            debugAutoInputSequence.ResetSequence();
+        }
+
+        FileLogger.WriteLine(
+            $"[NetworkInputSender] ConfigureRuntime playerId={playerId}, leftKey={leftKey}, rightKey={rightKey}, attackKey={attackKey}, useDebugAutoInput={useDebugAutoInput}");
+    }
+
     private void Update()
     {
         if (!updateLocalBitsWithoutSending)
+        {
+            return;
+        }
+
+        // 自動入力シーケンスは ProcessSendForFrame() 内だけで進める。
+        // ここで進めると render frame 数に依存してしまう。
+        if (useDebugAutoInput)
         {
             return;
         }
@@ -51,7 +82,7 @@ public class NetworkInputSender : MonoBehaviour
 
         byte inputBits = ReadCurrentLocalInputBits();
         LastLocalInputBits = inputBits;
-        
+
         if (inputHistory != null)
         {
             inputHistory.StoreInput(playerId, frame, inputBits);
