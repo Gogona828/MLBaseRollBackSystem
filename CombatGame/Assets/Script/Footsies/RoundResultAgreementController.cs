@@ -160,7 +160,7 @@ namespace Footsies
                 if (wasInRoundFenceState)
                 {
                     ClearAgreementState();
-                    battleCore.ExternalRoundAdvanceBlocked = false;
+                    // battleCore.ExternalRoundAdvanceBlocked = false;
                 }
 
                 wasInRoundFenceState = false;
@@ -174,7 +174,7 @@ namespace Footsies
                 BeginAgreement();
             }
 
-            battleCore.ExternalRoundAdvanceBlocked = true;
+            // battleCore.ExternalRoundAdvanceBlocked = true;
 
             if (Time.unscaledTime - lastSendTime >= resendIntervalSeconds)
             {
@@ -191,7 +191,7 @@ namespace Footsies
                             $"[RoundResultAgreementController] Agreement OK local={localSignature} remote={remoteSignature}");
                     }
 
-                    battleCore.ExternalRoundAdvanceBlocked = false;
+                    // battleCore.ExternalRoundAdvanceBlocked = false;
                     waitingAgreement = false;
                     return;
                 }
@@ -209,7 +209,7 @@ namespace Footsies
                 rollbackCoordinator?.RequestRollback(rollbackTarget);
 
                 ClearAgreementState();
-                battleCore.ExternalRoundAdvanceBlocked = false;
+                // battleCore.ExternalRoundAdvanceBlocked = false;
             }
         }
 
