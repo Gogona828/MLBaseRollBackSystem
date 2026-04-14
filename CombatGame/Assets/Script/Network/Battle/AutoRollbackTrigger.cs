@@ -6,6 +6,7 @@ public class AutoRollbackTrigger : MonoBehaviour
     [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
     [SerializeField] private RollbackCoordinator rollbackCoordinator;
     [SerializeField] private NetworkFrameClock frameClock;
+    [SerializeField] private RollbackObservationMonitor rollbackObservationMonitor;
 
     [Header("Settings")]
     [SerializeField] private bool enableAutoRollback = true;
@@ -41,6 +42,17 @@ public class AutoRollbackTrigger : MonoBehaviour
         }
 
         int currentFrame = frameClock.CurrentFrame;
+
+        if (rollbackObservationMonitor != null)
+        {
+            rollbackObservationMonitor.ObserveGhostHitCandidate(
+                missInfo.Frame,
+                missInfo.PredictedBits,
+                missInfo.ConfirmedBits,
+                currentFrame
+            );
+        }
+
         int framesSinceLastRollback = currentFrame - lastRollbackExecutedAtFrame;
 
         if (framesSinceLastRollback < rollbackCooldownFrames)

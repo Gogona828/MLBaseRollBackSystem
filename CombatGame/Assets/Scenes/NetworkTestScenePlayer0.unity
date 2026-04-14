@@ -1047,9 +1047,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   machineLabel: PCA
   playerId: 0
-  remoteIp: 
-  localPort: -1
-  remotePort: -1
+  remoteIp: 192.168.0.161
+  localPort: 5100
+  remotePort: 5101
 --- !u!4 &1686263274
 Transform:
   m_ObjectHideFlags: 0
@@ -1141,6 +1141,7 @@ MonoBehaviour:
   predictionMismatchDetector: {fileID: 910968105}
   rollbackCoordinator: {fileID: 209991332}
   frameClock: {fileID: 1764990854}
+  rollbackObservationMonitor: {fileID: 1295603683}
   enableAutoRollback: 1
   rollbackSafetyOffsetFrames: 0
   rollbackCooldownFrames: 6

@@ -14,6 +14,7 @@ public class RollbackObservationMonitor : MonoBehaviour
 
     public int TotalWarpDetections { get; private set; }
     public int TotalGhostHitCandidates { get; private set; }
+    public int TotalGhostHitChecks { get; private set; }
 
     private float lastPredictedObservedRemotePosX = 0f;
     private int lastMissFrame = -1;
@@ -66,6 +67,8 @@ public class RollbackObservationMonitor : MonoBehaviour
 
     public void ObserveGhostHitCandidate(int frame, byte predictedBits, byte confirmedBits, int rollbackFrame)
     {
+        TotalGhostHitChecks++;
+
         bool predictedAttack = (predictedBits & 4) != 0;
         bool confirmedAttack = (confirmedBits & 4) != 0;
 
@@ -119,6 +122,7 @@ public class RollbackObservationMonitor : MonoBehaviour
     {
         TotalWarpDetections = 0;
         TotalGhostHitCandidates = 0;
+        TotalGhostHitChecks = 0;
         lastPredictedObservedRemotePosX = 0f;
         lastMissFrame = -1;
 
