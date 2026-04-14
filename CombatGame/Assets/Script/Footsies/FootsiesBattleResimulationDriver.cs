@@ -30,10 +30,13 @@ namespace Footsies
                 return;
             }
 
+            // 重要:
+            // snapshot は「その frame 開始時点の状態」として保存されている前提なので、
+            // rollback target frame 自体を再計算しないと、訂正された入力が反映されない。
             FileLogger.WriteLine(
-                $"[FootsiesBattleResimulationDriver] Begin resim from={fromFrame + 1} to={toFrame}");
+                $"[FootsiesBattleResimulationDriver] Begin resim from={fromFrame} to={toFrame}");
 
-            for (int frame = fromFrame + 1; frame <= toFrame; frame++)
+            for (int frame = fromFrame; frame <= toFrame; frame++)
             {
                 byte p1Bits = ResolveBitsForPlayer(0, frame);
                 byte p2Bits = ResolveBitsForPlayer(1, frame);
@@ -49,7 +52,7 @@ namespace Footsies
             inputRouter.ClearOverrideInputs();
 
             FileLogger.WriteLine(
-                $"[FootsiesBattleResimulationDriver] End resim from={fromFrame + 1} to={toFrame}");
+                $"[FootsiesBattleResimulationDriver] End resim from={fromFrame} to={toFrame}");
         }
 
         private byte ResolveBitsForPlayer(int playerId, int frame)
