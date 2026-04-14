@@ -2,109 +2,102 @@ using UnityEngine;
 
 public class DebugAutoInputSequence : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private NetworkSessionManager sessionManager;
-    [SerializeField] private NetworkFrameClock frameClock;
-
-    [Header("Enable")]
-    [SerializeField] private bool enableAutoSequence = true;
-
-    [Header("Sequence Frames")]
-    [SerializeField] private int startFrame = 20;
-    [SerializeField] private int leftStartFrame = 25;
-    [SerializeField] private int leftEndFrame = 32;
-    [SerializeField] private int neutralStartFrame = 33;
-    [SerializeField] private int neutralEndFrame = 36;
-    [SerializeField] private int attackStartFrame = 37;
-    [SerializeField] private int attackEndFrame = 40;
-    [SerializeField] private int rightStartFrame = 41;
-    [SerializeField] private int rightEndFrame = 48;
-    [SerializeField] private int bothStartFrame = 49;
-    [SerializeField] private int bothEndFrame = 54;
-
-    [Header("Loop")]
-    [SerializeField] private bool loopSequence = true;
-    [SerializeField] private int loopLengthFrames = 70;
-
-    public bool Left { get; private set; }
-    public bool Right { get; private set; }
-    public bool Attack { get; private set; }
-
-    private void Update()
+    [System.Serializable]
+    public class SequenceStep
     {
-        if (!enableAutoSequence)
-        {
-            Left = false;
-            Right = false;
-            Attack = false;
-            return;
-        }
+        public int durationFrames = 10;
+        public bool left = false;
+        public bool right = false;
+        public bool attack = false;
+    }
 
-        if (sessionManager == null || frameClock == null)
-        {
-            Left = false;
-            Right = false;
-            Attack = false;
-            return;
-        }
+    [Header("Sequence")]
+    [SerializeField] private SequenceStep[] steps = new SequenceStep[]
+    {
+        new SequenceStep { durationFrames = 8, left = false, right = false, attack = false },
+        new SequenceStep { durationFrames = 2, left = false, right = true,  attack = false },
+        new SequenceStep { durationFrames = 2, left = false, right = false, attack = false },
+        new SequenceStep { durationFrames = 2, left = false, right = false, attack = true  },
+        new SequenceStep { durationFrames = 3, left = false, right = false, attack = false },
+        new SequenceStep { durationFrames = 2, left = true,  right = false, attack = false },
+        new SequenceStep { durationFrames = 2, left = false, right = false, attack = false },
+        new SequenceStep { durationFrames = 2, left = false, right = true,  attack = true  },
+        new SequenceStep { durationFrames = 4, left = false, right = false, attack = false },
+    };
 
-        if (!sessionManager.Running)
-        {
-            Left = false;
-            Right = false;
-            Attack = false;
-            return;
-        }
+    [Header("Playback")]
+    [SerializeField] private bool playOnStart = true;
+    [SerializeField] private bool loop = true;
 
-        int frame = frameClock.CurrentFrame;
+    private int currentStepIndex = 0;
+    private int currentStepFrame = 0;
+    private bool isPlaying = false;
 
-        if (loopSequence && loopLengthFrames > 0)
-        {
-            frame %= loopLengthFrames;
-        }
-
-        Left = false;
-        Right = false;
-        Attack = false;
-
-        if (frame < startFrame)
-        {
-            return;
-        }
-
-        if (frame >= leftStartFrame && frame <= leftEndFrame)
-        {
-            Left = true;
-            return;
-        }
-
-        if (frame >= neutralStartFrame && frame <= neutralEndFrame)
-        {
-            return;
-        }
-
-        if (frame >= attackStartFrame && frame <= attackEndFrame)
-        {
-            Attack = true;
-            return;
-        }
-
-        if (frame >= rightStartFrame && frame <= rightEndFrame)
-        {
-            Right = true;
-            return;
-        }
-
-        if (frame >= bothStartFrame && frame <= bothEndFrame)
-        {
-            Left = true;
-            Attack = true;
-            return;
-        }
+    private void Start()
+    {
+        isPlaying = playOnStart;
+        currentStepIndex = 0;
+        currentStepFrame = 0;
     }
 
     public byte GetBits()
     {
-        return InputEncoder.ToBits(Left, Right, Attack);
+        if (!isPlaying || steps == null || steps.Length == 0)
+        {
+            return 0;
+        }
+
+        SequenceStep step = steps[currentStepIndex];
+        byte bits = InputEncoder.ToBits(step.left, step.right, step.attack);
+
+        AdvanceFrame();
+
+        return bits;
+    }
+
+    private void AdvanceFrame()
+    {
+        if (steps == null || steps.Length == 0)
+        {
+            return;
+        }
+
+        currentStepFrame++;
+
+        SequenceStep step = steps[currentStepIndex];
+        int duration = Mathf.Max(1, step.durationFrames);
+
+        if (currentStepFrame < duration)
+        {
+            return;
+        }
+
+        currentStepFrame = 0;
+        currentStepIndex++;
+
+        if (currentStepIndex >= steps.Length)
+        {
+            if (loop)
+            {
+                currentStepIndex = 0;
+            }
+            else
+            {
+                currentStepIndex = steps.Length - 1;
+                isPlaying = false;
+            }
+        }
+    }
+
+    public void ResetSequence()
+    {
+        currentStepIndex = 0;
+        currentStepFrame = 0;
+        isPlaying = playOnStart;
+    }
+
+    public void SetPlaying(bool playing)
+    {
+        isPlaying = playing;
     }
 }

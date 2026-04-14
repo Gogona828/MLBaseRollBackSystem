@@ -424,6 +424,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 395cfab4f8a9b054b8650b0d653eacd7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  battleCore: {fileID: 1856329101}
+  inputRouter: {fileID: 2065654612}
+  rollbackCoordinator: {fileID: 587250376}
+  inputHistory: {fileID: 886560970}
 --- !u!4 &445552244
 Transform:
   m_ObjectHideFlags: 0
@@ -714,6 +718,89 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1210230553
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1210230554}
+  - component: {fileID: 1210230555}
+  m_Layer: 0
+  m_Name: DebugAutoInputSequence
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1210230554
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210230553}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1210230555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210230553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd200d9ff43687d40931b0f33351ba70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  steps:
+  - durationFrames: 8
+    left: 0
+    right: 0
+    attack: 0
+  - durationFrames: 2
+    left: 0
+    right: 1
+    attack: 0
+  - durationFrames: 2
+    left: 0
+    right: 0
+    attack: 0
+  - durationFrames: 2
+    left: 0
+    right: 0
+    attack: 1
+  - durationFrames: 3
+    left: 0
+    right: 0
+    attack: 0
+  - durationFrames: 2
+    left: 1
+    right: 0
+    attack: 0
+  - durationFrames: 2
+    left: 0
+    right: 0
+    attack: 0
+  - durationFrames: 2
+    left: 0
+    right: 1
+    attack: 1
+  - durationFrames: 4
+    left: 0
+    right: 0
+    attack: 0
+  playOnStart: 1
+  loop: 1
 --- !u!1 &1250205676
 GameObject:
   m_ObjectHideFlags: 0
@@ -982,11 +1069,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sessionManager: {fileID: 1948372535}
-  frameClock: {fileID: 1948372536}
   inputReceiver: {fileID: 1948372539}
-  predictionMismatchDetector: {fileID: 1272376372}
   autoRollbackTrigger: {fileID: 1347111158}
   battleRollbackCoordinator: {fileID: 587250376}
+  battleResimulationDriver: {fileID: 445552243}
 --- !u!4 &1691120391
 Transform:
   m_ObjectHideFlags: 0
@@ -1177,9 +1263,10 @@ MonoBehaviour:
   attackKey: 32
   transport: {fileID: 1948372533}
   sessionManager: {fileID: 1948372535}
-  debugAutoInputSequence: {fileID: 0}
-  useDebugAutoInput: 0
+  debugAutoInputSequence: {fileID: 1210230555}
+  useDebugAutoInput: 1
   updateLocalBitsWithoutSending: 1
+  inputHistory: {fileID: 886560970}
 --- !u!114 &1948372539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1200,10 +1287,11 @@ MonoBehaviour:
     jitterMin: -1
     jitterMax: 1
     enableSpike: 1
-    spikeChance: 0.05
+    spikeChance: 0.08
     spikeExtraMin: 3
-    spikeExtraMax: 5
+    spikeExtraMax: 6
   predictionMismatchDetector: {fileID: 1272376372}
+  inputHistory: {fileID: 886560970}
 --- !u!114 &1948372540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1343,3 +1431,4 @@ SceneRoots:
   - {fileID: 675947966}
   - {fileID: 886560971}
   - {fileID: 445552244}
+  - {fileID: 1210230554}
