@@ -395,6 +395,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &445552242
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 445552244}
+  - component: {fileID: 445552243}
+  m_Layer: 0
+  m_Name: BattleResimulationDriver
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &445552243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445552242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 395cfab4f8a9b054b8650b0d653eacd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &445552244
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445552242}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &571076817
 GameObject:
   m_ObjectHideFlags: 0
@@ -469,7 +513,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc3f2e46a96e4bf4e8fe4b4cf92ebe04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  battleCore: {fileID: 1856329101}
   battleStateBridge: {fileID: 823842452}
   frameClock: {fileID: 1948372536}
   snapshotCapacity: 300
@@ -627,6 +670,50 @@ MonoBehaviour:
   predictionMismatchDetector: {fileID: 1272376372}
   remotePlayerId: 0
   useLastConfirmedAsPrediction: 1
+--- !u!1 &886560969
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 886560971}
+  - component: {fileID: 886560970}
+  m_Layer: 0
+  m_Name: BattleInputHistory
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &886560970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 886560969}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 226db90a346025447b9f06f73d411706, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &886560971
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 886560969}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1250205676
 GameObject:
   m_ObjectHideFlags: 0
@@ -1105,8 +1192,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5d445009d384024dbc47d1ac618a86a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fixedInputDelayFrames: 100
-  predictionMismatchDetector: {fileID: 0}
+  useVariableDelay: 1
+  fixedInputDelayFrames: 2
+  variableDelayProfile:
+    baseDelayFrames: 2
+    enableJitter: 1
+    jitterMin: -1
+    jitterMax: 1
+    enableSpike: 1
+    spikeChance: 0.05
+    spikeExtraMin: 3
+    spikeExtraMax: 5
+  predictionMismatchDetector: {fileID: 1272376372}
 --- !u!114 &1948372540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1244,3 +1341,5 @@ SceneRoots:
   - {fileID: 1250205678}
   - {fileID: 187519315}
   - {fileID: 675947966}
+  - {fileID: 886560971}
+  - {fileID: 445552244}

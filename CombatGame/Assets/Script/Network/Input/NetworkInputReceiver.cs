@@ -4,7 +4,9 @@ using UnityEngine;
 public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 {
     [Header("Delay Simulation")]
-    [SerializeField] private int fixedInputDelayFrames = 0;
+    [SerializeField] private bool useVariableDelay = true;
+    [SerializeField] private int fixedInputDelayFrames = 2;
+    [SerializeField] private VariableInputDelayProfile variableDelayProfile = new VariableInputDelayProfile();
 
     [Header("Prediction")]
     [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
@@ -17,10 +19,12 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     public RemoteInputBuffer Buffer => remoteInputBuffer;
     public int FixedInputDelayFrames => fixedInputDelayFrames;
+    
+    [SerializeField] private Footsies.FootsiesBattleInputHistory inputHistory;
 
     private void Awake()
     {
-        delaySimulator = new InputDelaySimulator(fixedInputDelayFrames);
+        delaySimulator = new InputDelaySimulator();
     }
 
     public void ProcessDelayedInputsForCurrentStep()
@@ -36,6 +40,11 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         {
             InputPacket packet = releasedPackets[i];
             remoteInputBuffer.Store(packet);
+            
+            if (inputHistory != null)
+            {
+                inputHistory.StoreInput(packet.playerId, packet.frame, packet.inputBits);
+            }
 
             if (packet.playerId == 0)
             {
@@ -67,13 +76,20 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
         if (delaySimulator == null)
         {
-            delaySimulator = new InputDelaySimulator(fixedInputDelayFrames);
+            delaySimulator = new InputDelaySimulator();
         }
 
-        delaySimulator.Enqueue(inputPacket);
+        int delayFrames = fixedInputDelayFrames;
+
+        if (useVariableDelay && variableDelayProfile != null)
+        {
+            delayFrames = variableDelayProfile.SampleDelayFrames();
+        }
+
+        delaySimulator.Enqueue(inputPacket, delayFrames);
 
         FileLogger.WriteLine(
-            $"[NetworkInputReceiver] Enqueued delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}, delay={fixedInputDelayFrames}");
+            $"[NetworkInputReceiver] Enqueued delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}, delay={delayFrames}");
     }
 
     public bool TryGetRemoteInput(int frame, out byte inputBits)

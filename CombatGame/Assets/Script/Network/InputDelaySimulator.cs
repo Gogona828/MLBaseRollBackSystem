@@ -1,55 +1,52 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 public class InputDelaySimulator
 {
-    private readonly List<DelayedInputEntry> delayedEntries = new List<DelayedInputEntry>();
-    private readonly int fixedDelayFrames;
-
-    public InputDelaySimulator(int fixedDelayFrames)
+    private class DelayedPacket
     {
-        this.fixedDelayFrames = Mathf.Max(0, fixedDelayFrames);
+        public InputPacket packet;
+        public int releaseStep;
     }
 
-    public int FixedDelayFrames => fixedDelayFrames;
+    private readonly List<DelayedPacket> pendingPackets = new List<DelayedPacket>();
+    private int currentStep = 0;
 
-    public void Enqueue(InputPacket packet)
+    public void Enqueue(InputPacket packet, int delayFrames)
     {
-        DelayedInputEntry entry = new DelayedInputEntry(packet, fixedDelayFrames);
-        delayedEntries.Add(entry);
+        pendingPackets.Add(new DelayedPacket
+        {
+            packet = packet,
+            releaseStep = currentStep + delayFrames
+        });
     }
 
     public List<InputPacket> TickAndCollectReleasedPackets()
     {
-        List<InputPacket> releasedPackets = new List<InputPacket>();
+        currentStep++;
 
-        for (int i = delayedEntries.Count - 1; i >= 0; i--)
+        List<InputPacket> released = new List<InputPacket>();
+
+        for (int i = pendingPackets.Count - 1; i >= 0; i--)
         {
-            DelayedInputEntry entry = delayedEntries[i];
-            entry.RemainingDelayFrames--;
-
-            if (entry.RemainingDelayFrames <= 0)
+            if (pendingPackets[i].releaseStep <= currentStep)
             {
-                releasedPackets.Add(entry.Packet);
-                delayedEntries.RemoveAt(i);
-            }
-            else
-            {
-                delayedEntries[i] = entry;
+                released.Add(pendingPackets[i].packet);
+                pendingPackets.RemoveAt(i);
             }
         }
 
-        releasedPackets.Reverse();
-        return releasedPackets;
-    }
-
-    public void Clear()
-    {
-        delayedEntries.Clear();
+        released.Sort((a, b) => a.frame.CompareTo(b.frame));
+        return released;
     }
 
     public int GetPendingCount()
     {
-        return delayedEntries.Count;
+        return pendingPackets.Count;
+    }
+
+    public void Clear()
+    {
+        pendingPackets.Clear();
+        currentStep = 0;
     }
 }

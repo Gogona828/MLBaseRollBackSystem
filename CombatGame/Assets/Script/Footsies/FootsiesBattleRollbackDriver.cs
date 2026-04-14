@@ -6,15 +6,14 @@ namespace Footsies
     {
         [Header("References")]
         [SerializeField] private NetworkSessionManager sessionManager;
-        [SerializeField] private NetworkFrameClock frameClock;
         [SerializeField] private NetworkInputReceiver inputReceiver;
-        [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
         [SerializeField] private AutoRollbackTrigger autoRollbackTrigger;
         [SerializeField] private FootsiesBattleRollbackCoordinator battleRollbackCoordinator;
+        [SerializeField] private FootsiesBattleResimulationDriver battleResimulationDriver;
 
         private void FixedUpdate()
         {
-            if (sessionManager == null || frameClock == null || battleRollbackCoordinator == null)
+            if (sessionManager == null || battleRollbackCoordinator == null)
             {
                 return;
             }
@@ -37,6 +36,12 @@ namespace Footsies
             }
 
             battleRollbackCoordinator.ProcessRollbackIfNeeded();
+
+            if (battleResimulationDriver != null)
+            {
+                battleResimulationDriver.ProcessResimulationIfNeeded();
+            }
+
             battleRollbackCoordinator.SaveSnapshotForCurrentFrame();
         }
     }

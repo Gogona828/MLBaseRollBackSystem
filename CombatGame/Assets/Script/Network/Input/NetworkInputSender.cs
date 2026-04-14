@@ -20,6 +20,8 @@ public class NetworkInputSender : MonoBehaviour
 
     [Header("Local Preview")]
     [SerializeField] private bool updateLocalBitsWithoutSending = true;
+    
+    [SerializeField] private Footsies.FootsiesBattleInputHistory inputHistory;
 
     private int lastSentFrame = -1;
 
@@ -49,6 +51,11 @@ public class NetworkInputSender : MonoBehaviour
 
         byte inputBits = ReadCurrentLocalInputBits();
         LastLocalInputBits = inputBits;
+        
+        if (inputHistory != null)
+        {
+            inputHistory.StoreInput(playerId, frame, inputBits);
+        }
 
         if (transport == null || sessionManager == null)
         {

@@ -5,7 +5,6 @@ namespace Footsies
     public class FootsiesBattleRollbackCoordinator : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private BattleCore battleCore;
         [SerializeField] private FootsiesBattleStateBridge battleStateBridge;
         [SerializeField] private NetworkFrameClock frameClock;
 
@@ -16,6 +15,9 @@ namespace Footsies
         private int pendingRollbackFrame = -1;
 
         public bool DidRollbackThisStep { get; private set; }
+        public int LastRollbackFrame { get; private set; } = -1;
+        public int LastRollbackRestoreFromFrame { get; private set; } = -1;
+        public int LastRollbackRestoreToFrame { get; private set; } = -1;
 
         private void Awake()
         {
@@ -25,6 +27,9 @@ namespace Footsies
         public void BeginStep()
         {
             DidRollbackThisStep = false;
+            LastRollbackFrame = -1;
+            LastRollbackRestoreFromFrame = -1;
+            LastRollbackRestoreToFrame = -1;
         }
 
         public void SaveSnapshotForCurrentFrame()
@@ -56,11 +61,13 @@ namespace Footsies
                 return;
             }
 
-            if (battleStateBridge == null)
+            if (battleStateBridge == null || frameClock == null)
             {
                 pendingRollbackFrame = -1;
                 return;
             }
+
+            int currentFrame = frameClock.CurrentFrame;
 
             if (!snapshotRingBuffer.TryGetSnapshot(pendingRollbackFrame, out FootsiesBattleSnapshot snapshot))
             {
@@ -71,7 +78,11 @@ namespace Footsies
             }
 
             battleStateBridge.RestoreSnapshot(snapshot);
+
             DidRollbackThisStep = true;
+            LastRollbackFrame = pendingRollbackFrame;
+            LastRollbackRestoreFromFrame = pendingRollbackFrame;
+            LastRollbackRestoreToFrame = currentFrame;
 
             FileLogger.WriteLine(
                 $"[FootsiesBattleRollbackCoordinator] Restored snapshot frame={pendingRollbackFrame}");
@@ -84,6 +95,9 @@ namespace Footsies
             snapshotRingBuffer?.Clear();
             pendingRollbackFrame = -1;
             DidRollbackThisStep = false;
+            LastRollbackFrame = -1;
+            LastRollbackRestoreFromFrame = -1;
+            LastRollbackRestoreToFrame = -1;
         }
     }
 }

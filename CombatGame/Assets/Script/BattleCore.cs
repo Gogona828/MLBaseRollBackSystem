@@ -33,7 +33,7 @@ namespace Footsies
 
         [SerializeField]
         private List<FighterData> fighterDataList = new List<FighterData>();
-        
+
         [SerializeField]
         private FootsiesBattleInputRouter battleInputRouter;
 
@@ -88,7 +88,6 @@ namespace Footsies
 
         void Awake()
         {
-            // Setup dictionary from ScriptableObject data
             fighterDataList.ForEach((data) => data.setupDictionary());
 
             fighter1 = new Fighter();
@@ -97,21 +96,27 @@ namespace Footsies
             _fighters.Add(fighter1);
             _fighters.Add(fighter2);
 
-            if(roundUI != null)
+            if (roundUI != null)
             {
                 roundUIAnimator = roundUI.GetComponent<Animator>();
             }
         }
-        
+
         void FixedUpdate()
         {
-            switch(_roundState)
+            DoFixedUpdate();
+        }
+
+        public void DoFixedUpdate()
+        {
+            switch (_roundState)
             {
                 case RoundStateType.Stop:
 
                     ChangeRoundState(RoundStateType.Intro);
 
                     break;
+
                 case RoundStateType.Intro:
 
                     UpdateIntroState();
@@ -129,24 +134,26 @@ namespace Footsies
                     }
 
                     break;
+
                 case RoundStateType.Fight:
 
-                    if(CheckUpdateDebugPause())
+                    if (CheckUpdateDebugPause())
                     {
                         break;
                     }
 
                     frameCount++;
-                    
+
                     UpdateFightState();
 
                     var deadFighter = _fighters.Find((f) => f.isDead);
-                    if(deadFighter != null)
+                    if (deadFighter != null)
                     {
                         ChangeRoundState(RoundStateType.KO);
                     }
 
                     break;
+
                 case RoundStateType.KO:
 
                     UpdateKOState();
@@ -157,6 +164,7 @@ namespace Footsies
                     }
 
                     break;
+
                 case RoundStateType.End:
 
                     UpdateEndState();
@@ -178,13 +186,14 @@ namespace Footsies
             {
                 case RoundStateType.Stop:
 
-                    if(fighter1RoundWon >= maxRoundWon
+                    if (fighter1RoundWon >= maxRoundWon
                         || fighter2RoundWon >= maxRoundWon)
                     {
                         GameManager.Instance.LoadTitleScene();
                     }
 
                     break;
+
                 case RoundStateType.Intro:
 
                     fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -198,14 +207,16 @@ namespace Footsies
                         battleAI = new BattleAI(this);
 
                     break;
+
                 case RoundStateType.Fight:
 
                     roundStartTime = Time.fixedTime;
                     frameCount = -1;
 
                     currentRecordingInputIndex = 0;
-                    
+
                     break;
+
                 case RoundStateType.KO:
 
                     timer = koStateTime;
@@ -220,6 +231,7 @@ namespace Footsies
                     roundUIAnimator.SetTrigger("RoundEnd");
 
                     break;
+
                 case RoundStateType.End:
 
                     timer = endStateTime;
@@ -366,7 +378,7 @@ namespace Footsies
 
             return false;
         }
-        
+
         void UpdatePushCharacterVsCharacter()
         {
             var rect1 = fighter1.pushbox.rect;
@@ -407,7 +419,7 @@ namespace Footsies
 
         void UpdateHitboxHurtboxCollision()
         {
-            foreach(var attacker in _fighters)
+            foreach (var attacker in _fighters)
             {
                 Vector2 damagePos = Vector2.zero;
                 bool isHit = false;
@@ -418,11 +430,10 @@ namespace Footsies
                 {
                     if (attacker == damaged)
                         continue;
-                    
+
                     foreach (var hitbox in attacker.hitboxes)
                     {
-                        // continue if attack already hit
-                        if(!attacker.CanAttackHit(hitbox.attackID))
+                        if (!attacker.CanAttackHit(hitbox.attackID))
                         {
                             continue;
                         }
@@ -447,7 +458,6 @@ namespace Footsies
                                     damagePos.y = (y1 + y2) / 2;
                                     break;
                                 }
-                                
                             }
                         }
 
@@ -472,8 +482,6 @@ namespace Footsies
                         damaged.NotifyInProximityGuardRange();
                     }
                 }
-
-
             }
         }
 
@@ -495,13 +503,13 @@ namespace Footsies
 
         void CopyLastRoundInput()
         {
-            for(int i = 0; i < currentRecordingInputIndex; i++)
+            for (int i = 0; i < currentRecordingInputIndex; i++)
             {
                 lastRoundP1Input[i] = recordingP1Input[i].ShallowCopy();
                 lastRoundP2Input[i] = recordingP2Input[i].ShallowCopy();
             }
             lastRoundMaxRecordingInput = currentRecordingInputIndex;
-            
+
             isReplayingLastRoundInput = false;
             currentReplayingInputIndex = 0;
         }
@@ -521,7 +529,6 @@ namespace Footsies
 
             if (isDebugPause)
             {
-                // press f2 during debug pause to 
                 if (Input.GetKeyDown(KeyCode.F2))
                 {
                     return false;
@@ -550,7 +557,7 @@ namespace Footsies
             else
                 return p1FrameLeft - p2FrameLeft;
         }
-        
+
         public FootsiesBattleSnapshot CaptureSnapshot()
         {
             return new FootsiesBattleSnapshot
