@@ -1069,9 +1069,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sessionManager: {fileID: 1948372535}
-  battleRollbackCoordinator: {fileID: 587250376}
+  frameClock: {fileID: 1948372536}
+  inputSender: {fileID: 1948372538}
   inputReceiver: {fileID: 1948372539}
   autoRollbackTrigger: {fileID: 1347111158}
+  battleRollbackCoordinator: {fileID: 587250376}
   battleResimulationDriver: {fileID: 445552243}
 --- !u!4 &1691120391
 Transform:
