@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace Footsies
 {
@@ -20,9 +19,10 @@ namespace Footsies
         public bool isReplayingLastRoundInput;
         public bool isDebugPause;
 
-        // KO 即確定を避けるための pending 状態
+        // 追加: KO 確定前の候補状態
         public bool hasPendingKO;
-        public int pendingKOFighterSlot;
+        public int pendingKOFighterSlot;     // 1 or 2, none = -1
+        public int pendingKOFrame;
         public int pendingKOStableFrames;
 
         public FootsiesFighterSnapshot fighter1;
@@ -45,6 +45,7 @@ namespace Footsies
                 isDebugPause = isDebugPause,
                 hasPendingKO = hasPendingKO,
                 pendingKOFighterSlot = pendingKOFighterSlot,
+                pendingKOFrame = pendingKOFrame,
                 pendingKOStableFrames = pendingKOStableFrames,
                 fighter1 = fighter1 != null ? fighter1.Clone() : null,
                 fighter2 = fighter2 != null ? fighter2.Clone() : null

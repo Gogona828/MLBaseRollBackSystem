@@ -21,6 +21,10 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     private byte lastConfirmedBitsPlayer0 = 0;
     private byte lastConfirmedBitsPlayer1 = 0;
 
+    // 追加:
+    // 「相手入力が 0,1,2... と連続して確定済みである最後のフレーム」
+    private int latestContiguousConfirmedRemoteFrame = -1;
+
     public RemoteInputBuffer Buffer => remoteInputBuffer;
     public int FixedInputDelayFrames => fixedInputDelayFrames;
 
@@ -83,6 +87,8 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
                 predictionMismatchDetector.ConfirmIfPredicted(packet.frame, packet.inputBits);
             }
         }
+
+        UpdateLatestContiguousConfirmedRemoteFrame();
     }
 
     public void HandlePacket(NetworkPacket packet)
@@ -100,7 +106,6 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         }
 
         int delayFrames = ResolveDelayFrames();
-
         delaySimulator.Enqueue(inputPacket, delayFrames);
 
         FileLogger.WriteLine(
@@ -162,6 +167,12 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         return delaySimulator.GetPendingCount();
     }
 
+    // 追加:
+    public int GetLatestContiguousConfirmedRemoteFrame()
+    {
+        return latestContiguousConfirmedRemoteFrame;
+    }
+
     public void ClearBuffer()
     {
         remoteInputBuffer.Clear();
@@ -173,5 +184,17 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
         lastConfirmedBitsPlayer0 = 0;
         lastConfirmedBitsPlayer1 = 0;
+        latestContiguousConfirmedRemoteFrame = -1;
+    }
+
+    private void UpdateLatestContiguousConfirmedRemoteFrame()
+    {
+        int probe = latestContiguousConfirmedRemoteFrame + 1;
+
+        while (remoteInputBuffer.TryGetInput(probe, out _))
+        {
+            latestContiguousConfirmedRemoteFrame = probe;
+            probe++;
+        }
     }
 }

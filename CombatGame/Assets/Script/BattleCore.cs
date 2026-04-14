@@ -5,10 +5,6 @@ using UnityEngine.Events;
 
 namespace Footsies
 {
-    /// <summary>
-    /// Main update for battle engine
-    /// Update player/ai input, fighter actions, hitbox/hurtbox collision, round start/end
-    /// </summary>
     public class BattleCore : MonoBehaviour
     {
         public enum RoundStateType
@@ -37,9 +33,12 @@ namespace Footsies
         [SerializeField]
         private FootsiesBattleInputRouter battleInputRouter;
 
-        [Header("Optional Network Reference")]
+        [Header("Optional Network References")]
         [SerializeField]
         private NetworkInputReceiver networkInputReceiver;
+
+        [SerializeField]
+        private FootsiesBattleRollbackCoordinator rollbackCoordinator;
 
         public bool debugP1Attack = false;
         public bool debugP2Attack = false;
@@ -48,7 +47,7 @@ namespace Footsies
 
         public bool debugPlayLastRoundInput = false;
 
-        private float timer = 0;
+        private float timer = 0f;
         private uint maxRoundWon = 3;
 
         public Fighter fighter1 { get; private set; }
@@ -69,7 +68,6 @@ namespace Footsies
         public System.Action<Fighter, Vector2, DamageResult> damageHandler;
 
         private Animator roundUIAnimator;
-
         private BattleAI battleAI = null;
 
         private static uint maxRecordingInputFrame = 60 * 60 * 5;
@@ -90,15 +88,21 @@ namespace Footsies
         private float endStateTime = 3f;
         private float endStateSkippableTime = 1.5f;
 
-        [Header("Rollback-safe KO Confirmation")]
-        [SerializeField]
-        private int koConfirmStableFrames = 6;
+        [Header("Confirmed-frame KO gate")]
+        [SerializeField] private bool useConfirmedFrameGateForKO = true;
 
-        [SerializeField]
-        private bool requireNoPendingRemoteInputsForKO = true;
+        [Tooltip("KO 候補が出てから最低何フレーム連続で同じ結果なら確定候補にするか")]
+        [SerializeField] private int koConfirmStableFrames = 2;
+
+        [Tooltip("KO 候補フレームまでの相手入力が連続確定している必要がある")]
+        [SerializeField] private bool requireConfirmedRemoteFrameForKO = true;
+
+        [Tooltip("遅延キューに未処理入力が残っている間は KO を確定しない")]
+        [SerializeField] private bool requireNoPendingRemoteInputsForKO = true;
 
         private bool hasPendingKO = false;
-        private int pendingKOFighterSlot = -1;   // 1 or 2, none = -1
+        private int pendingKOFighterSlot = -1; // 1 or 2
+        private int pendingKOFrame = -1;
         private int pendingKOStableFrames = 0;
 
         void Awake()
@@ -120,6 +124,11 @@ namespace Footsies
             {
                 networkInputReceiver = FindObjectOfType<NetworkInputReceiver>();
             }
+
+            if (rollbackCoordinator == null)
+            {
+                rollbackCoordinator = FindObjectOfType<FootsiesBattleRollbackCoordinator>();
+            }
         }
 
         void FixedUpdate()
@@ -132,12 +141,10 @@ namespace Footsies
             switch (_roundState)
             {
                 case RoundStateType.Stop:
-
                     ChangeRoundState(RoundStateType.Intro);
                     break;
 
                 case RoundStateType.Intro:
-
                     UpdateIntroState();
 
                     timer -= Time.fixedDeltaTime;
@@ -146,8 +153,7 @@ namespace Footsies
                         ChangeRoundState(RoundStateType.Fight);
                     }
 
-                    if (debugPlayLastRoundInput
-                        && !isReplayingLastRoundInput)
+                    if (debugPlayLastRoundInput && !isReplayingLastRoundInput)
                     {
                         StartPlayLastRoundInput();
                     }
@@ -155,7 +161,6 @@ namespace Footsies
                     break;
 
                 case RoundStateType.Fight:
-
                     if (CheckUpdateDebugPause())
                     {
                         break;
@@ -169,7 +174,6 @@ namespace Footsies
                     break;
 
                 case RoundStateType.KO:
-
                     UpdateKOState();
 
                     timer -= Time.fixedDeltaTime;
@@ -181,12 +185,10 @@ namespace Footsies
                     break;
 
                 case RoundStateType.End:
-
                     UpdateEndState();
 
                     timer -= Time.fixedDeltaTime;
-                    if (timer <= 0f
-                        || (timer <= endStateSkippableTime && IsKOSkipButtonPressed()))
+                    if (timer <= 0f || (timer <= endStateSkippableTime && IsKOSkipButtonPressed()))
                     {
                         ChangeRoundState(RoundStateType.Stop);
                     }
@@ -207,17 +209,13 @@ namespace Footsies
             switch (_roundState)
             {
                 case RoundStateType.Stop:
-
-                    if (fighter1RoundWon >= maxRoundWon
-                        || fighter2RoundWon >= maxRoundWon)
+                    if (fighter1RoundWon >= maxRoundWon || fighter2RoundWon >= maxRoundWon)
                     {
                         GameManager.Instance.LoadTitleScene();
                     }
-
                     break;
 
                 case RoundStateType.Intro:
-
                     ClearPendingKO();
 
                     fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -236,18 +234,14 @@ namespace Footsies
                     break;
 
                 case RoundStateType.Fight:
-
                     ClearPendingKO();
 
                     roundStartTime = Time.fixedTime;
                     frameCount = -1;
-
                     currentRecordingInputIndex = 0;
-
                     break;
 
                 case RoundStateType.KO:
-
                     ClearPendingKO();
 
                     timer = koStateTime;
@@ -267,7 +261,6 @@ namespace Footsies
                     break;
 
                 case RoundStateType.End:
-
                     timer = endStateTime;
 
                     var deadFighter = _fighters.FindAll((f) => f.isDead);
@@ -300,7 +293,6 @@ namespace Footsies
             fighter2.UpdateInput(p2Input);
 
             _fighters.ForEach((f) => f.IncrementActionFrame());
-
             _fighters.ForEach((f) => f.UpdateIntroAction());
             _fighters.ForEach((f) => f.UpdateMovement());
             _fighters.ForEach((f) => f.UpdateBoxes());
@@ -320,7 +312,6 @@ namespace Footsies
             fighter2.UpdateInput(p2Input);
 
             _fighters.ForEach((f) => f.IncrementActionFrame());
-
             _fighters.ForEach((f) => f.UpdateActionRequest());
             _fighters.ForEach((f) => f.UpdateMovement());
             _fighters.ForEach((f) => f.UpdateBoxes());
@@ -337,7 +328,6 @@ namespace Footsies
         void UpdateEndState()
         {
             _fighters.ForEach((f) => f.IncrementActionFrame());
-
             _fighters.ForEach((f) => f.UpdateActionRequest());
             _fighters.ForEach((f) => f.UpdateMovement());
             _fighters.ForEach((f) => f.UpdateBoxes());
@@ -375,6 +365,7 @@ namespace Footsies
         {
             hasPendingKO = true;
             pendingKOFighterSlot = deadSlot;
+            pendingKOFrame = frameCount;
             pendingKOStableFrames = 0;
         }
 
@@ -382,6 +373,7 @@ namespace Footsies
         {
             hasPendingKO = false;
             pendingKOFighterSlot = -1;
+            pendingKOFrame = -1;
             pendingKOStableFrames = 0;
         }
 
@@ -400,7 +392,6 @@ namespace Footsies
                 return 2;
             }
 
-            // 両方死んだケースは今回の pending KO では即確定しない
             return -1;
         }
 
@@ -416,11 +407,27 @@ namespace Footsies
                 return false;
             }
 
+            if (rollbackCoordinator != null && rollbackCoordinator.DidRollbackThisStep)
+            {
+                return false;
+            }
+
             if (requireNoPendingRemoteInputsForKO
                 && networkInputReceiver != null
                 && networkInputReceiver.GetPendingDelayedInputCount() > 0)
             {
                 return false;
+            }
+
+            if (useConfirmedFrameGateForKO
+                && requireConfirmedRemoteFrameForKO
+                && networkInputReceiver != null)
+            {
+                int latestConfirmedRemoteFrame = networkInputReceiver.GetLatestContiguousConfirmedRemoteFrame();
+                if (latestConfirmedRemoteFrame < pendingKOFrame)
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -448,7 +455,7 @@ namespace Footsies
                 return lastRoundP1Input[currentReplayingInputIndex];
             }
 
-            var time = GetDeterministicInputTime();
+            float time = GetDeterministicInputTime();
 
             FootsiesInputFrame frameInput = battleInputRouter != null
                 ? battleInputRouter.GetPlayer1Input()
@@ -471,7 +478,7 @@ namespace Footsies
                 return lastRoundP2Input[currentReplayingInputIndex];
             }
 
-            var time = GetDeterministicInputTime();
+            float time = GetDeterministicInputTime();
 
             InputData p2Input = new InputData();
 
@@ -520,13 +527,13 @@ namespace Footsies
             {
                 if (fighter1.position.x < fighter2.position.x)
                 {
-                    fighter1.ApplyPositionChange((rect1.xMax - rect2.xMin) * -1 / 2, fighter1.position.y);
-                    fighter2.ApplyPositionChange((rect1.xMax - rect2.xMin) * 1 / 2, fighter2.position.y);
+                    fighter1.ApplyPositionChange((rect1.xMax - rect2.xMin) * -1 / 2, 0f);
+                    fighter2.ApplyPositionChange((rect1.xMax - rect2.xMin) * 1 / 2, 0f);
                 }
                 else if (fighter1.position.x > fighter2.position.x)
                 {
-                    fighter1.ApplyPositionChange((rect2.xMax - rect1.xMin) * 1 / 2, fighter1.position.y);
-                    fighter2.ApplyPositionChange((rect2.xMax - rect1.xMin) * -1 / 2, fighter1.position.y);
+                    fighter1.ApplyPositionChange((rect2.xMax - rect1.xMin) * 1 / 2, 0f);
+                    fighter2.ApplyPositionChange((rect2.xMax - rect1.xMin) * -1 / 2, 0f);
                 }
             }
         }
@@ -540,11 +547,11 @@ namespace Footsies
             {
                 if (f.pushbox.xMin < stageMinX)
                 {
-                    f.ApplyPositionChange(stageMinX - f.pushbox.xMin, f.position.y);
+                    f.ApplyPositionChange(stageMinX - f.pushbox.xMin, 0f);
                 }
                 else if (f.pushbox.xMax > stageMaxX)
                 {
-                    f.ApplyPositionChange(stageMaxX - f.pushbox.xMax, f.position.y);
+                    f.ApplyPositionChange(stageMaxX - f.pushbox.xMax, 0f);
                 }
             });
         }
@@ -607,7 +614,7 @@ namespace Footsies
                         damaged.SetHitStun(hitStunFrame);
                         damaged.SetSpriteShakeFrame(hitStunFrame / 3);
 
-                        damageHandler(damaged, damagePos, damageResult);
+                        damageHandler?.Invoke(damaged, damagePos, damageResult);
                     }
                     else if (isProximity)
                     {
@@ -640,8 +647,8 @@ namespace Footsies
                 lastRoundP1Input[i] = recordingP1Input[i].ShallowCopy();
                 lastRoundP2Input[i] = recordingP2Input[i].ShallowCopy();
             }
-            lastRoundMaxRecordingInput = currentRecordingInputIndex;
 
+            lastRoundMaxRecordingInput = currentRecordingInputIndex;
             isReplayingLastRoundInput = false;
             currentReplayingInputIndex = 0;
         }
@@ -707,6 +714,7 @@ namespace Footsies
                 isDebugPause = isDebugPause,
                 hasPendingKO = hasPendingKO,
                 pendingKOFighterSlot = pendingKOFighterSlot,
+                pendingKOFrame = pendingKOFrame,
                 pendingKOStableFrames = pendingKOStableFrames,
                 fighter1 = fighter1 != null ? fighter1.CaptureSnapshot() : null,
                 fighter2 = fighter2 != null ? fighter2.CaptureSnapshot() : null
@@ -736,6 +744,7 @@ namespace Footsies
 
             hasPendingKO = snapshot.hasPendingKO;
             pendingKOFighterSlot = snapshot.pendingKOFighterSlot;
+            pendingKOFrame = snapshot.pendingKOFrame;
             pendingKOStableFrames = snapshot.pendingKOStableFrames;
 
             if (fighter1 != null && snapshot.fighter1 != null)
