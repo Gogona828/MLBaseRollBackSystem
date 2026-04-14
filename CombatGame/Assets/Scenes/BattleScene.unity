@@ -1068,6 +1068,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2bb2a380f49ee946ab5abe670bf19b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  battleCore: {fileID: 1856329101}
   sessionManager: {fileID: 1948372535}
   frameClock: {fileID: 1948372536}
   inputSender: {fileID: 1948372538}
@@ -1114,7 +1115,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1856329100}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fbfdaeb55d379442a0e7bed580d8a47, type: 3}
   m_Name: 

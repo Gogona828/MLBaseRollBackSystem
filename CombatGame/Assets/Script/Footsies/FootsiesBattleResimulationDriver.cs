@@ -35,11 +35,8 @@ namespace Footsies
 
             for (int frame = fromFrame + 1; frame <= toFrame; frame++)
             {
-                byte p1Bits = 0;
-                byte p2Bits = 0;
-
-                inputHistory.TryGetInput(0, frame, out p1Bits);
-                inputHistory.TryGetInput(1, frame, out p2Bits);
+                byte p1Bits = ResolveBitsForPlayer(0, frame);
+                byte p2Bits = ResolveBitsForPlayer(1, frame);
 
                 inputRouter.SetOverrideInputs(
                     FootsiesInputFrame.FromBits(p1Bits),
@@ -53,6 +50,21 @@ namespace Footsies
 
             FileLogger.WriteLine(
                 $"[FootsiesBattleResimulationDriver] End resim from={fromFrame + 1} to={toFrame}");
+        }
+
+        private byte ResolveBitsForPlayer(int playerId, int frame)
+        {
+            if (inputHistory.TryGetInput(playerId, frame, out byte exactBits))
+            {
+                return exactBits;
+            }
+
+            if (inputHistory.TryGetLatestInputAtOrBefore(playerId, frame, out byte latestBits))
+            {
+                return latestBits;
+            }
+
+            return 0;
         }
     }
 }

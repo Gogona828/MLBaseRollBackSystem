@@ -36,6 +36,48 @@ namespace Footsies
             return false;
         }
 
+        public bool TryGetLatestInputAtOrBefore(int playerId, int frame, out byte bits)
+        {
+            Dictionary<int, byte> target = null;
+
+            if (playerId == 0)
+            {
+                target = player0Inputs;
+            }
+            else if (playerId == 1)
+            {
+                target = player1Inputs;
+            }
+
+            if (target == null || target.Count == 0)
+            {
+                bits = 0;
+                return false;
+            }
+
+            int bestFrame = int.MinValue;
+            byte bestBits = 0;
+            bool found = false;
+
+            foreach (KeyValuePair<int, byte> pair in target)
+            {
+                if (pair.Key > frame)
+                {
+                    continue;
+                }
+
+                if (!found || pair.Key > bestFrame)
+                {
+                    found = true;
+                    bestFrame = pair.Key;
+                    bestBits = pair.Value;
+                }
+            }
+
+            bits = bestBits;
+            return found;
+        }
+
         public void ClearAll()
         {
             player0Inputs.Clear();

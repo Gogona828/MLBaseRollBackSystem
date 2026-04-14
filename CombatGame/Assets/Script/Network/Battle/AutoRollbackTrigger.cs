@@ -12,7 +12,7 @@ public class AutoRollbackTrigger : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private bool enableAutoRollback = true;
     [SerializeField] private int rollbackSafetyOffsetFrames = 0;
-    [SerializeField] private int rollbackCooldownFrames = 6;
+    [SerializeField] private int rollbackCooldownFrames = 1;
 
     private int lastRequestedFrame = -1;
     private int lastRollbackExecutedAtFrame = -999999;

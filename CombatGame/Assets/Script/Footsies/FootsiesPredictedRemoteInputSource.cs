@@ -54,5 +54,38 @@ namespace Footsies
 
             return FootsiesInputFrame.FromBits(predictedBits);
         }
+        
+        public FootsiesInputFrame GetInputForFrame(int frame)
+        {
+            if (networkInputReceiver != null && networkInputReceiver.TryGetRemoteInput(frame, out byte confirmedBits))
+            {
+                if (predictionMismatchDetector != null)
+                {
+                    predictionMismatchDetector.RecordPrediction(frame, confirmedBits);
+                }
+
+                return FootsiesInputFrame.FromBits(confirmedBits);
+            }
+
+            byte fallbackBits = 0;
+
+            if (networkInputReceiver != null)
+            {
+                fallbackBits = networkInputReceiver.GetLastConfirmedBitsForPlayer(remotePlayerId);
+            }
+
+            if (predictionMismatchDetector != null)
+            {
+                predictionMismatchDetector.RecordPrediction(frame, fallbackBits);
+            }
+
+            return FootsiesInputFrame.FromBits(fallbackBits);
+        }
+        
+        public FootsiesInputFrame GetInput()
+        {
+            int frame = frameClock != null ? frameClock.CurrentFrame : 0;
+            return GetInputForFrame(frame);
+        }
     }
 }
