@@ -111,6 +111,12 @@ namespace Footsies
 
         private bool hasWon = false;
 
+        // 追加: rollback 挙動確認用
+        private int lastResolvedInput;
+        private int lastResolvedInputDown;
+        private int lastResolvedInputUp;
+        private float lastAppliedDeltaX;
+
         /// <summary>
         /// Setup fighter at the start of battle
         /// </summary>
@@ -128,6 +134,10 @@ namespace Footsies
             hasWon = false;
 
             velocity_x = 0;
+            lastAppliedDeltaX = 0f;
+            lastResolvedInput = 0;
+            lastResolvedInputDown = 0;
+            lastResolvedInputUp = 0;
 
             ClearInput();
 
@@ -139,14 +149,12 @@ namespace Footsies
         /// </summary>
         public void IncrementActionFrame()
         {
-            // Decrease sprite shake count and swap +/- (used by BattleGUI for fighter sprite position)
             if (Mathf.Abs(spriteShakePosition) > 0)
             {
                 spriteShakePosition *= -1;
                 spriteShakePosition += (spriteShakePosition > 0 ? -1 : 1);
             }
 
-            // If fighter is in hit stun then the action frame stay the same
             if (currentHitStunFrame > 0)
             {
                 currentHitStunFrame--;
@@ -155,7 +163,6 @@ namespace Footsies
 
             currentActionFrame++;
 
-            // For loop motion (winning pose etc.) set action frame back to loop start frame
             if (isActionEnd)
             {
                 if(fighterData.actions[currentActionID].isLoop)
@@ -171,7 +178,6 @@ namespace Footsies
         /// <param name="inputData"></param>
         public void UpdateInput(InputData inputData)
         {
-            // Shift input history by 1 frame
             for(int i = input.Length - 1; i >= 1; i--)
             {
                 input[i] = input[i - 1];
@@ -179,36 +185,29 @@ namespace Footsies
                 inputUp[i] = inputUp[i - 1];
             }
 
-            // Insert new input data
             input[0] = inputData.input;
             inputDown[0] = (input[0] ^ input[1]) & input[0];
             inputUp[0] = (input[0] ^ input[1]) & ~input[0];
-            //Debug.Log(System.Convert.ToString(input[0], 2) + " " + System.Convert.ToString(inputDown[0], 2) + " " + System.Convert.ToString(inputUp[0], 2));
 
+            // 追加: 直近に解釈した入力を保持
+            lastResolvedInput = input[0];
+            lastResolvedInputDown = inputDown[0];
+            lastResolvedInputUp = inputUp[0];
         }
 
-        /// <summary>
-        /// Action request for intro state ()
-        /// </summary>
         public void UpdateIntroAction()
         {
             RequestAction((int)CommonActionID.STAND);
         }
 
-        /// <summary>
-        /// Update action request
-        /// </summary>
         public void UpdateActionRequest()
         {
-            // If won then just request win animation
             if(hasWon)
             {
                 RequestAction((int)CommonActionID.WIN);
                 return;
             }
 
-            // If there is any reserve damage action, set that to current action
-            // Use for playing damage motion after hit stun ended (only use this for guard break currently)
             if (reserveDamageActionID != -1
                 && currentHitStunFrame <= 0)
             {
@@ -217,8 +216,6 @@ namespace Footsies
                 return;
             }
 
-            // If there is any buffer action, set that to current action
-            // Use for canceling normal to special attack
             if (bufferActionID != -1 
                 && canCancelAttack()
                 && currentHitStunFrame <= 0)
@@ -231,6 +228,7 @@ namespace Footsies
             var isForward = IsForwardInput(input[0]);
             var isBackward = IsBackwardInput(input[0]);
             bool isAttack = IsAttackInput(inputDown[0]);
+
             if (CheckSpecialAttackInput())
             {
                 if (isBackward || isForward)
@@ -258,8 +256,6 @@ namespace Footsies
             else if (CheckBackwardDashInput())
                 RequestAction((int)CommonActionID.DASH_BACKWARD);
 
-
-            // for proximity guard check
             isInputBackward = isBackward;
 
             if (isForward && isBackward)
@@ -290,32 +286,53 @@ namespace Footsies
         /// </summary>
         public void UpdateMovement()
         {
-            if (isInHitStun)
-                return;
+            // rollback/resim を deterministic にするため fixedDeltaTime を使う
+            float dt = Time.fixedDeltaTime;
+            int sign = isFaceRight ? 1 : -1;
 
-            // Position changes from walking forward and backward
-            var sign = isFaceRight ? 1 : -1;
+            lastAppliedDeltaX = 0f;
+
+            if (isInHitStun)
+            {
+                velocity_x = 0f;
+                return;
+            }
+
+            // 前進/後退も velocity_x を更新する
             if (currentActionID == (int)CommonActionID.FORWARD)
             {
-                position.x += fighterData.forwardMoveSpeed * sign * Time.deltaTime;
+                velocity_x = fighterData.forwardMoveSpeed;
+                lastAppliedDeltaX = velocity_x * sign * dt;
+                position.x += lastAppliedDeltaX;
                 return;
             }
             else if (currentActionID == (int)CommonActionID.BACKWARD)
             {
-                position.x -= fighterData.backwardMoveSpeed * sign * Time.deltaTime;
+                velocity_x = -fighterData.backwardMoveSpeed;
+                lastAppliedDeltaX = velocity_x * sign * dt;
+                position.x += lastAppliedDeltaX;
                 return;
             }
 
-            // Position changes from action data
             var movementData = fighterData.actions[currentActionID].GetMovementData(currentActionFrame);
             if (movementData != null)
             {
                 velocity_x = movementData.velocity_x;
-                if (velocity_x != 0)
+                if (velocity_x != 0f)
                 {
-                    position.x += velocity_x * sign * Time.deltaTime;
+                    lastAppliedDeltaX = velocity_x * sign * dt;
+                    position.x += lastAppliedDeltaX;
                 }
+                else
+                {
+                    lastAppliedDeltaX = 0f;
+                }
+
+                return;
             }
+
+            velocity_x = 0f;
+            lastAppliedDeltaX = 0f;
         }
 
         public void UpdateBoxes()
@@ -323,11 +340,6 @@ namespace Footsies
             ApplyCurrentActionData();
         }
 
-        /// <summary>
-        /// Apply position changed to all variable
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
         public void ApplyPositionChange(float x, float y)
         {
             position.x += x;
@@ -368,7 +380,7 @@ namespace Footsies
             }
 
             if (currentActionID == (int)CommonActionID.BACKWARD
-                || fighterData.actions[currentActionID].Type == ActionType.Guard) // if in blocking motion, automatically block next attack
+                || fighterData.actions[currentActionID].Type == ActionType.Guard)
             {
                 if (isGuardBreak)
                 {
@@ -463,12 +475,6 @@ namespace Footsies
             hasWon = true;
         }
 
-        /// <summary>
-        /// Request action, if condition is met then set the requested action to current action
-        /// </summary>
-        /// <param name="actionID"></param>
-        /// <param name="startFrame"></param>
-        /// <returns></returns>
         public bool RequestAction(int actionID, int startFrame = 0)
         {
             if (isActionEnd)
@@ -526,6 +532,10 @@ namespace Footsies
                 inputDown[i] = 0;
                 inputUp[i] = 0;
             }
+
+            lastResolvedInput = 0;
+            lastResolvedInputDown = 0;
+            lastResolvedInputUp = 0;
         }
         
         public FootsiesFighterSnapshot CaptureSnapshot()
@@ -549,7 +559,11 @@ namespace Footsies
                 hasWon = hasWon,
                 input = (int[])input.Clone(),
                 inputDown = (int[])inputDown.Clone(),
-                inputUp = (int[])inputUp.Clone()
+                inputUp = (int[])inputUp.Clone(),
+                lastResolvedInput = lastResolvedInput,
+                lastResolvedInputDown = lastResolvedInputDown,
+                lastResolvedInputUp = lastResolvedInputUp,
+                lastAppliedDeltaX = lastAppliedDeltaX
             };
         }
 
@@ -581,6 +595,11 @@ namespace Footsies
             spriteShakePosition = snapshot.spriteShakePosition;
             hasWon = snapshot.hasWon;
 
+            lastResolvedInput = snapshot.lastResolvedInput;
+            lastResolvedInputDown = snapshot.lastResolvedInputDown;
+            lastResolvedInputUp = snapshot.lastResolvedInputUp;
+            lastAppliedDeltaX = snapshot.lastAppliedDeltaX;
+
             if (snapshot.input != null)
             {
                 input = (int[])snapshot.input.Clone();
@@ -609,11 +628,6 @@ namespace Footsies
             return false;
         }
 
-        /// <summary>
-        /// Set current action
-        /// </summary>
-        /// <param name="actionID"></param>
-        /// <param name="startFrame"></param>
         private void SetCurrentAction(int actionID, int startFrame = 0)
         {
             currentActionID = actionID;
@@ -633,10 +647,6 @@ namespace Footsies
             }
         }
         
-        /// <summary>
-        /// Special attack input check (hold and release)
-        /// </summary>
-        /// <returns></returns>
         private bool CheckSpecialAttackInput()
         {
             if (!IsAttackInput(inputUp[0]))
@@ -736,9 +746,6 @@ namespace Footsies
 
         }
 
-        /// <summary>
-        /// Copy data from current action and convert relative box position with fighter position
-        /// </summary>
         private void ApplyCurrentActionData()
         {
             hitboxes.Clear();
@@ -767,13 +774,6 @@ namespace Footsies
             pushbox.rect = TransformToFightRect(pushRect, position, isFaceRight);
         }
 
-        /// <summary>
-        /// Convert relative box position with current fighter position
-        /// </summary>
-        /// <param name="dataRect"></param>
-        /// <param name="basePosition"></param>
-        /// <param name="isFaceRight"></param>
-        /// <returns></returns>
         private Rect TransformToFightRect(Rect dataRect, Vector2 basePosition, bool isFaceRight)
         {
             var sign = isFaceRight ? 1 : -1;

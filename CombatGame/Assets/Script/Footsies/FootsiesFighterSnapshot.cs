@@ -31,6 +31,12 @@ namespace Footsies
         public int[] inputDown;
         public int[] inputUp;
 
+        // 追加: rollback の追跡用デバッグ情報
+        public int lastResolvedInput;
+        public int lastResolvedInputDown;
+        public int lastResolvedInputUp;
+        public float lastAppliedDeltaX;
+
         public FootsiesFighterSnapshot Clone()
         {
             return new FootsiesFighterSnapshot
@@ -52,7 +58,11 @@ namespace Footsies
                 hasWon = hasWon,
                 input = input != null ? (int[])input.Clone() : null,
                 inputDown = inputDown != null ? (int[])inputDown.Clone() : null,
-                inputUp = inputUp != null ? (int[])inputUp.Clone() : null
+                inputUp = inputUp != null ? (int[])inputUp.Clone() : null,
+                lastResolvedInput = lastResolvedInput,
+                lastResolvedInputDown = lastResolvedInputDown,
+                lastResolvedInputUp = lastResolvedInputUp,
+                lastAppliedDeltaX = lastAppliedDeltaX
             };
         }
     }
