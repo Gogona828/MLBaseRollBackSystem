@@ -66,23 +66,31 @@ namespace Footsies
             if (_battleCoreGameObject != null)
             {
                 battleCore = _battleCoreGameObject.GetComponent<BattleCore>();
-                battleCore.damageHandler += OnDamageHandler;
+                if (battleCore != null)
+                {
+                    battleCore.damageHandler += OnDamageHandler;
+                }
             }
 
             if (fighter1ImageObject != null)
                 fighter1Image = fighter1ImageObject.GetComponent<Image>();
+
             if (fighter2ImageObject != null)
                 fighter2Image = fighter2ImageObject.GetComponent<Image>();
 
             if (hitEffectObject1 != null)
                 hitEffectAnimator1 = hitEffectObject1.GetComponent<Animator>();
+
             if (hitEffectObject2 != null)
                 hitEffectAnimator2 = hitEffectObject2.GetComponent<Animator>();
         }
 
         private void OnDestroy()
         {
-            battleCore.damageHandler -= OnDamageHandler;
+            if (battleCore != null)
+            {
+                battleCore.damageHandler -= OnDamageHandler;
+            }
         }
 
         private void FixedUpdate()
@@ -92,68 +100,93 @@ namespace Footsies
                 drawDebug = !drawDebug;
             }
 
+            if (battleCore == null || rectTransform == null)
+            {
+                return;
+            }
+
+            if (battleCore.fighter1 == null || battleCore.fighter2 == null)
+            {
+                return;
+            }
+
             CalculateBattleArea();
             CalculateFightPointToScreenScale();
 
-            UpdateSprite();
+            UpdateSpriteSafe();
         }
 
         void OnGUI()
         {
-            if (drawDebug)
+            if (!drawDebug)
             {
-                battleCore.fighters.ForEach((f) => DrawFighter(f));
-                
-                var labelRect = new Rect(Screen.width * 0.4f, Screen.height * 0.95f, Screen.width * 0.2f, Screen.height * 0.05f);
-                debugTextStyle.alignment = TextAnchor.UpperCenter;
-                GUI.Label(labelRect, "F1=Pause/Resume, F2=Frame Step, F12=Debug Draw", debugTextStyle);
-
-                //DrawBox(new Rect(battleAreaTopLeftPoint.x,
-                //    battleAreaTopLeftPoint.y,
-                //    battleAreaBottomRightPoint.x - battleAreaTopLeftPoint.x,
-                //    battleAreaBottomRightPoint.y - battleAreaTopLeftPoint.y),
-                //    Color.gray, true);
+                return;
             }
+
+            if (battleCore == null || battleCore.fighters == null)
+            {
+                return;
+            }
+
+            battleCore.fighters.ForEach((f) =>
+            {
+                if (f != null)
+                {
+                    DrawFighter(f);
+                }
+            });
+
+            var labelRect = new Rect(Screen.width * 0.4f, Screen.height * 0.95f, Screen.width * 0.2f, Screen.height * 0.05f);
+            if (debugTextStyle != null)
+            {
+                debugTextStyle.alignment = TextAnchor.UpperCenter;
+            }
+            GUI.Label(labelRect, "F1=Pause/Resume, F2=Frame Step, F12=Debug Draw", debugTextStyle);
         }
 
-        void UpdateSprite()
+        void UpdateSpriteSafe()
         {
-            if(fighter1Image != null)
+            UpdateOneSpriteSafe(battleCore.fighter1, fighter1Image);
+            UpdateOneSpriteSafe(battleCore.fighter2, fighter2Image);
+        }
+
+        void UpdateOneSpriteSafe(Fighter fighter, Image fighterImage)
+        {
+            if (fighter == null || fighterImage == null)
             {
-                var sprite = battleCore.fighter1.GetCurrentMotionSprite();
-                if(sprite != null)
-                    fighter1Image.sprite = sprite;
-                
-                var position = fighter1Image.transform.position;
-                position.x = TransformHorizontalFightPointToScreen(battleCore.fighter1.position.x) + battleCore.fighter1.spriteShakePosition;
-                fighter1Image.transform.position = position;
+                return;
             }
 
-            if (fighter2Image != null)
+            Sprite sprite = fighter.GetCurrentMotionSpriteSafe();
+            if (sprite != null)
             {
-                var sprite = battleCore.fighter2.GetCurrentMotionSprite();
-                if (sprite != null)
-                    fighter2Image.sprite = sprite;
-
-                var position = fighter2Image.transform.position;
-                position.x = TransformHorizontalFightPointToScreen(battleCore.fighter2.position.x) + battleCore.fighter2.spriteShakePosition;
-                fighter2Image.transform.position = position;
-                
+                fighterImage.sprite = sprite;
             }
+
+            var position = fighterImage.transform.position;
+            position.x = TransformHorizontalFightPointToScreen(fighter.position.x) + fighter.spriteShakePosition;
+            fighterImage.transform.position = position;
         }
 
         void DrawFighter(Fighter fighter)
         {
+            if (fighter == null || battleCore == null)
+            {
+                return;
+            }
+
             var labelRect = new Rect(0, Screen.height * 0.86f, Screen.width * 0.22f, 50);
             if (fighter.isFaceRight)
             {
                 labelRect.x = Screen.width * 0.01f;
-                debugTextStyle.alignment = TextAnchor.UpperLeft;
+                if (debugTextStyle != null)
+                    debugTextStyle.alignment = TextAnchor.UpperLeft;
             }
             else
             {
                 labelRect.x = Screen.width * 0.77f;
-                debugTextStyle.alignment = TextAnchor.UpperRight;
+                if (debugTextStyle != null)
+                    debugTextStyle.alignment = TextAnchor.UpperRight;
             }
 
             GUI.Label(labelRect, fighter.position.ToString(), debugTextStyle);
@@ -161,7 +194,7 @@ namespace Footsies
             labelRect.y += Screen.height * 0.03f;
             var frameAdvantage = battleCore.GetFrameAdvantage(fighter.isFaceRight);
             var frameAdvText = frameAdvantage > 0 ? "+" + frameAdvantage : frameAdvantage.ToString();
-            GUI.Label(labelRect, "Frame: " + fighter.currentActionFrame + "/" + fighter.currentActionFrameCount 
+            GUI.Label(labelRect, "Frame: " + fighter.currentActionFrame + "/" + fighter.currentActionFrameCount
                 + "(" + frameAdvText + ")", debugTextStyle);
 
             labelRect.y += Screen.height * 0.03f;
@@ -170,9 +203,12 @@ namespace Footsies
             labelRect.y += Screen.height * 0.03f;
             GUI.Label(labelRect, "Action: " + fighter.currentActionID + " " + (CommonActionID)fighter.currentActionID, debugTextStyle);
 
-            foreach (var hurtbox in fighter.hurtboxes)
+            if (fighter.hurtboxes != null)
             {
-                DrawFightBox(hurtbox.rect, Color.yellow, true);
+                foreach (var hurtbox in fighter.hurtboxes)
+                {
+                    DrawFightBox(hurtbox.rect, Color.yellow, true);
+                }
             }
 
             if (fighter.pushbox != null)
@@ -180,12 +216,15 @@ namespace Footsies
                 DrawFightBox(fighter.pushbox.rect, Color.blue, true);
             }
 
-            foreach (var hitbox in fighter.hitboxes)
+            if (fighter.hitboxes != null)
             {
-                if(hitbox.proximity)
-                    DrawFightBox(hitbox.rect, Color.gray, true);
-                else
-                    DrawFightBox(hitbox.rect, Color.red, true);
+                foreach (var hitbox in fighter.hitboxes)
+                {
+                    if (hitbox.proximity)
+                        DrawFightBox(hitbox.rect, Color.gray, true);
+                    else
+                        DrawFightBox(hitbox.rect, Color.red, true);
+                }
             }
         }
 
@@ -234,6 +273,11 @@ namespace Footsies
 
         void CalculateBattleArea()
         {
+            if (rectTransform == null)
+            {
+                return;
+            }
+
             Vector3[] v = new Vector3[4];
             rectTransform.GetWorldCorners(v);
             battleAreaTopLeftPoint = new Vector2(v[1].x, Screen.height - v[1].y);
@@ -242,6 +286,16 @@ namespace Footsies
 
         void CalculateFightPointToScreenScale()
         {
+            if (battleCore == null)
+            {
+                return;
+            }
+
+            if (Mathf.Approximately(battleCore.battleAreaWidth, 0f) || Mathf.Approximately(battleCore.battleAreaMaxHeight, 0f))
+            {
+                return;
+            }
+
             fightPointToScreenScale.x = (battleAreaBottomRightPoint.x - battleAreaTopLeftPoint.x) / battleCore.battleAreaWidth;
             fightPointToScreenScale.y = (battleAreaBottomRightPoint.y - battleAreaTopLeftPoint.y) / battleCore.battleAreaMaxHeight;
 
@@ -250,16 +304,26 @@ namespace Footsies
 
         private void OnDamageHandler(Fighter damagedFighter, Vector2 damagedPos, DamageResult damageResult)
         {
-            // Set attacker fighter to last sibling so that it will get draw last and be on the most front
-            if(damagedFighter == battleCore.fighter1)
+            if (battleCore == null || damagedFighter == null)
             {
-                fighter2Image.transform.SetAsLastSibling();
+                return;
+            }
+
+            if (damagedFighter == battleCore.fighter1)
+            {
+                if (fighter2Image != null)
+                {
+                    fighter2Image.transform.SetAsLastSibling();
+                }
 
                 RequestHitEffect(hitEffectAnimator1, damagedPos, damageResult);
             }
-            else if(damagedFighter == battleCore.fighter2)
+            else if (damagedFighter == battleCore.fighter2)
             {
-                fighter1Image.transform.SetAsLastSibling();
+                if (fighter1Image != null)
+                {
+                    fighter1Image.transform.SetAsLastSibling();
+                }
 
                 RequestHitEffect(hitEffectAnimator2, damagedPos, damageResult);
             }
@@ -267,14 +331,20 @@ namespace Footsies
 
         private void RequestHitEffect(Animator hitEffectAnimator, Vector2 damagedPos, DamageResult damageResult)
         {
+            if (hitEffectAnimator == null)
+            {
+                return;
+            }
+
             hitEffectAnimator.SetTrigger("Hit");
-            var position = hitEffectAnimator2.transform.position;
+
+            var position = hitEffectAnimator.transform.position;
             position.x = TransformHorizontalFightPointToScreen(damagedPos.x);
             position.y = TransformVerticalFightPointToScreen(damagedPos.y);
             hitEffectAnimator.transform.position = position;
 
             if (damageResult == DamageResult.GuardBreak)
-                hitEffectAnimator.transform.localScale = new Vector3(5,5,1);
+                hitEffectAnimator.transform.localScale = new Vector3(5, 5, 1);
             else if (damageResult == DamageResult.Damage)
                 hitEffectAnimator.transform.localScale = new Vector3(2, 2, 1);
             else if (damageResult == DamageResult.Guard)
@@ -283,5 +353,4 @@ namespace Footsies
             hitEffectAnimator.transform.SetAsLastSibling();
         }
     }
-
 }

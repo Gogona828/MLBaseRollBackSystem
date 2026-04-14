@@ -786,5 +786,17 @@ namespace Footsies
 
             return fightPosRect;
         }
+        
+        public Sprite GetCurrentMotionSpriteSafe()
+        {
+            try
+            {
+                return GetCurrentMotionSprite();
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }
