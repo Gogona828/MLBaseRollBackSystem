@@ -123,6 +123,102 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &187519313
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 187519315}
+  - component: {fileID: 187519314}
+  m_Layer: 0
+  m_Name: FootsiesP2RemoteInputSource
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &187519314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 187519313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 909078236615db341a976572d3e36061, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  readMode: 1
+  networkInputSender: {fileID: 1948372538}
+  networkInputReceiver: {fileID: 1948372539}
+  remotePlayerId: 1
+--- !u!4 &187519315
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 187519313}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &192827123
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 192827125}
+  - component: {fileID: 192827124}
+  m_Layer: 0
+  m_Name: FootsiesP1NetworkInputSource
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &192827124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192827123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 909078236615db341a976572d3e36061, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  readMode: 0
+  networkInputSender: {fileID: 1948372538}
+  networkInputReceiver: {fileID: 1948372539}
+  remotePlayerId: 0
+--- !u!4 &192827125
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192827123}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &199929777
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -251,7 +347,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ac8378dd394a0af4b946774d38e9710a, type: 3}
---- !u!1 &279974610
+--- !u!1 &392893571
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -259,35 +355,38 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 279974612}
-  - component: {fileID: 279974611}
+  - component: {fileID: 392893573}
+  - component: {fileID: 392893572}
   m_Layer: 0
-  m_Name: NetworkReceiver
+  m_Name: FootsiesP2NetworkInputSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &279974611
+--- !u!114 &392893572
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 279974610}
+  m_GameObject: {fileID: 392893571}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a57e0ccc3153714468f180a24fc13d37, type: 3}
+  m_Script: {fileID: 11500000, guid: 909078236615db341a976572d3e36061, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transport: {fileID: 1988909628}
---- !u!4 &279974612
+  readMode: 0
+  networkInputSender: {fileID: 1948372538}
+  networkInputReceiver: {fileID: 1948372539}
+  remotePlayerId: 1
+--- !u!4 &392893573
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 279974610}
+  m_GameObject: {fileID: 392893571}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -296,7 +395,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &663014004
+--- !u!1 &571076817
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -304,22 +403,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 663014005}
-  - component: {fileID: 663014006}
+  - component: {fileID: 571076818}
+  - component: {fileID: 571076819}
   m_Layer: 0
-  m_Name: NetworkSender
+  m_Name: FootsiesP2LocalInputSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &663014005
+--- !u!4 &571076818
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 663014004}
+  m_GameObject: {fileID: 571076817}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -328,31 +427,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &663014006
+--- !u!114 &571076819
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 663014004}
+  m_GameObject: {fileID: 571076817}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71c62a4611b08bf4ba6554f993ba9c2d, type: 3}
+  m_Script: {fileID: 11500000, guid: 6e32d6a0cd860cf4aa2fac129206d2b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerId: 0
-  leftKey: 97
-  rightKey: 100
-  attackKey: 106
-  frameClock: {fileID: 1743430320}
-  transport: {fileID: 1988909628}
+  isPlayer1: 0
 --- !u!1 &749302605 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1680832827664012, guid: ac8378dd394a0af4b946774d38e9710a,
     type: 3}
   m_PrefabInstance: {fileID: 199929777}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1743430319
+--- !u!1 &1250205676
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -360,34 +454,83 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1743430321}
-  - component: {fileID: 1743430320}
+  - component: {fileID: 1250205678}
+  - component: {fileID: 1250205677}
   m_Layer: 0
-  m_Name: NetworkClock
+  m_Name: FootsiesP1RemoteInputSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1743430320
+--- !u!114 &1250205677
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1743430319}
+  m_GameObject: {fileID: 1250205676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 69977e1b496c13c4f9ae17748f9398e1, type: 3}
+  m_Script: {fileID: 11500000, guid: 909078236615db341a976572d3e36061, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &1743430321
+  readMode: 1
+  networkInputSender: {fileID: 1948372538}
+  networkInputReceiver: {fileID: 1948372539}
+  remotePlayerId: 0
+--- !u!4 &1250205678
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1743430319}
+  m_GameObject: {fileID: 1250205676}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1638377578
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1638377580}
+  - component: {fileID: 1638377579}
+  m_Layer: 0
+  m_Name: FootsiesP1LocalInputSource
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1638377579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1638377578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e32d6a0cd860cf4aa2fac129206d2b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isPlayer1: 1
+--- !u!4 &1638377580
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1638377578}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -430,6 +573,7 @@ MonoBehaviour:
   roundUI: {fileID: 749302605}
   fighterDataList:
   - {fileID: 11400000, guid: 5566ac98dc546dc4a89972ce7db49d91, type: 2}
+  battleInputRouter: {fileID: 2065654612}
   debugP1Attack: 0
   debugP2Attack: 0
   debugP1Guard: 0
@@ -450,7 +594,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1988909627
+--- !u!1 &1948372532
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -458,37 +602,204 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1988909629}
-  - component: {fileID: 1988909628}
+  - component: {fileID: 1948372534}
+  - component: {fileID: 1948372533}
+  - component: {fileID: 1948372536}
+  - component: {fileID: 1948372535}
+  - component: {fileID: 1948372540}
+  - component: {fileID: 1948372539}
+  - component: {fileID: 1948372538}
+  - component: {fileID: 1948372537}
+  - component: {fileID: 1948372541}
   m_Layer: 0
-  m_Name: NetworkTransport
+  m_Name: Network
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1988909628
+--- !u!114 &1948372533
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1988909627}
+  m_GameObject: {fileID: 1948372532}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ac40e1f397f1d244e9496a02bf4c7bd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   remoteIp: 192.168.0.161
-  localPort: 5000
-  remotePort: 5001
---- !u!4 &1988909629
+  localPort: 5100
+  remotePort: 5101
+  autoStartOnAwake: 1
+--- !u!4 &1948372534
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1988909627}
+  m_GameObject: {fileID: 1948372532}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1948372535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948372532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 892c22c8eba6d0443a46fb66f7955569, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerId: 0
+  transport: {fileID: 1948372533}
+  frameClock: {fileID: 1948372536}
+  helloIntervalSeconds: 0.5
+  readyIntervalSeconds: 0.5
+  startDelayFrames: 60
+--- !u!114 &1948372536
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948372532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69977e1b496c13c4f9ae17748f9398e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1948372537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948372532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a0e8a456386ae94dbef864c8bafe59a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  machineLabel: PCA
+  playerId: 0
+  remoteIp: 192.168.0.161
+  localPort: 5100
+  remotePort: 5101
+--- !u!114 &1948372538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948372532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71c62a4611b08bf4ba6554f993ba9c2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerId: 0
+  leftKey: 97
+  rightKey: 100
+  attackKey: 32
+  transport: {fileID: 1948372533}
+  sessionManager: {fileID: 1948372535}
+  debugAutoInputSequence: {fileID: 0}
+  useDebugAutoInput: 0
+  updateLocalBitsWithoutSending: 1
+--- !u!114 &1948372539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948372532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5d445009d384024dbc47d1ac618a86a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fixedInputDelayFrames: 10
+  predictionMismatchDetector: {fileID: 0}
+--- !u!114 &1948372540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948372532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8db030989853b93438d6127c4da232a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  transport: {fileID: 1948372533}
+  sessionManager: {fileID: 1948372535}
+  inputReceiver: {fileID: 1948372539}
+--- !u!114 &1948372541
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948372532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb092de22c12374e96be4d1afb13d45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  frameClock: {fileID: 1948372536}
+  sessionManager: {fileID: 1948372535}
+  inputSender: {fileID: 1948372538}
+  inputReceiver: {fileID: 1948372539}
+--- !u!1 &2065654611
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2065654613}
+  - component: {fileID: 2065654612}
+  m_Layer: 0
+  m_Name: FootsiesBattleInputRouter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2065654612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2065654611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e48d5a73caba191419cb07e33db40cf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player1InputSourceBehaviour: {fileID: 192827124}
+  player2InputSourceBehaviour: {fileID: 187519314}
+--- !u!4 &2065654613
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2065654611}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -503,7 +814,11 @@ SceneRoots:
   m_Roots:
   - {fileID: 1856329102}
   - {fileID: 199929777}
-  - {fileID: 1988909629}
-  - {fileID: 1743430321}
-  - {fileID: 663014005}
-  - {fileID: 279974612}
+  - {fileID: 1638377580}
+  - {fileID: 571076818}
+  - {fileID: 192827125}
+  - {fileID: 392893573}
+  - {fileID: 2065654613}
+  - {fileID: 1948372534}
+  - {fileID: 1250205678}
+  - {fileID: 187519315}

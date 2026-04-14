@@ -18,12 +18,38 @@ public class NetworkInputSender : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool useDebugAutoInput = false;
 
+    [Header("Local Preview")]
+    [SerializeField] private bool updateLocalBitsWithoutSending = true;
+
     private int lastSentFrame = -1;
 
     public byte LastLocalInputBits { get; private set; }
 
+    private void Update()
+    {
+        if (!updateLocalBitsWithoutSending)
+        {
+            return;
+        }
+
+        LastLocalInputBits = ReadCurrentLocalInputBits();
+    }
+
     public void ProcessSendForFrame(int frame)
     {
+        if (frame < 0)
+        {
+            return;
+        }
+
+        if (frame == lastSentFrame)
+        {
+            return;
+        }
+
+        byte inputBits = ReadCurrentLocalInputBits();
+        LastLocalInputBits = inputBits;
+
         if (transport == null || sessionManager == null)
         {
             return;
@@ -39,29 +65,6 @@ public class NetworkInputSender : MonoBehaviour
             return;
         }
 
-        if (frame < 0)
-        {
-            return;
-        }
-
-        if (frame == lastSentFrame)
-        {
-            return;
-        }
-
-        byte inputBits;
-
-        if (useDebugAutoInput && debugAutoInputSequence != null)
-        {
-            inputBits = debugAutoInputSequence.GetBits();
-        }
-        else
-        {
-            inputBits = InputEncoder.ReadLocalInputBits(leftKey, rightKey, attackKey);
-        }
-
-        LastLocalInputBits = inputBits;
-
         NetworkPacket packet = new NetworkPacket(
             NetworkPacketType.Input,
             playerId,
@@ -74,6 +77,16 @@ public class NetworkInputSender : MonoBehaviour
         lastSentFrame = frame;
 
         FileLogger.WriteLine($"[NetworkInputSender] Sent Input frame={frame} bits={inputBits}");
+    }
+
+    private byte ReadCurrentLocalInputBits()
+    {
+        if (useDebugAutoInput && debugAutoInputSequence != null)
+        {
+            return debugAutoInputSequence.GetBits();
+        }
+
+        return InputEncoder.ReadLocalInputBits(leftKey, rightKey, attackKey);
     }
 
     public void ResetSenderState()

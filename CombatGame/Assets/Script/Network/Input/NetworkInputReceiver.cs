@@ -12,6 +12,9 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     private RemoteInputBuffer remoteInputBuffer = new RemoteInputBuffer();
     private InputDelaySimulator delaySimulator;
 
+    private byte lastConfirmedBitsPlayer0 = 0;
+    private byte lastConfirmedBitsPlayer1 = 0;
+
     public RemoteInputBuffer Buffer => remoteInputBuffer;
     public int FixedInputDelayFrames => fixedInputDelayFrames;
 
@@ -33,6 +36,15 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         {
             InputPacket packet = releasedPackets[i];
             remoteInputBuffer.Store(packet);
+
+            if (packet.playerId == 0)
+            {
+                lastConfirmedBitsPlayer0 = packet.inputBits;
+            }
+            else if (packet.playerId == 1)
+            {
+                lastConfirmedBitsPlayer1 = packet.inputBits;
+            }
 
             FileLogger.WriteLine(
                 $"[NetworkInputReceiver] Released delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}");
@@ -68,7 +80,22 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     {
         return remoteInputBuffer.TryGetInput(frame, out inputBits);
     }
-    
+
+    public byte GetLastConfirmedBitsForPlayer(int playerId)
+    {
+        if (playerId == 0)
+        {
+            return lastConfirmedBitsPlayer0;
+        }
+
+        if (playerId == 1)
+        {
+            return lastConfirmedBitsPlayer1;
+        }
+
+        return 0;
+    }
+
     public int GetPendingDelayedInputCount()
     {
         if (delaySimulator == null)
@@ -87,5 +114,8 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         {
             delaySimulator.Clear();
         }
+
+        lastConfirmedBitsPlayer0 = 0;
+        lastConfirmedBitsPlayer1 = 0;
     }
 }

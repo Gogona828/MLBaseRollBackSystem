@@ -33,6 +33,9 @@ namespace Footsies
 
         [SerializeField]
         private List<FighterData> fighterDataList = new List<FighterData>();
+        
+        [SerializeField]
+        private FootsiesBattleInputRouter battleInputRouter;
 
         public bool debugP1Attack = false;
         public bool debugP2Attack = false;
@@ -296,18 +299,18 @@ namespace Footsies
 
         InputData GetP1InputData()
         {
-            if(isReplayingLastRoundInput)
+            if (isReplayingLastRoundInput)
             {
                 return lastRoundP1Input[currentReplayingInputIndex];
             }
 
             var time = Time.fixedTime - roundStartTime;
 
-            InputData p1Input = new InputData();
-            p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Left) ? (int)InputDefine.Left : 0;
-            p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Right) ? (int)InputDefine.Right : 0;
-            p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Attack) ? (int)InputDefine.Attack : 0;
-            p1Input.time = time;
+            FootsiesInputFrame frameInput = battleInputRouter != null
+                ? battleInputRouter.GetPlayer1Input()
+                : FootsiesInputFrame.Empty();
+
+            InputData p1Input = frameInput.ToInputData(time);
 
             if (debugP1Attack)
                 p1Input.input |= (int)InputDefine.Attack;
@@ -331,15 +334,16 @@ namespace Footsies
             if (battleAI != null)
             {
                 p2Input.input |= battleAI.getNextAIInput();
+                p2Input.time = time;
             }
             else
             {
-                p2Input.input |= InputManager.Instance.GetButton(InputManager.Command.p2Left) ? (int)InputDefine.Left : 0;
-                p2Input.input |= InputManager.Instance.GetButton(InputManager.Command.p2Right) ? (int)InputDefine.Right : 0;
-                p2Input.input |= InputManager.Instance.GetButton(InputManager.Command.p2Attack) ? (int)InputDefine.Attack : 0;
-            }
+                FootsiesInputFrame frameInput = battleInputRouter != null
+                    ? battleInputRouter.GetPlayer2Input()
+                    : FootsiesInputFrame.Empty();
 
-            p2Input.time = time;
+                p2Input = frameInput.ToInputData(time);
+            }
 
             if (debugP2Attack)
                 p2Input.input |= (int)InputDefine.Attack;
@@ -351,11 +355,14 @@ namespace Footsies
 
         private bool IsKOSkipButtonPressed()
         {
-            if (InputManager.Instance.GetButton(InputManager.Command.p1Attack))
-                return true;
+            if (battleInputRouter != null)
+            {
+                if (battleInputRouter.GetPlayer1Input().Attack)
+                    return true;
 
-            if (InputManager.Instance.GetButton(InputManager.Command.p2Attack))
-                return true;
+                if (battleInputRouter.GetPlayer2Input().Attack)
+                    return true;
+            }
 
             return false;
         }
