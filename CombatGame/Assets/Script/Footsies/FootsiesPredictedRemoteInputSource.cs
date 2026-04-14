@@ -31,16 +31,35 @@ namespace Footsies
         private byte lastPredictedBits = 0;
         private int lastPredictionFrame = -1;
 
+        public int RemotePlayerId => remotePlayerId;
+        public RemotePredictionMode PredictionMode => predictionMode;
+        public int DirectionalHoldFrames => directionalHoldFrames;
+
+        /// <summary>
+        /// 旧 API 互換用。
+        /// true なら昔の LastConfirmedUnsafe、false なら NeutralWhenUnknown に寄せる。
+        /// ただし今後は ConfigureRemotePlayer(remotePlayerId, mode, holdFrames) を使うこと。
+        /// </summary>
         public void ConfigureRemotePlayer(int remotePlayerId, bool useLastConfirmedAsPrediction)
         {
-            this.remotePlayerId = remotePlayerId;
-
-            // 旧 API 互換:
-            // true なら昔の「最後の確定入力をそのまま予測」、
-            // false なら安全側の NeutralWhenUnknown に寄せる。
-            predictionMode = useLastConfirmedAsPrediction
+            RemotePredictionMode mode = useLastConfirmedAsPrediction
                 ? RemotePredictionMode.LastConfirmedUnsafe
                 : RemotePredictionMode.NeutralWhenUnknown;
+
+            ConfigureRemotePlayer(remotePlayerId, mode, directionalHoldFrames);
+        }
+
+        /// <summary>
+        /// 推奨 API。prediction mode を明示的に指定する。
+        /// </summary>
+        public void ConfigureRemotePlayer(
+            int remotePlayerId,
+            RemotePredictionMode predictionMode,
+            int directionalHoldFrames)
+        {
+            this.remotePlayerId = remotePlayerId;
+            this.predictionMode = predictionMode;
+            this.directionalHoldFrames = Mathf.Max(0, directionalHoldFrames);
 
             lastConfirmedBits = 0;
             lastConfirmedFrame = -1;
@@ -48,7 +67,7 @@ namespace Footsies
             lastPredictionFrame = -1;
 
             FileLogger.WriteLine(
-                $"[FootsiesPredictedRemoteInputSource] ConfigureRemotePlayer remotePlayerId={remotePlayerId}, predictionMode={predictionMode}, directionalHoldFrames={directionalHoldFrames}");
+                $"[FootsiesPredictedRemoteInputSource] ConfigureRemotePlayer remotePlayerId={remotePlayerId}, predictionMode={this.predictionMode}, directionalHoldFrames={this.directionalHoldFrames}");
         }
 
         public FootsiesInputFrame GetCurrentInput()
@@ -115,13 +134,12 @@ namespace Footsies
                         return 0;
                     }
 
-                    if ((frame - lastConfirmedFrame) > Mathf.Max(0, directionalHoldFrames))
+                    if ((frame - lastConfirmedFrame) > directionalHoldFrames)
                     {
                         return 0;
                     }
 
-                    // 攻撃は絶対に予測しない。
-                    // 左右入力だけを短く保持する。
+                    // 攻撃は絶対に予測しない。左右入力だけ短く保持する。
                     return ExtractDirectionalBitsOnly(lastConfirmedBits);
 
                 case RemotePredictionMode.LastConfirmedUnsafe:

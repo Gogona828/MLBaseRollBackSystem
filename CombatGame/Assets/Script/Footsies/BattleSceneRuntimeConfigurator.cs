@@ -30,6 +30,12 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         [Header("Temporary Delay Simplification")]
         public bool useFixedDelayForTest = false;
         public int fixedDelayFramesForTest = 2;
+
+        [Header("Remote Prediction")]
+        public FootsiesPredictedRemoteInputSource.RemotePredictionMode remotePredictionMode
+            = FootsiesPredictedRemoteInputSource.RemotePredictionMode.NeutralWhenUnknown;
+
+        public int remoteDirectionalHoldFrames = 1;
     }
 
     [Header("Editor Override")]
@@ -41,7 +47,7 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
     {
         new MachineProfile
         {
-            machineName = "PCA",
+            machineName = "MSI",
             machineLabel = "PCA",
             localPlayerId = 0,
             startDelayFrames = 60,
@@ -53,11 +59,13 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             rightKey = KeyCode.D,
             attackKey = KeyCode.Space,
             useFixedDelayForTest = false,
-            fixedDelayFramesForTest = 2
+            fixedDelayFramesForTest = 4,
+            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.NeutralWhenUnknown,
+            remoteDirectionalHoldFrames = 1
         },
         new MachineProfile
         {
-            machineName = "PCB",
+            machineName = "MKLAB03",
             machineLabel = "PCB",
             localPlayerId = 1,
             startDelayFrames = 60,
@@ -69,7 +77,9 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             rightKey = KeyCode.RightArrow,
             attackKey = KeyCode.Return,
             useFixedDelayForTest = false,
-            fixedDelayFramesForTest = 2
+            fixedDelayFramesForTest = 4,
+            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.NeutralWhenUnknown,
+            remoteDirectionalHoldFrames = 1
         }
     };
 
@@ -197,7 +207,7 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             }
         }
 
-        // ローカル入力ソース
+        // ローカル入力 source
         if (footsiesP1NetworkInputSource != null)
         {
             footsiesP1NetworkInputSource.Configure(
@@ -214,15 +224,25 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             );
         }
 
-        // 予測リモート入力ソース
+        // リモート予測 source を「明示モード」で設定する
         if (footsiesP1PredictedRemoteInputSource != null)
         {
-            footsiesP1PredictedRemoteInputSource.ConfigureRemotePlayer(0, true);
+            // P1 remote source は player0 を読む
+            footsiesP1PredictedRemoteInputSource.ConfigureRemotePlayer(
+                0,
+                profile.remotePredictionMode,
+                profile.remoteDirectionalHoldFrames
+            );
         }
 
         if (footsiesP2PredictedRemoteInputSource != null)
         {
-            footsiesP2PredictedRemoteInputSource.ConfigureRemotePlayer(1, true);
+            // P2 remote source は player1 を読む
+            footsiesP2PredictedRemoteInputSource.ConfigureRemotePlayer(
+                1,
+                profile.remotePredictionMode,
+                profile.remoteDirectionalHoldFrames
+            );
         }
 
         // localPlayerId に応じて P1/P2 の入力源を差し替える
@@ -247,9 +267,9 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         }
 
         Debug.Log(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={profile.enableDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}");
+            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={profile.enableDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
 
         FileLogger.WriteLine(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={profile.enableDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}");
+            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={profile.enableDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
     }
 }
