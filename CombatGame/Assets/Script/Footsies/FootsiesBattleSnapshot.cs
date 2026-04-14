@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Footsies
 {
@@ -13,12 +14,16 @@ namespace Footsies
         public uint fighter1RoundWon;
         public uint fighter2RoundWon;
 
-        // battle-level の進行状態も rollback 対象にする
         public uint currentRecordingInputIndex;
         public uint currentReplayingInputIndex;
         public uint lastRoundMaxRecordingInput;
         public bool isReplayingLastRoundInput;
         public bool isDebugPause;
+
+        // KO 即確定を避けるための pending 状態
+        public bool hasPendingKO;
+        public int pendingKOFighterSlot;
+        public int pendingKOStableFrames;
 
         public FootsiesFighterSnapshot fighter1;
         public FootsiesFighterSnapshot fighter2;
@@ -38,6 +43,9 @@ namespace Footsies
                 lastRoundMaxRecordingInput = lastRoundMaxRecordingInput,
                 isReplayingLastRoundInput = isReplayingLastRoundInput,
                 isDebugPause = isDebugPause,
+                hasPendingKO = hasPendingKO,
+                pendingKOFighterSlot = pendingKOFighterSlot,
+                pendingKOStableFrames = pendingKOStableFrames,
                 fighter1 = fighter1 != null ? fighter1.Clone() : null,
                 fighter2 = fighter2 != null ? fighter2.Clone() : null
             };

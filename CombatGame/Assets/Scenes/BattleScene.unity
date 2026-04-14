@@ -623,7 +623,7 @@ MonoBehaviour:
     leftKey: 97
     rightKey: 100
     attackKey: 32
-    useFixedDelayForTest: 1
+    useFixedDelayForTest: 0
     fixedDelayFramesForTest: 4
   - machineName: mklab03
     machineLabel: PCB
@@ -636,7 +636,7 @@ MonoBehaviour:
     leftKey: 276
     rightKey: 275
     attackKey: 13
-    useFixedDelayForTest: 1
+    useFixedDelayForTest: 0
     fixedDelayFramesForTest: 4
   transport: {fileID: 1948372533}
   sessionManager: {fileID: 1948372535}

@@ -37,6 +37,10 @@ namespace Footsies
         [SerializeField]
         private FootsiesBattleInputRouter battleInputRouter;
 
+        [Header("Optional Network Reference")]
+        [SerializeField]
+        private NetworkInputReceiver networkInputReceiver;
+
         public bool debugP1Attack = false;
         public bool debugP2Attack = false;
         public bool debugP1Guard = false;
@@ -86,6 +90,17 @@ namespace Footsies
         private float endStateTime = 3f;
         private float endStateSkippableTime = 1.5f;
 
+        [Header("Rollback-safe KO Confirmation")]
+        [SerializeField]
+        private int koConfirmStableFrames = 6;
+
+        [SerializeField]
+        private bool requireNoPendingRemoteInputsForKO = true;
+
+        private bool hasPendingKO = false;
+        private int pendingKOFighterSlot = -1;   // 1 or 2, none = -1
+        private int pendingKOStableFrames = 0;
+
         void Awake()
         {
             fighterDataList.ForEach((data) => data.setupDictionary());
@@ -99,6 +114,11 @@ namespace Footsies
             if (roundUI != null)
             {
                 roundUIAnimator = roundUI.GetComponent<Animator>();
+            }
+
+            if (networkInputReceiver == null)
+            {
+                networkInputReceiver = FindObjectOfType<NetworkInputReceiver>();
             }
         }
 
@@ -114,14 +134,13 @@ namespace Footsies
                 case RoundStateType.Stop:
 
                     ChangeRoundState(RoundStateType.Intro);
-
                     break;
 
                 case RoundStateType.Intro:
 
                     UpdateIntroState();
 
-                    timer -= Time.deltaTime;
+                    timer -= Time.fixedDeltaTime;
                     if (timer <= 0f)
                     {
                         ChangeRoundState(RoundStateType.Fight);
@@ -145,19 +164,15 @@ namespace Footsies
                     frameCount++;
 
                     UpdateFightState();
-
-                    var deadFighter = _fighters.Find((f) => f.isDead);
-                    if (deadFighter != null)
-                    {
-                        ChangeRoundState(RoundStateType.KO);
-                    }
+                    UpdatePendingKOState();
 
                     break;
 
                 case RoundStateType.KO:
 
                     UpdateKOState();
-                    timer -= Time.deltaTime;
+
+                    timer -= Time.fixedDeltaTime;
                     if (timer <= 0f)
                     {
                         ChangeRoundState(RoundStateType.End);
@@ -168,7 +183,8 @@ namespace Footsies
                 case RoundStateType.End:
 
                     UpdateEndState();
-                    timer -= Time.deltaTime;
+
+                    timer -= Time.fixedDeltaTime;
                     if (timer <= 0f
                         || (timer <= endStateSkippableTime && IsKOSkipButtonPressed()))
                     {
@@ -182,6 +198,12 @@ namespace Footsies
         void ChangeRoundState(RoundStateType state)
         {
             _roundState = state;
+
+            if (_roundState != RoundStateType.Fight)
+            {
+                ClearPendingKO();
+            }
+
             switch (_roundState)
             {
                 case RoundStateType.Stop:
@@ -196,12 +218,17 @@ namespace Footsies
 
                 case RoundStateType.Intro:
 
+                    ClearPendingKO();
+
                     fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
                     fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
 
                     timer = introStateTime;
 
-                    roundUIAnimator.SetTrigger("RoundStart");
+                    if (roundUIAnimator != null)
+                    {
+                        roundUIAnimator.SetTrigger("RoundStart");
+                    }
 
                     if (GameManager.Instance.isVsCPU)
                         battleAI = new BattleAI(this);
@@ -209,6 +236,8 @@ namespace Footsies
                     break;
 
                 case RoundStateType.Fight:
+
+                    ClearPendingKO();
 
                     roundStartTime = Time.fixedTime;
                     frameCount = -1;
@@ -219,6 +248,8 @@ namespace Footsies
 
                 case RoundStateType.KO:
 
+                    ClearPendingKO();
+
                     timer = koStateTime;
 
                     CopyLastRoundInput();
@@ -228,7 +259,10 @@ namespace Footsies
 
                     battleAI = null;
 
-                    roundUIAnimator.SetTrigger("RoundEnd");
+                    if (roundUIAnimator != null)
+                    {
+                        roundUIAnimator.SetTrigger("RoundEnd");
+                    }
 
                     break;
 
@@ -259,7 +293,9 @@ namespace Footsies
         {
             var p1Input = GetP1InputData();
             var p2Input = GetP2InputData();
+
             RecordInput(p1Input, p2Input);
+
             fighter1.UpdateInput(p1Input);
             fighter2.UpdateInput(p2Input);
 
@@ -277,7 +313,9 @@ namespace Footsies
         {
             var p1Input = GetP1InputData();
             var p2Input = GetP2InputData();
+
             RecordInput(p1Input, p2Input);
+
             fighter1.UpdateInput(p1Input);
             fighter2.UpdateInput(p2Input);
 
@@ -294,7 +332,6 @@ namespace Footsies
 
         void UpdateKOState()
         {
-
         }
 
         void UpdateEndState()
@@ -309,6 +346,101 @@ namespace Footsies
             UpdatePushCharacterVsBackground();
         }
 
+        private void UpdatePendingKOState()
+        {
+            int deadSlot = GetDeadFighterSlot();
+
+            if (deadSlot < 0)
+            {
+                ClearPendingKO();
+                return;
+            }
+
+            if (!hasPendingKO || pendingKOFighterSlot != deadSlot)
+            {
+                BeginPendingKO(deadSlot);
+            }
+            else
+            {
+                pendingKOStableFrames++;
+            }
+
+            if (CanConfirmPendingKO())
+            {
+                ChangeRoundState(RoundStateType.KO);
+            }
+        }
+
+        private void BeginPendingKO(int deadSlot)
+        {
+            hasPendingKO = true;
+            pendingKOFighterSlot = deadSlot;
+            pendingKOStableFrames = 0;
+        }
+
+        private void ClearPendingKO()
+        {
+            hasPendingKO = false;
+            pendingKOFighterSlot = -1;
+            pendingKOStableFrames = 0;
+        }
+
+        private int GetDeadFighterSlot()
+        {
+            bool p1Dead = fighter1 != null && fighter1.isDead;
+            bool p2Dead = fighter2 != null && fighter2.isDead;
+
+            if (p1Dead && !p2Dead)
+            {
+                return 1;
+            }
+
+            if (!p1Dead && p2Dead)
+            {
+                return 2;
+            }
+
+            // 両方死んだケースは今回の pending KO では即確定しない
+            return -1;
+        }
+
+        private bool CanConfirmPendingKO()
+        {
+            if (!hasPendingKO)
+            {
+                return false;
+            }
+
+            if (pendingKOStableFrames < koConfirmStableFrames)
+            {
+                return false;
+            }
+
+            if (requireNoPendingRemoteInputsForKO
+                && networkInputReceiver != null
+                && networkInputReceiver.GetPendingDelayedInputCount() > 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private float GetDeterministicInputTime()
+        {
+            if (_roundState != RoundStateType.Fight)
+            {
+                return 0f;
+            }
+
+            if (frameCount < 0)
+            {
+                return 0f;
+            }
+
+            return frameCount * Time.fixedDeltaTime;
+        }
+
         InputData GetP1InputData()
         {
             if (isReplayingLastRoundInput)
@@ -316,7 +448,7 @@ namespace Footsies
                 return lastRoundP1Input[currentReplayingInputIndex];
             }
 
-            float time = GetDeterministicInputTime();
+            var time = GetDeterministicInputTime();
 
             FootsiesInputFrame frameInput = battleInputRouter != null
                 ? battleInputRouter.GetPlayer1Input()
@@ -339,7 +471,7 @@ namespace Footsies
                 return lastRoundP2Input[currentReplayingInputIndex];
             }
 
-            float time = GetDeterministicInputTime();
+            var time = GetDeterministicInputTime();
 
             InputData p2Input = new InputData();
 
@@ -573,6 +705,9 @@ namespace Footsies
                 lastRoundMaxRecordingInput = lastRoundMaxRecordingInput,
                 isReplayingLastRoundInput = isReplayingLastRoundInput,
                 isDebugPause = isDebugPause,
+                hasPendingKO = hasPendingKO,
+                pendingKOFighterSlot = pendingKOFighterSlot,
+                pendingKOStableFrames = pendingKOStableFrames,
                 fighter1 = fighter1 != null ? fighter1.CaptureSnapshot() : null,
                 fighter2 = fighter2 != null ? fighter2.CaptureSnapshot() : null
             };
@@ -599,6 +734,10 @@ namespace Footsies
             isReplayingLastRoundInput = snapshot.isReplayingLastRoundInput;
             isDebugPause = snapshot.isDebugPause;
 
+            hasPendingKO = snapshot.hasPendingKO;
+            pendingKOFighterSlot = snapshot.pendingKOFighterSlot;
+            pendingKOStableFrames = snapshot.pendingKOStableFrames;
+
             if (fighter1 != null && snapshot.fighter1 != null)
             {
                 fighter1.RestoreSnapshot(snapshot.fighter1);
@@ -613,21 +752,6 @@ namespace Footsies
 
             UpdatePushCharacterVsCharacter();
             UpdatePushCharacterVsBackground();
-        }
-        
-        private float GetDeterministicInputTime()
-        {
-            if (_roundState != RoundStateType.Fight)
-            {
-                return 0f;
-            }
-
-            if (frameCount < 0)
-            {
-                return 0f;
-            }
-
-            return frameCount * Time.fixedDeltaTime;
         }
     }
 }
