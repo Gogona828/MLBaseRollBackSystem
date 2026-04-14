@@ -523,6 +523,8 @@ Transform:
   - {fileID: 1691120391}
   - {fileID: 1272376373}
   - {fileID: 1347111157}
+  - {fileID: 867329789}
+  - {fileID: 1483423051}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &749302605 stripped
@@ -576,6 +578,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 675947966}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &867329788
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 867329789}
+  - component: {fileID: 867329790}
+  m_Layer: 0
+  m_Name: FootsiesP1PredictedRemoteInputSource
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &867329789
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 867329788}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 675947966}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &867329790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 867329788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 445cf60eb47085f4d980810f4ef36671, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  networkInputReceiver: {fileID: 1948372539}
+  frameClock: {fileID: 1948372536}
+  predictionMismatchDetector: {fileID: 1272376372}
+  remotePlayerId: 0
+  useLastConfirmedAsPrediction: 1
 --- !u!1 &1250205676
 GameObject:
   m_ObjectHideFlags: 0
@@ -720,6 +771,55 @@ MonoBehaviour:
   enableAutoRollback: 1
   rollbackSafetyOffsetFrames: 0
   rollbackCooldownFrames: 6
+--- !u!1 &1483423050
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1483423051}
+  - component: {fileID: 1483423052}
+  m_Layer: 0
+  m_Name: FootsiesP2PredictedRemoteInputSource
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1483423051
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1483423050}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 675947966}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1483423052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1483423050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 445cf60eb47085f4d980810f4ef36671, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  networkInputReceiver: {fileID: 1948372539}
+  frameClock: {fileID: 1948372536}
+  predictionMismatchDetector: {fileID: 1272376372}
+  remotePlayerId: 1
+  useLastConfirmedAsPrediction: 1
 --- !u!1 &1638377578
 GameObject:
   m_ObjectHideFlags: 0
@@ -1005,7 +1105,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5d445009d384024dbc47d1ac618a86a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fixedInputDelayFrames: 10
+  fixedInputDelayFrames: 100
   predictionMismatchDetector: {fileID: 0}
 --- !u!114 &1948372540
 MonoBehaviour:
@@ -1068,7 +1168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player1InputSourceBehaviour: {fileID: 192827124}
-  player2InputSourceBehaviour: {fileID: 187519314}
+  player2InputSourceBehaviour: {fileID: 1483423052}
 --- !u!4 &2065654613
 Transform:
   m_ObjectHideFlags: 0

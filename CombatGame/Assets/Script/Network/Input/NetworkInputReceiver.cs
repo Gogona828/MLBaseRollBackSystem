@@ -78,7 +78,15 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     public bool TryGetRemoteInput(int frame, out byte inputBits)
     {
-        return remoteInputBuffer.TryGetInput(frame, out inputBits);
+        bool found = remoteInputBuffer.TryGetInput(frame, out inputBits);
+
+        if (found)
+        {
+            FileLogger.WriteLine(
+                $"[NetworkInputReceiver] TryGetRemoteInput HIT frame={frame}, bits={inputBits}");
+        }
+
+        return found;
     }
 
     public byte GetLastConfirmedBitsForPlayer(int playerId)
