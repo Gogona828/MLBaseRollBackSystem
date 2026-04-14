@@ -18,14 +18,26 @@ public class RollbackObservationMonitor : MonoBehaviour
     private float lastPredictedObservedRemotePosX = 0f;
     private int lastMissFrame = -1;
 
+    private void Awake()
+    {
+        FileLogger.WriteLine(
+            $"[RollbackObservationMonitor] Awake player1StateTester={(player1StateTester != null)} player2StateTester={(player2StateTester != null)} warpDistanceThreshold={warpDistanceThreshold} lateRollbackAllowanceFrames={lateRollbackAllowanceFrames}");
+    }
+
     public void RecordPredictedRemotePosition(float predictedRemotePosX)
     {
         lastPredictedObservedRemotePosX = predictedRemotePosX;
+
+        FileLogger.WriteLine(
+            $"[RollbackObservationMonitor] RecordPredictedRemotePosition predictedRemotePosX={predictedRemotePosX}");
     }
 
     public void RecordMissFrame(int frame)
     {
         lastMissFrame = frame;
+
+        FileLogger.WriteLine(
+            $"[RollbackObservationMonitor] RecordMissFrame frame={frame}");
     }
 
     public void ObserveWarpOnRollback(int rollbackFrame, float confirmedRemotePosX)
@@ -87,12 +99,20 @@ public class RollbackObservationMonitor : MonoBehaviour
     {
         if (player1StateTester == null || player2StateTester == null)
         {
+            FileLogger.WriteLine(
+                $"[RollbackObservationMonitor] GetObservedRemotePosX failed because references are missing. player1StateTester={(player1StateTester != null)} player2StateTester={(player2StateTester != null)}");
+
             return 0f;
         }
 
-        return localPlayerIsP1
+        float observedRemotePosX = localPlayerIsP1
             ? player2StateTester.SimulatedPosX
             : player1StateTester.SimulatedPosX;
+
+        FileLogger.WriteLine(
+            $"[RollbackObservationMonitor] GetObservedRemotePosX localPlayerIsP1={localPlayerIsP1} observedRemotePosX={observedRemotePosX}");
+
+        return observedRemotePosX;
     }
 
     public void ResetMonitor()
@@ -101,5 +121,7 @@ public class RollbackObservationMonitor : MonoBehaviour
         TotalGhostHitCandidates = 0;
         lastPredictedObservedRemotePosX = 0f;
         lastMissFrame = -1;
+
+        FileLogger.WriteLine("[RollbackObservationMonitor] ResetMonitor");
     }
 }

@@ -25,6 +25,9 @@ public class RollbackCoordinator : MonoBehaviour
     private void Awake()
     {
         snapshotRingBuffer = new SnapshotRingBuffer(snapshotCapacity);
+
+        FileLogger.WriteLine(
+            $"[RollbackCoordinator] Awake frameClock={(frameClock != null)} sessionManager={(sessionManager != null)} player1StateTester={(player1StateTester != null)} player2StateTester={(player2StateTester != null)} rollbackObservationMonitor={(rollbackObservationMonitor != null)} localPlayerIsP1={localPlayerIsP1} snapshotCapacity={snapshotCapacity}");
     }
 
     public void BeginStep()
@@ -37,6 +40,7 @@ public class RollbackCoordinator : MonoBehaviour
     {
         if (player1StateTester == null || player2StateTester == null)
         {
+            FileLogger.WriteLine("[RollbackCoordinator] SaveSnapshotForFrame skipped because player state testers are null.");
             return;
         }
 
@@ -53,6 +57,12 @@ public class RollbackCoordinator : MonoBehaviour
         snapshotRingBuffer.Store(snapshot);
 
         FileLogger.WriteLine($"[RollbackCoordinator] Saved snapshot {snapshot}");
+
+        if (rollbackObservationMonitor != null)
+        {
+            float predictedRemotePosX = rollbackObservationMonitor.GetObservedRemotePosX(localPlayerIsP1);
+            rollbackObservationMonitor.RecordPredictedRemotePosition(predictedRemotePosX);
+        }
     }
 
     public void RequestRollback(int targetFrame)
@@ -86,8 +96,16 @@ public class RollbackCoordinator : MonoBehaviour
             resumeFrameExclusive
         );
 
-        if (rollbackObservationMonitor != null)
+        if (rollbackObservationMonitor == null)
         {
+            FileLogger.WriteLine(
+                $"[RollbackCoordinator] rollbackObservationMonitor is null at rollback frame={pendingRequest.TargetFrame}");
+        }
+        else
+        {
+            FileLogger.WriteLine(
+                $"[RollbackCoordinator] Calling observation monitor at rollback frame={pendingRequest.TargetFrame}");
+
             float confirmedRemotePosX = rollbackObservationMonitor.GetObservedRemotePosX(localPlayerIsP1);
             rollbackObservationMonitor.ObserveWarpOnRollback(pendingRequest.TargetFrame, confirmedRemotePosX);
         }
@@ -128,5 +146,7 @@ public class RollbackCoordinator : MonoBehaviour
         pendingRequest = RollbackRequest.Invalid();
         PendingResimulationRequest = RollbackResimulationRequest.Invalid();
         DidRollbackThisStep = false;
+
+        FileLogger.WriteLine("[RollbackCoordinator] ResetCoordinator");
     }
 }

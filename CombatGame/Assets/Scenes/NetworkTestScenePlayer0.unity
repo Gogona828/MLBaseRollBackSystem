@@ -1046,7 +1046,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   machineLabel: PCA
-  playerId: -1
+  playerId: 0
   remoteIp: 
   localPort: -1
   remotePort: -1
