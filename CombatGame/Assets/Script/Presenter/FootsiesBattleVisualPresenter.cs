@@ -8,15 +8,20 @@ namespace Footsies
     /// Canvas 上の RectTransform / Image に対して
     /// 表示だけを滑らかに追従させる最小 View 層。
     ///
-    /// 想定:
-    /// - BattleCore.fighter1 / fighter2 がゲームの真実の state
-    /// - Canvas 内に P1 / P2 の Image がある
-    /// - その RectTransform の anchoredPosition をこの script が更新する
+    /// 安全版:
+    /// - 初期の anchoredPosition を基準として保持
+    /// - まずは X だけ追従
+    /// - Y はデフォルトで固定
+    ///
+    /// 使い方:
+    /// - BattleScene の Canvas 内に空オブジェクトを作ってこの script を付ける
+    /// - battleCore を割り当てる
+    /// - p1.root / p2.root に各キャラ Image の RectTransform を割り当てる
+    /// - p1.image / p2.image に各 Image を割り当てる
     ///
     /// 注意:
-    /// - 既存の別スクリプトが同じ RectTransform.anchoredPosition を毎フレーム更新している場合、
-    ///   その位置更新は止めてください
-    /// - Sprite の切り替えもこの script に任せるなら、既存の Image.sprite 更新も止めてください
+    /// - 他の script が同じ RectTransform.anchoredPosition を毎フレーム更新しているなら、
+    ///   その位置更新は止めること
     /// </summary>
     public class FootsiesBattleCanvasVisualPresenter : MonoBehaviour
     {
@@ -27,15 +32,21 @@ namespace Footsies
             public RectTransform root;
             public Image image;
 
-            [Header("Canvas Position Mapping")]
-            [Tooltip("fight 座標 0,0 を Canvas 上のどこへ置くか")]
-            public Vector2 canvasOrigin = Vector2.zero;
+            [Header("Follow Axes")]
+            [Tooltip("X 方向の補間追従を行う")]
+            public bool followX = true;
 
-            [Tooltip("fight の 1 unit を Canvas 上で何 px として扱うか")]
-            public float canvasUnitsPerFightUnit = 100f;
+            [Tooltip("Y 方向の補間追従を行う。最初は false 推奨")]
+            public bool followY = false;
 
-            [Header("Optional Offsets")]
+            [Header("Mapping")]
+            [Tooltip("fight 1 unit を Canvas 上で何 px とするか")]
+            public float canvasUnitsPerFightUnit = 120f;
+
+            [Tooltip("X に追加する微調整 px")]
             public float extraX = 0f;
+
+            [Tooltip("Y に追加する微調整 px")]
             public float extraY = 0f;
 
             [Header("Smoothing")]
@@ -55,6 +66,14 @@ namespace Footsies
             [Tooltip("faceRight=false のとき横反転する")]
             public bool flipByLocalScale = true;
 
+            [Header("Origin")]
+            [Tooltip("true なら開始時の anchoredPosition を基準点として使う")]
+            public bool useInitialAnchoredPositionAsOrigin = true;
+
+            [Tooltip("手動で基準点を指定したいときだけ使う")]
+            public Vector2 manualOrigin = Vector2.zero;
+
+            [HideInInspector] public Vector2 baseAnchoredPosition;
             [HideInInspector] public Vector2 renderAnchoredPosition;
             [HideInInspector] public Vector2 renderVelocity;
             [HideInInspector] public bool initialized;
@@ -71,6 +90,12 @@ namespace Footsies
         [Header("Player 2 View")]
         [SerializeField] private FighterCanvasViewBinding p2 = new FighterCanvasViewBinding();
 
+        private void Awake()
+        {
+            InitializeBinding(p1);
+            InitializeBinding(p2);
+        }
+
         private void LateUpdate()
         {
             if (battleCore == null)
@@ -82,6 +107,22 @@ namespace Footsies
             UpdateFighterView(battleCore.fighter2, p2);
         }
 
+        private void InitializeBinding(FighterCanvasViewBinding view)
+        {
+            if (view == null || view.root == null)
+            {
+                return;
+            }
+
+            view.baseAnchoredPosition = view.useInitialAnchoredPositionAsOrigin
+                ? view.root.anchoredPosition
+                : view.manualOrigin;
+
+            view.renderAnchoredPosition = view.root.anchoredPosition;
+            view.renderVelocity = Vector2.zero;
+            view.initialized = true;
+        }
+
         private void UpdateFighterView(Fighter fighter, FighterCanvasViewBinding view)
         {
             if (fighter == null || view == null || view.root == null)
@@ -89,35 +130,30 @@ namespace Footsies
                 return;
             }
 
+            if (!view.initialized)
+            {
+                InitializeBinding(view);
+            }
+
             Vector2 target = BuildTargetAnchoredPosition(fighter, view);
 
-            if (!view.initialized)
+            float distance = Vector2.Distance(view.renderAnchoredPosition, target);
+
+            if (distance >= view.snapDistance)
             {
                 view.renderAnchoredPosition = target;
                 view.renderVelocity = Vector2.zero;
-                view.initialized = true;
             }
             else
             {
-                float distance = Vector2.Distance(view.renderAnchoredPosition, target);
-
-                if (distance >= view.snapDistance)
-                {
-                    // rollback で大きくズレたときは即スナップ
-                    view.renderAnchoredPosition = target;
-                    view.renderVelocity = Vector2.zero;
-                }
-                else
-                {
-                    view.renderAnchoredPosition = Vector2.SmoothDamp(
-                        current: view.renderAnchoredPosition,
-                        target: target,
-                        currentVelocity: ref view.renderVelocity,
-                        smoothTime: Mathf.Max(0.0001f, view.smoothTime),
-                        maxSpeed: Mathf.Max(0.01f, view.maxSpeed),
-                        deltaTime: Time.unscaledDeltaTime
-                    );
-                }
+                view.renderAnchoredPosition = Vector2.SmoothDamp(
+                    current: view.renderAnchoredPosition,
+                    target: target,
+                    currentVelocity: ref view.renderVelocity,
+                    smoothTime: Mathf.Max(0.0001f, view.smoothTime),
+                    maxSpeed: Mathf.Max(0.01f, view.maxSpeed),
+                    deltaTime: Time.unscaledDeltaTime
+                );
             }
 
             view.root.anchoredPosition = view.renderAnchoredPosition;
@@ -128,16 +164,29 @@ namespace Footsies
 
         private Vector2 BuildTargetAnchoredPosition(Fighter fighter, FighterCanvasViewBinding view)
         {
-            float x = view.canvasOrigin.x
-                + (fighter.position.x * view.canvasUnitsPerFightUnit)
-                + (fighter.spriteShakePosition * view.shakeScale)
-                + view.extraX;
+            Vector2 target = view.baseAnchoredPosition;
 
-            float y = view.canvasOrigin.y
-                + (fighter.position.y * view.canvasUnitsPerFightUnit)
-                + view.extraY;
+            if (view.followX)
+            {
+                target.x = view.baseAnchoredPosition.x
+                    + (fighter.position.x * view.canvasUnitsPerFightUnit)
+                    + (fighter.spriteShakePosition * view.shakeScale)
+                    + view.extraX;
+            }
 
-            return new Vector2(x, y);
+            if (view.followY)
+            {
+                target.y = view.baseAnchoredPosition.y
+                    + (fighter.position.y * view.canvasUnitsPerFightUnit)
+                    + view.extraY;
+            }
+            else
+            {
+                // Y は開始時の見た目位置を維持
+                target.y = view.baseAnchoredPosition.y + view.extraY;
+            }
+
+            return target;
         }
 
         private void UpdateSprite(Fighter fighter, FighterCanvasViewBinding view)
@@ -180,6 +229,26 @@ namespace Footsies
             view.lastFaceRight = faceRight;
         }
 
+        [ContextMenu("Reinitialize Origins From Current UI")]
+        public void ReinitializeOriginsFromCurrentUI()
+        {
+            ReinitializeOne(p1);
+            ReinitializeOne(p2);
+        }
+
+        private void ReinitializeOne(FighterCanvasViewBinding view)
+        {
+            if (view == null || view.root == null)
+            {
+                return;
+            }
+
+            view.baseAnchoredPosition = view.root.anchoredPosition;
+            view.renderAnchoredPosition = view.root.anchoredPosition;
+            view.renderVelocity = Vector2.zero;
+            view.initialized = true;
+        }
+
         [ContextMenu("Snap UI To Core State")]
         public void SnapUIToCoreState()
         {
@@ -199,9 +268,10 @@ namespace Footsies
                 return;
             }
 
-            view.renderAnchoredPosition = BuildTargetAnchoredPosition(fighter, view);
+            Vector2 target = BuildTargetAnchoredPosition(fighter, view);
+            view.renderAnchoredPosition = target;
             view.renderVelocity = Vector2.zero;
-            view.root.anchoredPosition = view.renderAnchoredPosition;
+            view.root.anchoredPosition = target;
             view.initialized = true;
 
             UpdateSprite(fighter, view);

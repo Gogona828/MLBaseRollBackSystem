@@ -1154,15 +1154,19 @@ MonoBehaviour:
   p1:
     root: {fileID: 199929779}
     image: {fileID: 199929781}
-    canvasOrigin: {x: 0, y: 0}
-    canvasUnitsPerFightUnit: 100
+    followX: 1
+    followY: 0
+    canvasUnitsPerFightUnit: 120
     extraX: 0
     extraY: 0
     smoothTime: 0.045
-    snapDistance: 0.75
-    maxSpeed: 100
+    snapDistance: 80
+    maxSpeed: 10000
     shakeScale: 0.01
     flipByLocalScale: 1
+    useInitialAnchoredPositionAsOrigin: 1
+    manualOrigin: {x: 0, y: 0}
+    baseAnchoredPosition: {x: 0, y: 0}
     renderAnchoredPosition: {x: 0, y: 0}
     renderVelocity: {x: 0, y: 0}
     initialized: 0
@@ -1171,15 +1175,19 @@ MonoBehaviour:
   p2:
     root: {fileID: 199929778}
     image: {fileID: 199929780}
-    canvasOrigin: {x: 0, y: 0}
-    canvasUnitsPerFightUnit: 100
+    followX: 1
+    followY: 0
+    canvasUnitsPerFightUnit: 120
     extraX: 0
     extraY: 0
     smoothTime: 0.045
-    snapDistance: 0.75
-    maxSpeed: 100
+    snapDistance: 80
+    maxSpeed: 10000
     shakeScale: 0.01
     flipByLocalScale: 1
+    useInitialAnchoredPositionAsOrigin: 1
+    manualOrigin: {x: 0, y: 0}
+    baseAnchoredPosition: {x: 0, y: 0}
     renderAnchoredPosition: {x: 0, y: 0}
     renderVelocity: {x: 0, y: 0}
     initialized: 0
