@@ -6,9 +6,9 @@ namespace Footsies
     {
         [Header("References")]
         [SerializeField] private NetworkSessionManager sessionManager;
+        [SerializeField] private FootsiesBattleRollbackCoordinator battleRollbackCoordinator;
         [SerializeField] private NetworkInputReceiver inputReceiver;
         [SerializeField] private AutoRollbackTrigger autoRollbackTrigger;
-        [SerializeField] private FootsiesBattleRollbackCoordinator battleRollbackCoordinator;
         [SerializeField] private FootsiesBattleResimulationDriver battleResimulationDriver;
 
         private void FixedUpdate()
@@ -24,6 +24,9 @@ namespace Footsies
             }
 
             battleRollbackCoordinator.BeginStep();
+
+            // 先に現在 frame の状態を保存する
+            battleRollbackCoordinator.SaveSnapshotForCurrentFrame();
 
             if (inputReceiver != null)
             {
@@ -41,8 +44,6 @@ namespace Footsies
             {
                 battleResimulationDriver.ProcessResimulationIfNeeded();
             }
-
-            battleRollbackCoordinator.SaveSnapshotForCurrentFrame();
         }
     }
 }

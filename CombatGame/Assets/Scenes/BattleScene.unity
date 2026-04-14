@@ -1069,9 +1069,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sessionManager: {fileID: 1948372535}
+  battleRollbackCoordinator: {fileID: 587250376}
   inputReceiver: {fileID: 1948372539}
   autoRollbackTrigger: {fileID: 1347111158}
-  battleRollbackCoordinator: {fileID: 587250376}
   battleResimulationDriver: {fileID: 445552243}
 --- !u!4 &1691120391
 Transform:
@@ -1158,7 +1158,6 @@ GameObject:
   - component: {fileID: 1948372540}
   - component: {fileID: 1948372539}
   - component: {fileID: 1948372538}
-  - component: {fileID: 1948372541}
   - component: {fileID: 1948372537}
   m_Layer: 0
   m_Name: Network
@@ -1306,22 +1305,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   transport: {fileID: 1948372533}
   sessionManager: {fileID: 1948372535}
-  inputReceiver: {fileID: 1948372539}
---- !u!114 &1948372541
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1948372532}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: deb092de22c12374e96be4d1afb13d45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  frameClock: {fileID: 1948372536}
-  sessionManager: {fileID: 1948372535}
-  inputSender: {fileID: 1948372538}
   inputReceiver: {fileID: 1948372539}
 --- !u!1 &2065654611
 GameObject:
