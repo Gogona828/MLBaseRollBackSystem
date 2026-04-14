@@ -347,6 +347,42 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ac8378dd394a0af4b946774d38e9710a, type: 3}
+--- !u!224 &199929778 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 224646878221732290, guid: ac8378dd394a0af4b946774d38e9710a,
+    type: 3}
+  m_PrefabInstance: {fileID: 199929777}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &199929779 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 224105487118115214, guid: ac8378dd394a0af4b946774d38e9710a,
+    type: 3}
+  m_PrefabInstance: {fileID: 199929777}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &199929780 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 114789658872694582, guid: ac8378dd394a0af4b946774d38e9710a,
+    type: 3}
+  m_PrefabInstance: {fileID: 199929777}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &199929781 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 114247125956699192, guid: ac8378dd394a0af4b946774d38e9710a,
+    type: 3}
+  m_PrefabInstance: {fileID: 199929777}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &392893571
 GameObject:
   m_ObjectHideFlags: 0
@@ -625,6 +661,8 @@ MonoBehaviour:
     attackKey: 32
     useFixedDelayForTest: 0
     fixedDelayFramesForTest: 4
+    remotePredictionMode: 0
+    remoteDirectionalHoldFrames: 1
   - machineName: mklab03
     machineLabel: PCB
     localPlayerId: 1
@@ -638,6 +676,8 @@ MonoBehaviour:
     attackKey: 13
     useFixedDelayForTest: 0
     fixedDelayFramesForTest: 4
+    remotePredictionMode: 0
+    remoteDirectionalHoldFrames: 1
   transport: {fileID: 1948372533}
   sessionManager: {fileID: 1948372535}
   fileLoggerBootstrap: {fileID: 1948372537}
@@ -758,7 +798,8 @@ MonoBehaviour:
   frameClock: {fileID: 1948372536}
   predictionMismatchDetector: {fileID: 1272376372}
   remotePlayerId: 0
-  useLastConfirmedAsPrediction: 1
+  predictionMode: 0
+  directionalHoldFrames: 1
 --- !u!1 &886560969
 GameObject:
   m_ObjectHideFlags: 0
@@ -1078,7 +1119,87 @@ MonoBehaviour:
   frameClock: {fileID: 1948372536}
   predictionMismatchDetector: {fileID: 1272376372}
   remotePlayerId: 1
-  useLastConfirmedAsPrediction: 1
+  predictionMode: 0
+  directionalHoldFrames: 1
+--- !u!1 &1588919811
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1588919813}
+  - component: {fileID: 1588919812}
+  m_Layer: 0
+  m_Name: FootsiesBattleVisualPresenter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1588919812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1588919811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7349c837bb73e414fa213130c7561383, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  battleCore: {fileID: 1856329101}
+  p1:
+    root: {fileID: 199929779}
+    image: {fileID: 199929781}
+    canvasOrigin: {x: 0, y: 0}
+    canvasUnitsPerFightUnit: 100
+    extraX: 0
+    extraY: 0
+    smoothTime: 0.045
+    snapDistance: 0.75
+    maxSpeed: 100
+    shakeScale: 0.01
+    flipByLocalScale: 1
+    renderAnchoredPosition: {x: 0, y: 0}
+    renderVelocity: {x: 0, y: 0}
+    initialized: 0
+    lastSprite: {fileID: 0}
+    lastFaceRight: 0
+  p2:
+    root: {fileID: 199929778}
+    image: {fileID: 199929780}
+    canvasOrigin: {x: 0, y: 0}
+    canvasUnitsPerFightUnit: 100
+    extraX: 0
+    extraY: 0
+    smoothTime: 0.045
+    snapDistance: 0.75
+    maxSpeed: 100
+    shakeScale: 0.01
+    flipByLocalScale: 1
+    renderAnchoredPosition: {x: 0, y: 0}
+    renderVelocity: {x: 0, y: 0}
+    initialized: 0
+    lastSprite: {fileID: 0}
+    lastFaceRight: 0
+--- !u!4 &1588919813
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1588919811}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1638377578
 GameObject:
   m_ObjectHideFlags: 0
@@ -1211,11 +1332,14 @@ MonoBehaviour:
   fighterDataList:
   - {fileID: 11400000, guid: 5566ac98dc546dc4a89972ce7db49d91, type: 2}
   battleInputRouter: {fileID: 2065654612}
+  networkInputReceiver: {fileID: 0}
   debugP1Attack: 0
   debugP2Attack: 0
   debugP1Guard: 0
   debugP2Guard: 0
   debugPlayLastRoundInput: 0
+  koConfirmStableFrames: 6
+  requireNoPendingRemoteInputsForKO: 1
 --- !u!4 &1856329102
 Transform:
   m_ObjectHideFlags: 0
@@ -1506,3 +1630,4 @@ SceneRoots:
   - {fileID: 445552244}
   - {fileID: 1210230554}
   - {fileID: 814611510}
+  - {fileID: 1588919813}
