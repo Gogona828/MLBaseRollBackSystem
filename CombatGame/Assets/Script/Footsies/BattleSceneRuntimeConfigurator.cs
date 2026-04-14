@@ -97,6 +97,9 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
     [SerializeField] private FootsiesPredictedRemoteInputSource footsiesP1PredictedRemoteInputSource;
     [SerializeField] private FootsiesPredictedRemoteInputSource footsiesP2PredictedRemoteInputSource;
 
+    [Header("Round Result Agreement")]
+    [SerializeField] private RoundResultAgreementController roundResultAgreementController;
+
     [Header("Optional")]
     [SerializeField] private DebugAutoInputSequence debugAutoInputSequence;
     [SerializeField] private bool resetDebugSequenceOnConfigure = true;
@@ -207,7 +210,6 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             }
         }
 
-        // ローカル入力 source
         if (footsiesP1NetworkInputSource != null)
         {
             footsiesP1NetworkInputSource.Configure(
@@ -224,10 +226,8 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             );
         }
 
-        // リモート予測 source を「明示モード」で設定する
         if (footsiesP1PredictedRemoteInputSource != null)
         {
-            // P1 remote source は player0 を読む
             footsiesP1PredictedRemoteInputSource.ConfigureRemotePlayer(
                 0,
                 profile.remotePredictionMode,
@@ -237,7 +237,6 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
         if (footsiesP2PredictedRemoteInputSource != null)
         {
-            // P2 remote source は player1 を読む
             footsiesP2PredictedRemoteInputSource.ConfigureRemotePlayer(
                 1,
                 profile.remotePredictionMode,
@@ -245,12 +244,10 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             );
         }
 
-        // localPlayerId に応じて P1/P2 の入力源を差し替える
         if (inputRouter != null)
         {
             if (profile.localPlayerId == 0)
             {
-                // 自分が P1
                 inputRouter.ConfigureSources(
                     footsiesP1NetworkInputSource,
                     footsiesP2PredictedRemoteInputSource
@@ -258,12 +255,19 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             }
             else
             {
-                // 自分が P2
                 inputRouter.ConfigureSources(
                     footsiesP1PredictedRemoteInputSource,
                     footsiesP2NetworkInputSource
                 );
             }
+        }
+
+        if (roundResultAgreementController != null)
+        {
+            roundResultAgreementController.ConfigureRuntime(
+                profile.localPlayerId,
+                profile.remoteIp
+            );
         }
 
         Debug.Log(

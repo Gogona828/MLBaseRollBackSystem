@@ -99,6 +99,8 @@ namespace Footsies
 
         [Tooltip("遅延キューに未処理入力が残っている間は KO を確定しない")]
         [SerializeField] private bool requireNoPendingRemoteInputsForKO = true;
+        
+        public bool ExternalRoundAdvanceBlocked { get; set; }
 
         private bool hasPendingKO = false;
         private int pendingKOFighterSlot = -1; // 1 or 2
@@ -141,6 +143,7 @@ namespace Footsies
             switch (_roundState)
             {
                 case RoundStateType.Stop:
+                    ExternalRoundAdvanceBlocked = false;
                     ChangeRoundState(RoundStateType.Intro);
                     break;
 
@@ -150,6 +153,7 @@ namespace Footsies
                     timer -= Time.fixedDeltaTime;
                     if (timer <= 0f)
                     {
+                        ExternalRoundAdvanceBlocked = false;
                         ChangeRoundState(RoundStateType.Fight);
                     }
 
@@ -176,6 +180,11 @@ namespace Footsies
                 case RoundStateType.KO:
                     UpdateKOState();
 
+                    if (ExternalRoundAdvanceBlocked)
+                    {
+                        break;
+                    }
+
                     timer -= Time.fixedDeltaTime;
                     if (timer <= 0f)
                     {
@@ -186,6 +195,11 @@ namespace Footsies
 
                 case RoundStateType.End:
                     UpdateEndState();
+
+                    if (ExternalRoundAdvanceBlocked)
+                    {
+                        break;
+                    }
 
                     timer -= Time.fixedDeltaTime;
                     if (timer <= 0f || (timer <= endStateSkippableTime && IsKOSkipButtonPressed()))
