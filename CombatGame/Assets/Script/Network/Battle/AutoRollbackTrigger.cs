@@ -1,10 +1,11 @@
 using UnityEngine;
+using Footsies;
 
 public class AutoRollbackTrigger : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
-    [SerializeField] private RollbackCoordinator rollbackCoordinator;
+    [SerializeField] private FootsiesBattleRollbackCoordinator battleRollbackCoordinator;
     [SerializeField] private NetworkFrameClock frameClock;
     [SerializeField] private RollbackObservationMonitor rollbackObservationMonitor;
 
@@ -26,7 +27,7 @@ public class AutoRollbackTrigger : MonoBehaviour
             return;
         }
 
-        if (predictionMismatchDetector == null || rollbackCoordinator == null || frameClock == null)
+        if (predictionMismatchDetector == null || battleRollbackCoordinator == null || frameClock == null)
         {
             return;
         }
@@ -77,7 +78,7 @@ public class AutoRollbackTrigger : MonoBehaviour
             return;
         }
 
-        rollbackCoordinator.RequestRollback(targetFrame);
+        battleRollbackCoordinator.RequestRollback(targetFrame);
 
         lastRequestedFrame = targetFrame;
         lastRollbackExecutedAtFrame = currentFrame;
