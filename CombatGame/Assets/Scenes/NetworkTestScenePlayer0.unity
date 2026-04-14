@@ -746,9 +746,11 @@ MonoBehaviour:
   autoRollbackTrigger: {fileID: 1830830588}
   rollbackResimulationRunner: {fileID: 766074475}
   rollbackObservationMonitor: {fileID: 1295603683}
+  fileLoggerBootstrap: {fileID: 1686263273}
   testDurationSeconds: 8
   autoStartWhenRunning: 1
   autoQuitPlayModeInEditor: 0
+  testLabel: delay10_trial01_PCA
 --- !u!4 &1306210846
 Transform:
   m_ObjectHideFlags: 0
