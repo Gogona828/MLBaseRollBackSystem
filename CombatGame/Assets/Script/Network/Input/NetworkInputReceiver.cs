@@ -16,7 +16,6 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
 
     private RemoteInputBuffer remoteInputBuffer = new RemoteInputBuffer();
-    private InputDelaySimulator delaySimulator;
 
     private byte lastConfirmedBitsPlayer0 = 0;
     private byte lastConfirmedBitsPlayer1 = 0;
@@ -32,63 +31,22 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     private void Awake()
     {
-        delaySimulator = new InputDelaySimulator();
     }
 
     public void UseFixedDelayForTest(int delayFrames)
     {
-        forceFixedDelayForTest = true;
-        forcedFixedDelayFrames = Mathf.Max(0, delayFrames);
-
         FileLogger.WriteLine(
-            $"[NetworkInputReceiver] UseFixedDelayForTest delayFrames={forcedFixedDelayFrames}");
+            $"[NetworkInputReceiver] UseFixedDelayForTest (No-op, delay system is disabled)");
     }
 
     public void UseSceneConfiguredDelayMode()
     {
-        forceFixedDelayForTest = false;
-
-        FileLogger.WriteLine("[NetworkInputReceiver] UseSceneConfiguredDelayMode");
+        FileLogger.WriteLine("[NetworkInputReceiver] UseSceneConfiguredDelayMode (No-op, delay system is disabled)");
     }
 
     public void ProcessDelayedInputsForCurrentStep()
     {
-        if (delaySimulator == null)
-        {
-            return;
-        }
-
-        List<InputPacket> releasedPackets = delaySimulator.TickAndCollectReleasedPackets();
-
-        for (int i = 0; i < releasedPackets.Count; i++)
-        {
-            InputPacket packet = releasedPackets[i];
-            remoteInputBuffer.Store(packet);
-
-            if (inputHistory != null)
-            {
-                inputHistory.StoreInput(packet.playerId, packet.frame, packet.inputBits);
-            }
-
-            if (packet.playerId == 0)
-            {
-                lastConfirmedBitsPlayer0 = packet.inputBits;
-            }
-            else if (packet.playerId == 1)
-            {
-                lastConfirmedBitsPlayer1 = packet.inputBits;
-            }
-
-            FileLogger.WriteLine(
-                $"[NetworkInputReceiver] Released delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}");
-
-            if (predictionMismatchDetector != null)
-            {
-                predictionMismatchDetector.ConfirmIfPredicted(packet.frame, packet.inputBits);
-            }
-        }
-
-        UpdateLatestContiguousConfirmedRemoteFrame();
+        // No-op: inputs are processed immediately in HandlePacket.
     }
 
     public void HandlePacket(NetworkPacket packet)
@@ -99,34 +57,36 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         }
 
         InputPacket inputPacket = new InputPacket(packet.playerId, packet.frame, packet.inputBits);
+        remoteInputBuffer.Store(inputPacket);
 
-        if (delaySimulator == null)
+        if (inputHistory != null)
         {
-            delaySimulator = new InputDelaySimulator();
+            inputHistory.StoreInput(inputPacket.playerId, inputPacket.frame, inputPacket.inputBits);
         }
 
-        int delayFrames = ResolveDelayFrames();
-        delaySimulator.Enqueue(inputPacket, delayFrames);
+        if (inputPacket.playerId == 0)
+        {
+            lastConfirmedBitsPlayer0 = inputPacket.inputBits;
+        }
+        else if (inputPacket.playerId == 1)
+        {
+            lastConfirmedBitsPlayer1 = inputPacket.inputBits;
+        }
 
         FileLogger.WriteLine(
-            $"[NetworkInputReceiver] Enqueued delayed input frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}, delay={delayFrames}");
+            $"[NetworkInputReceiver] Processed input immediately: frame={packet.frame}, player={packet.playerId}, bits={packet.inputBits}");
+
+        if (predictionMismatchDetector != null)
+        {
+            predictionMismatchDetector.ConfirmIfPredicted(packet.frame, packet.inputBits);
+        }
+
+        UpdateLatestContiguousConfirmedRemoteFrame();
     }
 
     private int ResolveDelayFrames()
     {
-        if (forceFixedDelayForTest)
-        {
-            return Mathf.Max(0, forcedFixedDelayFrames);
-        }
-
-        int delayFrames = fixedInputDelayFrames;
-
-        if (useVariableDelay && variableDelayProfile != null)
-        {
-            delayFrames = variableDelayProfile.SampleDelayFrames();
-        }
-
-        return Mathf.Max(0, delayFrames);
+        return 0;
     }
 
     public bool TryGetRemoteInput(int frame, out byte inputBits)
@@ -159,12 +119,7 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     public int GetPendingDelayedInputCount()
     {
-        if (delaySimulator == null)
-        {
-            return 0;
-        }
-
-        return delaySimulator.GetPendingCount();
+        return 0;
     }
 
     // 追加:
@@ -176,11 +131,6 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     public void ClearBuffer()
     {
         remoteInputBuffer.Clear();
-
-        if (delaySimulator != null)
-        {
-            delaySimulator.Clear();
-        }
 
         lastConfirmedBitsPlayer0 = 0;
         lastConfirmedBitsPlayer1 = 0;
