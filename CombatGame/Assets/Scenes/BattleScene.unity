@@ -1435,9 +1435,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac40e1f397f1d244e9496a02bf4c7bd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  remoteIp: 192.168.0.161
-  localPort: 5100
-  remotePort: 5101
+  remoteIp: 192.168.0.90
+  localPort: 5000
+  remotePort: 6000
   autoStartOnAwake: 1
 --- !u!4 &1948372534
 Transform:
@@ -1498,9 +1498,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   machineLabel: PCA
   playerId: 0
-  remoteIp: 192.168.0.161
-  localPort: 5100
-  remotePort: 5101
+  remoteIp: 192.168.0.90
+  localPort: 5000
+  remotePort: 6000
 --- !u!114 &1948372538
 MonoBehaviour:
   m_ObjectHideFlags: 0
