@@ -54,7 +54,7 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             remoteIp = "192.168.0.90",
             localPort = 5000,
             remotePort = 6000,
-            enableDebugAutoInput = true,
+            enableDebugAutoInput = false,
             leftKey = KeyCode.A,
             rightKey = KeyCode.D,
             attackKey = KeyCode.Space,
@@ -159,6 +159,11 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
     private void ApplyProfile(MachineProfile profile, string currentMachineName)
     {
+        // BattleScene に古い serialized 値が残っていても、Player0 は必ず手動入力にする。
+        bool resolvedDebugAutoInput = profile.localPlayerId == 0
+            ? false
+            : profile.enableDebugAutoInput;
+
         if (transport != null)
         {
             transport.Configure(profile.remoteIp, profile.localPort, profile.remotePort);
@@ -187,7 +192,7 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
                 profile.leftKey,
                 profile.rightKey,
                 profile.attackKey,
-                profile.enableDebugAutoInput
+                resolvedDebugAutoInput
             );
         }
 
@@ -271,9 +276,9 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         }
 
         Debug.Log(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={profile.enableDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
+            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={resolvedDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
 
         FileLogger.WriteLine(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={profile.enableDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
+            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={resolvedDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
     }
 }

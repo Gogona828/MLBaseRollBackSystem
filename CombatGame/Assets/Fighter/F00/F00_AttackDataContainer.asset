@@ -14,12 +14,12 @@ MonoBehaviour:
   attackDataList:
   - attackID: 1
     attackName: N_ATTACK
-    damageActionID: 200
+    damageActionID: 500
     guardActionID: 306
     numberOfHit: 1
-    vitalHealthDamage: 0
+    vitalHealthDamage: 1
     guardHealthDamage: 1
-    hitStunFrame: 12
+    hitStunFrame: 0
     guardStunFrame: 12
     guardBreakStunFrame: 30
   - attackID: 10
@@ -34,12 +34,12 @@ MonoBehaviour:
     guardBreakStunFrame: 30
   - attackID: 2
     attackName: B_ATTACK
-    damageActionID: 200
+    damageActionID: 500
     guardActionID: 305
     numberOfHit: 1
-    vitalHealthDamage: 0
+    vitalHealthDamage: 1
     guardHealthDamage: 1
-    hitStunFrame: 12
+    hitStunFrame: 0
     guardStunFrame: 12
     guardBreakStunFrame: 30
   - attackID: 11
