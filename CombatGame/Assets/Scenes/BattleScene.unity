@@ -482,9 +482,9 @@ MonoBehaviour:
     machineLabel: PCA
     localPlayerId: 0
     startDelayFrames: 60
-    remoteIp: 192.168.0.161
-    localPort: 5100
-    remotePort: 5101
+    remoteIp: 192.168.0.90
+    localPort: 5000
+    remotePort: 6000
     enableDebugAutoInput: 1
     leftKey: 97
     rightKey: 100
@@ -497,9 +497,9 @@ MonoBehaviour:
     machineLabel: PCB
     localPlayerId: 1
     startDelayFrames: 60
-    remoteIp: 192.168.0.121
-    localPort: 5101
-    remotePort: 5100
+    remoteIp: 192.168.0.90
+    localPort: 5001
+    remotePort: 6000
     enableDebugAutoInput: 0
     leftKey: 276
     rightKey: 275
