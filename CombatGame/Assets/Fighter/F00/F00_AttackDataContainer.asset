@@ -14,41 +14,41 @@ MonoBehaviour:
   attackDataList:
   - attackID: 1
     attackName: N_ATTACK
-    damageActionID: 500
+    damageActionID: 200
     guardActionID: 306
     numberOfHit: 1
     vitalHealthDamage: 1
     guardHealthDamage: 1
-    hitStunFrame: 0
+    hitStunFrame: 12
     guardStunFrame: 12
     guardBreakStunFrame: 30
   - attackID: 10
     attackName: N_SPECIAL
-    damageActionID: 500
+    damageActionID: 200
     guardActionID: 301
     numberOfHit: 1
     vitalHealthDamage: 1
     guardHealthDamage: 1
-    hitStunFrame: 0
+    hitStunFrame: 12
     guardStunFrame: 15
     guardBreakStunFrame: 30
   - attackID: 2
     attackName: B_ATTACK
-    damageActionID: 500
+    damageActionID: 200
     guardActionID: 305
     numberOfHit: 1
     vitalHealthDamage: 1
     guardHealthDamage: 1
-    hitStunFrame: 0
+    hitStunFrame: 12
     guardStunFrame: 12
     guardBreakStunFrame: 30
   - attackID: 11
     attackName: B_SPECIAL
-    damageActionID: 500
+    damageActionID: 200
     guardActionID: 301
     numberOfHit: 1
     vitalHealthDamage: 1
     guardHealthDamage: 1
-    hitStunFrame: 0
+    hitStunFrame: 12
     guardStunFrame: 15
     guardBreakStunFrame: 30

@@ -33,14 +33,21 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
         [Header("Remote Prediction")]
         public FootsiesPredictedRemoteInputSource.RemotePredictionMode remotePredictionMode
-            = FootsiesPredictedRemoteInputSource.RemotePredictionMode.NeutralWhenUnknown;
+            = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold;
 
-        public int remoteDirectionalHoldFrames = 1;
+        public int remoteDirectionalHoldFrames = 30;
     }
 
     [Header("Editor Override")]
     [SerializeField] private bool useOverrideMachineNameInEditor = false;
     [SerializeField] private string overrideMachineName = "PCA";
+
+    [Header("Runtime Rule Overrides")]
+    [SerializeField] private bool forceDisablePlayer0DebugAutoInput = true;
+    [SerializeField] private bool forceDirectionPredictionForRelay = true;
+    [SerializeField] private int relayDirectionalHoldFrames = 30;
+    [SerializeField] private bool installThreeHitRoundRule = true;
+    [SerializeField] private int hitsToWinRound = 3;
 
     [Header("Machine Profiles")]
     [SerializeField] private MachineProfile[] machineProfiles =
@@ -60,8 +67,8 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             attackKey = KeyCode.Space,
             useFixedDelayForTest = false,
             fixedDelayFramesForTest = 4,
-            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.NeutralWhenUnknown,
-            remoteDirectionalHoldFrames = 1
+            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold,
+            remoteDirectionalHoldFrames = 30
         },
         new MachineProfile
         {
@@ -78,8 +85,8 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             attackKey = KeyCode.Return,
             useFixedDelayForTest = false,
             fixedDelayFramesForTest = 4,
-            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.NeutralWhenUnknown,
-            remoteDirectionalHoldFrames = 1
+            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold,
+            remoteDirectionalHoldFrames = 30
         }
     };
 
@@ -159,10 +166,20 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
     private void ApplyProfile(MachineProfile profile, string currentMachineName)
     {
-        // BattleScene に古い serialized 値が残っていても、Player0 は必ず手動入力にする。
-        bool resolvedDebugAutoInput = profile.localPlayerId == 0
-            ? false
-            : profile.enableDebugAutoInput;
+        bool runtimeDebugAutoInput = profile.enableDebugAutoInput;
+        if (forceDisablePlayer0DebugAutoInput && profile.localPlayerId == 0)
+        {
+            runtimeDebugAutoInput = false;
+        }
+
+        FootsiesPredictedRemoteInputSource.RemotePredictionMode runtimePredictionMode = profile.remotePredictionMode;
+        int runtimeDirectionalHoldFrames = Mathf.Max(0, profile.remoteDirectionalHoldFrames);
+
+        if (forceDirectionPredictionForRelay)
+        {
+            runtimePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold;
+            runtimeDirectionalHoldFrames = Mathf.Max(runtimeDirectionalHoldFrames, relayDirectionalHoldFrames);
+        }
 
         if (transport != null)
         {
@@ -192,7 +209,7 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
                 profile.leftKey,
                 profile.rightKey,
                 profile.attackKey,
-                resolvedDebugAutoInput
+                runtimeDebugAutoInput
             );
         }
 
@@ -235,8 +252,8 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         {
             footsiesP1PredictedRemoteInputSource.ConfigureRemotePlayer(
                 0,
-                profile.remotePredictionMode,
-                profile.remoteDirectionalHoldFrames
+                runtimePredictionMode,
+                runtimeDirectionalHoldFrames
             );
         }
 
@@ -244,8 +261,8 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         {
             footsiesP2PredictedRemoteInputSource.ConfigureRemotePlayer(
                 1,
-                profile.remotePredictionMode,
-                profile.remoteDirectionalHoldFrames
+                runtimePredictionMode,
+                runtimeDirectionalHoldFrames
             );
         }
 
@@ -275,10 +292,35 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
             );
         }
 
+        InstallThreeHitRoundRule();
+
         Debug.Log(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={resolvedDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
+            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={runtimeDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={runtimePredictionMode}, remoteDirectionalHoldFrames={runtimeDirectionalHoldFrames}, hitsToWinRound={hitsToWinRound}");
 
         FileLogger.WriteLine(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={resolvedDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={profile.remotePredictionMode}, remoteDirectionalHoldFrames={profile.remoteDirectionalHoldFrames}");
+            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={runtimeDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={runtimePredictionMode}, remoteDirectionalHoldFrames={runtimeDirectionalHoldFrames}, hitsToWinRound={hitsToWinRound}");
+    }
+
+    private void InstallThreeHitRoundRule()
+    {
+        if (!installThreeHitRoundRule)
+        {
+            return;
+        }
+
+        BattleCore battleCore = FindObjectOfType<BattleCore>();
+        if (battleCore == null)
+        {
+            Debug.LogWarning("[BattleSceneRuntimeConfigurator] BattleCore not found. ThreeHitRoundRule was not installed.");
+            return;
+        }
+
+        ThreeHitRoundRule rule = battleCore.GetComponent<ThreeHitRoundRule>();
+        if (rule == null)
+        {
+            rule = battleCore.gameObject.AddComponent<ThreeHitRoundRule>();
+        }
+
+        rule.Configure(hitsToWinRound);
     }
 }

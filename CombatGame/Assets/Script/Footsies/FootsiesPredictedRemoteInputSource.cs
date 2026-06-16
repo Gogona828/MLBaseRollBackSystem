@@ -20,10 +20,10 @@ namespace Footsies
         [SerializeField] private int remotePlayerId = 0;
 
         [Header("Prediction")]
-        [SerializeField] private RemotePredictionMode predictionMode = RemotePredictionMode.NeutralWhenUnknown;
+        [SerializeField] private RemotePredictionMode predictionMode = RemotePredictionMode.DirectionOnlyShortHold;
 
-        [Tooltip("DirectionOnlyShortHold のときだけ使う。最後の方向入力を何フレーム保持するか。まずは 1 を推奨。")]
-        [SerializeField] private int directionalHoldFrames = 1;
+        [Tooltip("DirectionOnlyShortHold のときだけ使う。リレー遅延中に最後の方向入力を何フレーム保持するか。")]
+        [SerializeField] private int directionalHoldFrames = 30;
 
         private byte lastConfirmedBits = 0;
         private int lastConfirmedFrame = -1;
@@ -88,29 +88,19 @@ namespace Footsies
                 return FootsiesInputFrame.Empty();
             }
 
+            SyncLatestReceivedRemoteInput();
+
             if (networkInputReceiver.TryGetRemoteInput(frame, out byte confirmedBits))
             {
-                lastConfirmedBits = confirmedBits;
-                lastConfirmedFrame = frame;
-                lastPredictedBits = confirmedBits;
-
-                if (predictionMismatchDetector != null && lastPredictionFrame != frame)
-                {
-                    predictionMismatchDetector.RecordPrediction(frame, confirmedBits);
-                    lastPredictionFrame = frame;
-                }
-
+                RememberConfirmedInput(frame, confirmedBits);
+                RecordPredictionOnce(frame, confirmedBits);
                 return FootsiesInputFrame.FromBits(confirmedBits);
             }
 
             byte predictedBits = BuildPredictedBits(frame);
             lastPredictedBits = predictedBits;
 
-            if (predictionMismatchDetector != null && lastPredictionFrame != frame)
-            {
-                predictionMismatchDetector.RecordPrediction(frame, predictedBits);
-                lastPredictionFrame = frame;
-            }
+            RecordPredictionOnce(frame, predictedBits);
 
             return FootsiesInputFrame.FromBits(predictedBits);
         }
@@ -119,6 +109,43 @@ namespace Footsies
         {
             int frame = frameClock != null ? frameClock.CurrentFrame : 0;
             return GetInputForFrame(frame);
+        }
+
+        private void SyncLatestReceivedRemoteInput()
+        {
+            if (networkInputReceiver == null)
+            {
+                return;
+            }
+
+            if (!networkInputReceiver.TryGetLatestReceivedRemoteInput(out int latestFrame, out byte latestBits))
+            {
+                return;
+            }
+
+            if (latestFrame > lastConfirmedFrame)
+            {
+                RememberConfirmedInput(latestFrame, latestBits);
+            }
+        }
+
+        private void RememberConfirmedInput(int frame, byte bits)
+        {
+            lastConfirmedBits = bits;
+            lastConfirmedFrame = frame;
+            lastPredictedBits = bits;
+
+            FileLogger.WriteLine(
+                $"[FootsiesPredictedRemoteInputSource] remember confirmed frame={frame}, bits={bits}");
+        }
+
+        private void RecordPredictionOnce(int frame, byte bits)
+        {
+            if (predictionMismatchDetector != null && lastPredictionFrame != frame)
+            {
+                predictionMismatchDetector.RecordPrediction(frame, bits);
+                lastPredictionFrame = frame;
+            }
         }
 
         private byte BuildPredictedBits(int frame)
@@ -139,7 +166,7 @@ namespace Footsies
                         return 0;
                     }
 
-                    // 攻撃は絶対に予測しない。左右入力だけ短く保持する。
+                    // 攻撃は絶対に予測しない。左右入力だけ保持する。
                     return ExtractDirectionalBitsOnly(lastConfirmedBits);
 
                 case RemotePredictionMode.LastConfirmedUnsafe:

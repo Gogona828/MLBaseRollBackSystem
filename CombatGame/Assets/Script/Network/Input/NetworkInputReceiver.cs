@@ -20,9 +20,14 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     private byte lastConfirmedBitsPlayer0 = 0;
     private byte lastConfirmedBitsPlayer1 = 0;
 
-    // 追加:
-    // 「相手入力が 0,1,2... と連続して確定済みである最後のフレーム」
+    // 相手入力が 0,1,2... と連続して確定済みである最後のフレーム。
     private int latestContiguousConfirmedRemoteFrame = -1;
+
+    // 追加:
+    // 連続性に関係なく、最後に受信できた相手入力フレーム。
+    // リレー遅延中の表示予測ではこちらを使うことで、長押し移動が
+    // 受信済みの最新方向入力から途切れにくくなる。
+    private int latestReceivedRemoteFrame = -1;
 
     public RemoteInputBuffer Buffer => remoteInputBuffer;
     public int FixedInputDelayFrames => fixedInputDelayFrames;
@@ -58,6 +63,11 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
         InputPacket inputPacket = new InputPacket(packet.playerId, packet.frame, packet.inputBits);
         remoteInputBuffer.Store(inputPacket);
+
+        if (packet.frame > latestReceivedRemoteFrame)
+        {
+            latestReceivedRemoteFrame = packet.frame;
+        }
 
         if (inputHistory != null)
         {
@@ -122,10 +132,27 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         return 0;
     }
 
-    // 追加:
     public int GetLatestContiguousConfirmedRemoteFrame()
     {
         return latestContiguousConfirmedRemoteFrame;
+    }
+
+    public int GetLatestReceivedRemoteFrame()
+    {
+        return latestReceivedRemoteFrame;
+    }
+
+    public bool TryGetLatestReceivedRemoteInput(out int frame, out byte inputBits)
+    {
+        frame = latestReceivedRemoteFrame;
+        inputBits = 0;
+
+        if (frame < 0)
+        {
+            return false;
+        }
+
+        return remoteInputBuffer.TryGetInput(frame, out inputBits);
     }
 
     public void ClearBuffer()
@@ -135,6 +162,7 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         lastConfirmedBitsPlayer0 = 0;
         lastConfirmedBitsPlayer1 = 0;
         latestContiguousConfirmedRemoteFrame = -1;
+        latestReceivedRemoteFrame = -1;
     }
 
     private void UpdateLatestContiguousConfirmedRemoteFrame()
