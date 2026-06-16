@@ -2,18 +2,25 @@ using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using UnityEngine;
 
 public class UdpP2PTransport : MonoBehaviour
 {
+    private const int SerializedNetworkPacketSize = 14;
+
     [Header("Connection")]
     [SerializeField] private string remoteIp = "127.0.0.1";
     [SerializeField] private int localPort = 5000;
     [SerializeField] private int remotePort = 5001;
     [SerializeField] private bool autoStartOnAwake = true;
 
-    private UdpClient sender;
-    private UdpClient receiver;
+    [Header("Relay Compatibility")]
+    [Tooltip("Usually false for the current DelayRelayServer. The server registers clients from normal binary packets.")]
+    [SerializeField] private bool sendTextRegisterToRelay = false;
+    [SerializeField] private string textRegisterMessage = "REGISTER";
+
+    private UdpClient socket;
     private IPEndPoint remoteEndPoint;
     private bool started = false;
 
@@ -48,17 +55,28 @@ public class UdpP2PTransport : MonoBehaviour
         {
             remoteEndPoint = new IPEndPoint(IPAddress.Parse(remoteIp), remotePort);
 
-            sender = new UdpClient();
-            receiver = new UdpClient(localPort);
+            // Important:
+            // Use one UDP socket for both Send and Receive, bound to localPort.
+            // DelayRelayServer registers clients by the UDP source endpoint.
+            // If Send uses a separate unbound socket, the server replies to that temporary source port,
+            // but Unity is receiving on localPort, so Hello/Ready/Start/Input never come back to Unity.
+            socket = new UdpClient(localPort);
 
             started = true;
             BeginReceive();
 
+            if (sendTextRegisterToRelay)
+            {
+                SendTextRegisterToRelay();
+            }
+
             Debug.Log($"[UdpP2PTransport] Started local={localPort}, remote={remoteIp}:{remotePort}");
+            FileLogger.WriteLine($"[UdpP2PTransport] Started local={localPort}, remote={remoteIp}:{remotePort}");
         }
         catch (Exception e)
         {
             Debug.LogError($"[UdpP2PTransport] StartTransport failed: {e}");
+            FileLogger.WriteLine($"[UdpP2PTransport] StartTransport failed: {e}");
         }
     }
 
@@ -73,23 +91,18 @@ public class UdpP2PTransport : MonoBehaviour
 
         try
         {
-            sender?.Close();
+            socket?.Close();
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"[UdpP2PTransport] sender close failed: {e.Message}");
+            Debug.LogWarning($"[UdpP2PTransport] socket close failed: {e.Message}");
         }
 
-        try
-        {
-            receiver?.Close();
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning($"[UdpP2PTransport] receiver close failed: {e.Message}");
-        }
+        socket = null;
+        remoteEndPoint = null;
 
         Debug.Log("[UdpP2PTransport] Stopped");
+        FileLogger.WriteLine("[UdpP2PTransport] Stopped");
     }
 
     public void Send(NetworkPacket packet)
@@ -100,15 +113,22 @@ public class UdpP2PTransport : MonoBehaviour
             return;
         }
 
+        if (socket == null || remoteEndPoint == null)
+        {
+            Debug.LogWarning("[UdpP2PTransport] Send skipped because socket or remoteEndPoint is null");
+            return;
+        }
+
         try
         {
             byte[] bytes = NetworkPacketSerializer.Serialize(packet);
-            sender.Send(bytes, bytes.Length, remoteEndPoint);
-            FileLogger.WriteLine($"[UdpP2PTransport] Sent {packet.packetType} to {remoteIp}:{remotePort} player={packet.playerId} frame={packet.frame}");
+            socket.Send(bytes, bytes.Length, remoteEndPoint);
+            FileLogger.WriteLine($"[UdpP2PTransport] Sent {packet.packetType} to {remoteIp}:{remotePort} from localPort={localPort} player={packet.playerId} frame={packet.frame}");
         }
         catch (Exception e)
         {
             Debug.LogError($"[UdpP2PTransport] Send failed: {e}");
+            FileLogger.WriteLine($"[UdpP2PTransport] Send failed: {e}");
         }
     }
 
@@ -117,26 +137,51 @@ public class UdpP2PTransport : MonoBehaviour
         return receivedPackets.TryDequeue(out packet);
     }
 
-    private void BeginReceive()
+    private void SendTextRegisterToRelay()
     {
-        if (!started || receiver == null)
+        if (!started || socket == null || remoteEndPoint == null)
         {
             return;
         }
 
         try
         {
-            receiver.BeginReceive(OnReceive, null);
+            string message = string.IsNullOrWhiteSpace(textRegisterMessage) ? "REGISTER" : textRegisterMessage.Trim();
+            byte[] bytes = Encoding.UTF8.GetBytes(message);
+            socket.Send(bytes, bytes.Length, remoteEndPoint);
+            FileLogger.WriteLine($"[UdpP2PTransport] Sent text register '{message}' to {remoteIp}:{remotePort} from localPort={localPort}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"[UdpP2PTransport] BeginReceive failed: {e}");
+            Debug.LogWarning($"[UdpP2PTransport] Text register failed: {e.Message}");
+            FileLogger.WriteLine($"[UdpP2PTransport] Text register failed: {e.Message}");
+        }
+    }
+
+    private void BeginReceive()
+    {
+        if (!started || socket == null)
+        {
+            return;
+        }
+
+        try
+        {
+            socket.BeginReceive(OnReceive, null);
+        }
+        catch (Exception e)
+        {
+            if (started)
+            {
+                Debug.LogError($"[UdpP2PTransport] BeginReceive failed: {e}");
+                FileLogger.WriteLine($"[UdpP2PTransport] BeginReceive failed: {e}");
+            }
         }
     }
 
     private void OnReceive(IAsyncResult ar)
     {
-        if (!started || receiver == null)
+        if (!started || socket == null)
         {
             return;
         }
@@ -144,11 +189,24 @@ public class UdpP2PTransport : MonoBehaviour
         try
         {
             IPEndPoint any = new IPEndPoint(IPAddress.Any, 0);
-            byte[] data = receiver.EndReceive(ar, ref any);
+            byte[] data = socket.EndReceive(ar, ref any);
+
+            if (data.Length != SerializedNetworkPacketSize)
+            {
+                string text = Encoding.UTF8.GetString(data).Trim();
+                FileLogger.WriteLine($"[UdpP2PTransport] Ignored non-game UDP packet from {any.Address}:{any.Port} len={data.Length} text='{text}'");
+                return;
+            }
 
             NetworkPacket packet = NetworkPacketSerializer.Deserialize(data);
-            receivedPackets.Enqueue(packet);
 
+            if (!Enum.IsDefined(typeof(NetworkPacketType), packet.packetType))
+            {
+                FileLogger.WriteLine($"[UdpP2PTransport] Ignored unknown packetType={(byte)packet.packetType} from {any.Address}:{any.Port}");
+                return;
+            }
+
+            receivedPackets.Enqueue(packet);
             FileLogger.WriteLine($"[UdpP2PTransport] Received {packet.packetType} from {any.Address}:{any.Port} player={packet.playerId} frame={packet.frame}");
         }
         catch (ObjectDisposedException)
@@ -156,7 +214,11 @@ public class UdpP2PTransport : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[UdpP2PTransport] Receive failed: {e}");
+            if (started)
+            {
+                Debug.LogError($"[UdpP2PTransport] Receive failed: {e}");
+                FileLogger.WriteLine($"[UdpP2PTransport] Receive failed: {e}");
+            }
         }
         finally
         {
