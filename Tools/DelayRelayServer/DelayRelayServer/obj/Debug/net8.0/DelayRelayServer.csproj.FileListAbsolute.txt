@@ -1,0 +1,15 @@
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\bin\Debug\net8.0\DelayRelayServer.exe
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\bin\Debug\net8.0\DelayRelayServer.deps.json
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\bin\Debug\net8.0\DelayRelayServer.runtimeconfig.json
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\bin\Debug\net8.0\DelayRelayServer.dll
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\bin\Debug\net8.0\DelayRelayServer.pdb
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.AssemblyInfoInputs.cache
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.AssemblyInfo.cs
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.csproj.CoreCompileInputs.cache
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.sourcelink.json
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.dll
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\refint\DelayRelayServer.dll
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.pdb
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\DelayRelayServer.genruntimeconfig.cache
+C:\Users\tomita\MLBaseRollBackSystem\Tools\DelayRelayServer\DelayRelayServer\obj\Debug\net8.0\ref\DelayRelayServer.dll
