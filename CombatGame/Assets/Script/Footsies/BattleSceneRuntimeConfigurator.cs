@@ -1,326 +1,332 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
-using Footsies;
 
-[DefaultExecutionOrder(-10000)]
 public class BattleSceneRuntimeConfigurator : MonoBehaviour
 {
     [Serializable]
     public class MachineProfile
     {
-        [Header("Machine")]
-        public string machineName = "PCA";
-        public string machineLabel = "PCA";
+        [Header("Match")]
+        [Tooltip("SystemInfo.deviceName, Multiplayer Play Mode の Player1 / Player2, または profile タグ名")]
+        public string profileName;
 
-        [Header("Role")]
-        public int localPlayerId = 0;
-        public int startDelayFrames = 60;
+        [Tooltip("同じ設定を使いたい別名。実PC名と Player1/Player2 を両方入れておくと便利")]
+        public string[] aliases;
 
         [Header("Network")]
         public string remoteIp = "127.0.0.1";
-        public int localPort = 5100;
-        public int remotePort = 5101;
+        public int localPort = 5000;
+        public int remotePort = 6000;
 
-        [Header("Local Input")]
-        public bool enableDebugAutoInput = false;
-        public KeyCode leftKey = KeyCode.A;
-        public KeyCode rightKey = KeyCode.D;
-        public KeyCode attackKey = KeyCode.Space;
+        [Header("Session")]
+        public int playerId = 0;
+        public int startDelayFrames = 60;
 
-        [Header("Temporary Delay Simplification")]
-        public bool useFixedDelayForTest = false;
-        public int fixedDelayFramesForTest = 2;
-
-        [Header("Remote Prediction")]
-        public FootsiesPredictedRemoteInputSource.RemotePredictionMode remotePredictionMode
-            = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold;
-
-        public int remoteDirectionalHoldFrames = 30;
-    }
-
-    [Header("Editor Override")]
-    [SerializeField] private bool useOverrideMachineNameInEditor = false;
-    [SerializeField] private string overrideMachineName = "PCA";
-
-    [Header("Runtime Rule Overrides")]
-    [SerializeField] private bool forceDisablePlayer0DebugAutoInput = true;
-    [SerializeField] private bool forceDirectionPredictionForRelay = true;
-    [SerializeField] private int relayDirectionalHoldFrames = 30;
-    [SerializeField] private bool installThreeHitRoundRule = true;
-    [SerializeField] private int hitsToWinRound = 3;
-
-    [Header("Machine Profiles")]
-    [SerializeField] private MachineProfile[] machineProfiles =
-    {
-        new MachineProfile
+        public bool Matches(string key)
         {
-            machineName = "MSI",
-            machineLabel = "PCA",
-            localPlayerId = 0,
-            startDelayFrames = 60,
-            remoteIp = "192.168.0.90",
-            localPort = 5000,
-            remotePort = 6000,
-            enableDebugAutoInput = false,
-            leftKey = KeyCode.A,
-            rightKey = KeyCode.D,
-            attackKey = KeyCode.Space,
-            useFixedDelayForTest = false,
-            fixedDelayFramesForTest = 4,
-            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold,
-            remoteDirectionalHoldFrames = 30
-        },
-        new MachineProfile
-        {
-            machineName = "MKLAB03",
-            machineLabel = "PCB",
-            localPlayerId = 1,
-            startDelayFrames = 60,
-            remoteIp = "192.168.0.90",
-            localPort = 5001,
-            remotePort = 6000,
-            enableDebugAutoInput = false,
-            leftKey = KeyCode.LeftArrow,
-            rightKey = KeyCode.RightArrow,
-            attackKey = KeyCode.Return,
-            useFixedDelayForTest = false,
-            fixedDelayFramesForTest = 4,
-            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold,
-            remoteDirectionalHoldFrames = 30
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            if (IsSameName(profileName, key))
+            {
+                return true;
+            }
+
+            if (aliases == null)
+            {
+                return false;
+            }
+
+            return aliases.Any(alias => IsSameName(alias, key));
         }
-    };
+
+        private static bool IsSameName(string a, string b)
+        {
+            if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b))
+            {
+                return false;
+            }
+
+            if (string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Unity MPPM の "Player 1" / "Player1" 揺れ対策
+            return Canonical(a) == Canonical(b);
+        }
+
+        private static string Canonical(string value)
+        {
+            return value.Trim()
+                .Replace(" ", string.Empty)
+                .Replace("　", string.Empty)
+                .ToLowerInvariant();
+        }
+    }
 
     [Header("References")]
     [SerializeField] private UdpP2PTransport transport;
     [SerializeField] private NetworkSessionManager sessionManager;
-    [SerializeField] private FileLoggerBootstrap fileLoggerBootstrap;
-    [SerializeField] private NetworkInputSender inputSender;
-    [SerializeField] private NetworkInputReceiver inputReceiver;
-    [SerializeField] private FootsiesBattleInputRouter inputRouter;
 
-    [Header("Input Sources")]
-    [SerializeField] private FootsiesNetworkPlayerInputSource footsiesP1NetworkInputSource;
-    [SerializeField] private FootsiesNetworkPlayerInputSource footsiesP2NetworkInputSource;
-    [SerializeField] private FootsiesPredictedRemoteInputSource footsiesP1PredictedRemoteInputSource;
-    [SerializeField] private FootsiesPredictedRemoteInputSource footsiesP2PredictedRemoteInputSource;
+    [Header("Profiles")]
+    [SerializeField] private MachineProfile[] machineProfiles;
 
-    [Header("Round Result Agreement")]
-    [SerializeField] private RoundResultAgreementController roundResultAgreementController;
+    [Tooltip("一致するProfileが見つからなかった場合に使う。不要ならnullでよい")]
+    [SerializeField] private MachineProfile fallbackProfile;
 
-    [Header("Optional")]
-    [SerializeField] private DebugAutoInputSequence debugAutoInputSequence;
-    [SerializeField] private bool resetDebugSequenceOnConfigure = true;
+    [Header("Timing")]
+    [SerializeField] private bool configureOnAwake = true;
+
+    [Tooltip("UdpP2PTransportが先に起動していた場合、いったん止めてから設定し直す")]
+    [SerializeField] private bool restartTransportAfterConfigure = true;
 
     private void Awake()
     {
-        string currentMachineName = ResolveMachineName();
-        MachineProfile profile = FindProfile(currentMachineName);
+        if (configureOnAwake)
+        {
+            Configure();
+        }
+    }
+
+    public void Configure()
+    {
+        string runtimeKey = RuntimeProfileKeyResolver.Resolve();
+        MachineProfile profile = FindProfile(runtimeKey);
 
         if (profile == null)
         {
-            Debug.LogError(
-                $"[BattleSceneRuntimeConfigurator] Machine profile not found. machineName={currentMachineName}");
+            Debug.LogWarning(
+                $"[BattleSceneRuntimeConfigurator] No MachineProfile matched runtimeKey='{runtimeKey}'. " +
+                $"fallback={(fallbackProfile != null ? fallbackProfile.profileName : "null")}");
+
+            profile = fallbackProfile;
+        }
+
+        if (profile == null)
+        {
+            Debug.LogError("[BattleSceneRuntimeConfigurator] No valid MachineProfile. Configuration skipped.");
             return;
         }
 
-        ApplyProfile(profile, currentMachineName);
+        ApplyProfile(profile, runtimeKey);
     }
 
-    private string ResolveMachineName()
+    private MachineProfile FindProfile(string runtimeKey)
     {
-#if UNITY_EDITOR
-        if (useOverrideMachineNameInEditor && !string.IsNullOrWhiteSpace(overrideMachineName))
-        {
-            return overrideMachineName.Trim();
-        }
-#endif
-        return Environment.MachineName;
-    }
-
-    private MachineProfile FindProfile(string currentMachineName)
-    {
-        if (machineProfiles == null || machineProfiles.Length == 0)
+        if (machineProfiles == null)
         {
             return null;
         }
 
-        for (int i = 0; i < machineProfiles.Length; i++)
-        {
-            MachineProfile profile = machineProfiles[i];
-            if (profile == null || string.IsNullOrWhiteSpace(profile.machineName))
-            {
-                continue;
-            }
-
-            if (string.Equals(
-                    profile.machineName.Trim(),
-                    currentMachineName.Trim(),
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return profile;
-            }
-        }
-
-        return null;
+        return machineProfiles.FirstOrDefault(profile =>
+            profile != null && profile.Matches(runtimeKey));
     }
 
-    private void ApplyProfile(MachineProfile profile, string currentMachineName)
+    private void ApplyProfile(MachineProfile profile, string runtimeKey)
     {
-        bool runtimeDebugAutoInput = profile.enableDebugAutoInput;
-        if (forceDisablePlayer0DebugAutoInput && profile.localPlayerId == 0)
-        {
-            runtimeDebugAutoInput = false;
-        }
+        Debug.Log(
+            $"[BattleSceneRuntimeConfigurator] Apply profile='{profile.profileName}' " +
+            $"runtimeKey='{runtimeKey}' playerId={profile.playerId} " +
+            $"localPort={profile.localPort} remote={profile.remoteIp}:{profile.remotePort} " +
+            $"startDelayFrames={profile.startDelayFrames}");
 
-        FootsiesPredictedRemoteInputSource.RemotePredictionMode runtimePredictionMode = profile.remotePredictionMode;
-        int runtimeDirectionalHoldFrames = Mathf.Max(0, profile.remoteDirectionalHoldFrames);
-
-        if (forceDirectionPredictionForRelay)
-        {
-            runtimePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold;
-            runtimeDirectionalHoldFrames = Mathf.Max(runtimeDirectionalHoldFrames, relayDirectionalHoldFrames);
-        }
+        FileLogger.WriteLine(
+            $"[BattleSceneRuntimeConfigurator] Apply profile='{profile.profileName}' " +
+            $"runtimeKey='{runtimeKey}' playerId={profile.playerId} " +
+            $"localPort={profile.localPort} remote={profile.remoteIp}:{profile.remotePort} " +
+            $"startDelayFrames={profile.startDelayFrames}");
 
         if (transport != null)
         {
+            if (restartTransportAfterConfigure && transport.IsStarted)
+            {
+                transport.StopTransport();
+            }
+
             transport.Configure(profile.remoteIp, profile.localPort, profile.remotePort);
+
+            if (restartTransportAfterConfigure && !transport.IsStarted)
+            {
+                transport.StartTransport();
+            }
         }
 
         if (sessionManager != null)
         {
-            sessionManager.ConfigureRuntime(profile.localPlayerId, profile.startDelayFrames);
+            sessionManager.ConfigureRuntime(profile.playerId, profile.startDelayFrames);
         }
-
-        if (fileLoggerBootstrap != null)
-        {
-            fileLoggerBootstrap.Configure(
-                profile.machineLabel,
-                profile.localPlayerId,
-                profile.remoteIp,
-                profile.localPort,
-                profile.remotePort
-            );
-        }
-
-        if (inputSender != null)
-        {
-            inputSender.ConfigureRuntime(
-                profile.localPlayerId,
-                profile.leftKey,
-                profile.rightKey,
-                profile.attackKey,
-                runtimeDebugAutoInput
-            );
-        }
-
-        if (debugAutoInputSequence != null && resetDebugSequenceOnConfigure)
-        {
-            debugAutoInputSequence.ResetSequence();
-        }
-
-        if (inputReceiver != null)
-        {
-            inputReceiver.ClearBuffer();
-
-            if (profile.useFixedDelayForTest)
-            {
-                inputReceiver.UseFixedDelayForTest(profile.fixedDelayFramesForTest);
-            }
-            else
-            {
-                inputReceiver.UseSceneConfiguredDelayMode();
-            }
-        }
-
-        if (footsiesP1NetworkInputSource != null)
-        {
-            footsiesP1NetworkInputSource.Configure(
-                FootsiesNetworkPlayerInputSource.ReadMode.LocalSender,
-                0
-            );
-        }
-
-        if (footsiesP2NetworkInputSource != null)
-        {
-            footsiesP2NetworkInputSource.Configure(
-                FootsiesNetworkPlayerInputSource.ReadMode.LocalSender,
-                1
-            );
-        }
-
-        if (footsiesP1PredictedRemoteInputSource != null)
-        {
-            footsiesP1PredictedRemoteInputSource.ConfigureRemotePlayer(
-                0,
-                runtimePredictionMode,
-                runtimeDirectionalHoldFrames
-            );
-        }
-
-        if (footsiesP2PredictedRemoteInputSource != null)
-        {
-            footsiesP2PredictedRemoteInputSource.ConfigureRemotePlayer(
-                1,
-                runtimePredictionMode,
-                runtimeDirectionalHoldFrames
-            );
-        }
-
-        if (inputRouter != null)
-        {
-            if (profile.localPlayerId == 0)
-            {
-                inputRouter.ConfigureSources(
-                    footsiesP1NetworkInputSource,
-                    footsiesP2PredictedRemoteInputSource
-                );
-            }
-            else
-            {
-                inputRouter.ConfigureSources(
-                    footsiesP1PredictedRemoteInputSource,
-                    footsiesP2NetworkInputSource
-                );
-            }
-        }
-
-        if (roundResultAgreementController != null)
-        {
-            roundResultAgreementController.ConfigureRuntime(
-                profile.localPlayerId,
-                profile.remoteIp
-            );
-        }
-
-        InstallThreeHitRoundRule();
-
-        Debug.Log(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={runtimeDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={runtimePredictionMode}, remoteDirectionalHoldFrames={runtimeDirectionalHoldFrames}, hitsToWinRound={hitsToWinRound}");
-
-        FileLogger.WriteLine(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={runtimeDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={runtimePredictionMode}, remoteDirectionalHoldFrames={runtimeDirectionalHoldFrames}, hitsToWinRound={hitsToWinRound}");
     }
 
-    private void InstallThreeHitRoundRule()
+    private static class RuntimeProfileKeyResolver
     {
-        if (!installThreeHitRoundRule)
+        public static string Resolve()
         {
-            return;
+            // 1. 明示指定を最優先
+            // 例: -machineProfile Player1
+            // 例: -machineProfile=Player1
+            string explicitProfile =
+                GetCommandLineValue("-machineProfile") ??
+                GetCommandLineValue("-profile") ??
+                GetCommandLineValue("-runtimeProfile");
+
+            if (!string.IsNullOrWhiteSpace(explicitProfile))
+            {
+                return explicitProfile.Trim();
+            }
+
+            // 2. Multiplayer Play Mode のタグ指定
+            // Play Mode Scenario 側で profile:Player1 のようなタグを付ける場合
+            string tagProfile = TryGetProfileFromMppmTags();
+            if (!string.IsNullOrWhiteSpace(tagProfile))
+            {
+                return tagProfile.Trim();
+            }
+
+            // 3. Multiplayer Play Mode の -name
+            // Unity公式FAQでは Player1 / Player2 / Player3 / Player4 を見る方法が案内されている
+            string mppmPlayerName = GetCommandLineValue("-name");
+            if (!string.IsNullOrWhiteSpace(mppmPlayerName))
+            {
+                return NormalizeMppmPlayerName(mppmPlayerName);
+            }
+
+            // 4. 通常起動時は従来通り機器名
+            return SystemInfo.deviceName;
         }
 
-        BattleCore battleCore = FindObjectOfType<BattleCore>();
-        if (battleCore == null)
+        private static string NormalizeMppmPlayerName(string name)
         {
-            Debug.LogWarning("[BattleSceneRuntimeConfigurator] BattleCore not found. ThreeHitRoundRule was not installed.");
-            return;
+            string trimmed = name.Trim();
+
+            // "Player 1" と "Player1" のどちらでも MachineProfiles 側は Player1 で書けるようにする
+            if (trimmed.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Player" + trimmed.Substring("Player ".Length).Trim();
+            }
+
+            return trimmed;
         }
 
-        ThreeHitRoundRule rule = battleCore.GetComponent<ThreeHitRoundRule>();
-        if (rule == null)
+        private static string GetCommandLineValue(string key)
         {
-            rule = battleCore.gameObject.AddComponent<ThreeHitRoundRule>();
+            string[] args = Environment.GetCommandLineArgs();
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                string arg = args[i];
+
+                if (string.Equals(arg, key, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (i + 1 < args.Length)
+                    {
+                        return args[i + 1];
+                    }
+
+                    return null;
+                }
+
+                string prefix = key + "=";
+                if (arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return arg.Substring(prefix.Length);
+                }
+            }
+
+            return null;
         }
 
-        rule.Configure(hitsToWinRound);
+        private static string TryGetProfileFromMppmTags()
+        {
+            foreach (string tag in TryGetCurrentPlayerTagsByReflection())
+            {
+                if (string.IsNullOrWhiteSpace(tag))
+                {
+                    continue;
+                }
+
+                const string profilePrefix = "profile:";
+                const string machinePrefix = "machine:";
+
+                if (tag.StartsWith(profilePrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return tag.Substring(profilePrefix.Length);
+                }
+
+                if (tag.StartsWith(machinePrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return tag.Substring(machinePrefix.Length);
+                }
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<string> TryGetCurrentPlayerTagsByReflection()
+        {
+            // com.unity.multiplayer.playmode が無い環境でもコンパイルを壊さないため、直接参照せずReflectionで読む。
+            Type currentPlayerType = FindType(
+                "Unity.Multiplayer.PlayMode.CurrentPlayer",
+                "Unity.Multiplayer.Playmode.CurrentPlayer");
+
+            if (currentPlayerType == null)
+            {
+                yield break;
+            }
+
+            PropertyInfo tagsProperty = currentPlayerType.GetProperty(
+                "Tags",
+                BindingFlags.Public | BindingFlags.Static);
+
+            if (tagsProperty == null)
+            {
+                yield break;
+            }
+
+            object value = null;
+
+            try
+            {
+                value = tagsProperty.GetValue(null);
+            }
+            catch
+            {
+                yield break;
+            }
+
+            if (value is IEnumerable enumerable)
+            {
+                foreach (object item in enumerable)
+                {
+                    if (item != null)
+                    {
+                        yield return item.ToString();
+                    }
+                }
+            }
+        }
+
+        private static Type FindType(params string[] fullNames)
+        {
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                foreach (string fullName in fullNames)
+                {
+                    Type type = assembly.GetType(fullName);
+                    if (type != null)
+                    {
+                        return type;
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }

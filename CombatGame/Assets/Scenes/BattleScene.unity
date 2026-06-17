@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 9
+  serializedVersion: 10
   m_Fog: 0
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
@@ -42,8 +42,8 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
-  m_GIWorkflowMode: 1
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -66,9 +66,6 @@ LightmapSettings:
     m_LightmapParameters: {fileID: 0}
     m_LightmapsBakeMode: 1
     m_TextureCompression: 1
-    m_FinalGather: 0
-    m_FinalGatherFiltering: 1
-    m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
     m_MixedBakeMode: 2
     m_BakeBackend: 0
@@ -475,52 +472,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84c438f5ac09d0443acaf072d6933443, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useOverrideMachineNameInEditor: 0
-  overrideMachineName: PCA
+  transport: {fileID: 1948372533}
+  sessionManager: {fileID: 1948372535}
   machineProfiles:
-  - machineName: MSI
-    machineLabel: PCA
-    localPlayerId: 0
-    startDelayFrames: 60
+  - profileName: Player0
+    aliases:
+    - MSI
     remoteIp: 192.168.0.90
     localPort: 5000
     remotePort: 6000
-    enableDebugAutoInput: 1
-    leftKey: 97
-    rightKey: 100
-    attackKey: 32
-    useFixedDelayForTest: 0
-    fixedDelayFramesForTest: 4
-    remotePredictionMode: 0
-    remoteDirectionalHoldFrames: 1
-  - machineName: mklab03
-    machineLabel: PCB
-    localPlayerId: 1
+    playerId: 0
     startDelayFrames: 60
+  - profileName: Player1
+    aliases:
+    - mklab-03
     remoteIp: 192.168.0.90
     localPort: 5001
     remotePort: 6000
-    enableDebugAutoInput: 0
-    leftKey: 276
-    rightKey: 275
-    attackKey: 13
-    useFixedDelayForTest: 0
-    fixedDelayFramesForTest: 4
-    remotePredictionMode: 0
-    remoteDirectionalHoldFrames: 1
-  transport: {fileID: 1948372533}
-  sessionManager: {fileID: 1948372535}
-  fileLoggerBootstrap: {fileID: 1948372537}
-  inputSender: {fileID: 1948372538}
-  inputReceiver: {fileID: 1948372539}
-  inputRouter: {fileID: 2065654612}
-  footsiesP1NetworkInputSource: {fileID: 192827124}
-  footsiesP2NetworkInputSource: {fileID: 392893572}
-  footsiesP1PredictedRemoteInputSource: {fileID: 867329790}
-  footsiesP2PredictedRemoteInputSource: {fileID: 1483423052}
-  roundResultAgreementController: {fileID: 0}
-  debugAutoInputSequence: {fileID: 1210230555}
-  resetDebugSequenceOnConfigure: 1
+    playerId: 1
+    startDelayFrames: 60
+  fallbackProfile:
+    profileName: 
+    aliases: []
+    remoteIp: 127.0.0.1
+    localPort: 5000
+    remotePort: 6000
+    playerId: 0
+    startDelayFrames: 60
+  configureOnAwake: 1
+  restartTransportAfterConfigure: 1
 --- !u!4 &814611510
 Transform:
   m_ObjectHideFlags: 0
@@ -1439,6 +1419,8 @@ MonoBehaviour:
   localPort: 5000
   remotePort: 6000
   autoStartOnAwake: 1
+  sendTextRegisterToRelay: 0
+  textRegisterMessage: REGISTER
 --- !u!4 &1948372534
 Transform:
   m_ObjectHideFlags: 0
@@ -2170,7 +2152,7 @@ GameObject:
   m_IsActive: 1
 --- !u!95 &95493457237901949
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2184,6 +2166,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -2191,7 +2174,7 @@ Animator:
   m_WriteDefaultValuesOnDisable: 0
 --- !u!95 &95514604311162683
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2205,6 +2188,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -2212,7 +2196,7 @@ Animator:
   m_WriteDefaultValuesOnDisable: 0
 --- !u!95 &95768309704388377
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2226,6 +2210,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -2393,6 +2378,7 @@ MonoBehaviour:
     m_FixedHeight: 0
     m_StretchWidth: 1
     m_StretchHeight: 0
+    m_IsSDF: 0
   drawDebug: 0
 --- !u!114 &114162139828254051
 MonoBehaviour:
