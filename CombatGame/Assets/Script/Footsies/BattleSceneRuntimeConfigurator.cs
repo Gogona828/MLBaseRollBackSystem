@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 public class BattleSceneRuntimeConfigurator : MonoBehaviour
@@ -11,13 +8,12 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
     public class MachineProfile
     {
         [Header("Match")]
-        [Tooltip("SystemInfo.deviceName, Multiplayer Play Mode の Player1 / Player2, または profile タグ名")]
         public string profileName;
 
-        [Tooltip("同じ設定を使いたい別名。実PC名と Player1/Player2 を両方入れておくと便利")]
+        [Tooltip("実PC名、Player1、Player2などの別名")]
         public string[] aliases;
 
-        [Header("Network")]
+        [Header("Transport")]
         public string remoteIp = "127.0.0.1";
         public int localPort = 5000;
         public int remotePort = 6000;
@@ -53,18 +49,13 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
                 return false;
             }
 
-            if (string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Unity MPPM の "Player 1" / "Player1" 揺れ対策
-            return Canonical(a) == Canonical(b);
+            return Normalize(a) == Normalize(b);
         }
 
-        private static string Canonical(string value)
+        private static string Normalize(string value)
         {
-            return value.Trim()
+            return value
+                .Trim()
                 .Replace(" ", string.Empty)
                 .Replace("　", string.Empty)
                 .ToLowerInvariant();
@@ -78,13 +69,12 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
     [Header("Profiles")]
     [SerializeField] private MachineProfile[] machineProfiles;
 
-    [Tooltip("一致するProfileが見つからなかった場合に使う。不要ならnullでよい")]
     [SerializeField] private MachineProfile fallbackProfile;
 
-    [Header("Timing")]
+    [Header("Apply")]
     [SerializeField] private bool configureOnAwake = true;
 
-    [Tooltip("UdpP2PTransportが先に起動していた場合、いったん止めてから設定し直す")]
+    [Tooltip("UdpP2PTransportが先に起動していた場合、止めてから設定し直す")]
     [SerializeField] private bool restartTransportAfterConfigure = true;
 
     private void Awake()
@@ -97,13 +87,13 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
     public void Configure()
     {
-        string runtimeKey = RuntimeProfileKeyResolver.Resolve();
+        string runtimeKey = ResolveRuntimeProfileKey();
         MachineProfile profile = FindProfile(runtimeKey);
 
         if (profile == null)
         {
             Debug.LogWarning(
-                $"[BattleSceneRuntimeConfigurator] No MachineProfile matched runtimeKey='{runtimeKey}'. " +
+                $"[BattleSceneRuntimeConfigurator] No profile matched runtimeKey='{runtimeKey}'. " +
                 $"fallback={(fallbackProfile != null ? fallbackProfile.profileName : "null")}");
 
             profile = fallbackProfile;
@@ -131,17 +121,16 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
     private void ApplyProfile(MachineProfile profile, string runtimeKey)
     {
-        Debug.Log(
+        string message =
             $"[BattleSceneRuntimeConfigurator] Apply profile='{profile.profileName}' " +
-            $"runtimeKey='{runtimeKey}' playerId={profile.playerId} " +
-            $"localPort={profile.localPort} remote={profile.remoteIp}:{profile.remotePort} " +
-            $"startDelayFrames={profile.startDelayFrames}");
+            $"runtimeKey='{runtimeKey}' " +
+            $"playerId={profile.playerId} " +
+            $"localPort={profile.localPort} " +
+            $"remote={profile.remoteIp}:{profile.remotePort} " +
+            $"startDelayFrames={profile.startDelayFrames}";
 
-        FileLogger.WriteLine(
-            $"[BattleSceneRuntimeConfigurator] Apply profile='{profile.profileName}' " +
-            $"runtimeKey='{runtimeKey}' playerId={profile.playerId} " +
-            $"localPort={profile.localPort} remote={profile.remoteIp}:{profile.remotePort} " +
-            $"startDelayFrames={profile.startDelayFrames}");
+        Debug.Log(message);
+        FileLogger.WriteLine(message);
 
         if (transport != null)
         {
@@ -164,169 +153,76 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         }
     }
 
-    private static class RuntimeProfileKeyResolver
+    private static string ResolveRuntimeProfileKey()
     {
-        public static string Resolve()
+        // 手動指定を最優先。
+        // 例: -machineProfile Player2
+        // 例: -machineProfile=Player2
+        string explicitProfile =
+            GetCommandLineValue("-machineProfile") ??
+            GetCommandLineValue("-profile") ??
+            GetCommandLineValue("-runtimeProfile");
+
+        if (!string.IsNullOrWhiteSpace(explicitProfile))
         {
-            // 1. 明示指定を最優先
-            // 例: -machineProfile Player1
-            // 例: -machineProfile=Player1
-            string explicitProfile =
-                GetCommandLineValue("-machineProfile") ??
-                GetCommandLineValue("-profile") ??
-                GetCommandLineValue("-runtimeProfile");
-
-            if (!string.IsNullOrWhiteSpace(explicitProfile))
-            {
-                return explicitProfile.Trim();
-            }
-
-            // 2. Multiplayer Play Mode のタグ指定
-            // Play Mode Scenario 側で profile:Player1 のようなタグを付ける場合
-            string tagProfile = TryGetProfileFromMppmTags();
-            if (!string.IsNullOrWhiteSpace(tagProfile))
-            {
-                return tagProfile.Trim();
-            }
-
-            // 3. Multiplayer Play Mode の -name
-            // Unity公式FAQでは Player1 / Player2 / Player3 / Player4 を見る方法が案内されている
-            string mppmPlayerName = GetCommandLineValue("-name");
-            if (!string.IsNullOrWhiteSpace(mppmPlayerName))
-            {
-                return NormalizeMppmPlayerName(mppmPlayerName);
-            }
-
-            // 4. 通常起動時は従来通り機器名
-            return SystemInfo.deviceName;
+            return NormalizePlayerName(explicitProfile);
         }
 
-        private static string NormalizeMppmPlayerName(string name)
+        // Unity Multiplayer Play Mode。
+        // Main Editor: Player1
+        // Virtual Player 1: Player2
+        // Virtual Player 2: Player3
+        // Virtual Player 3: Player4
+        string mppmName = GetCommandLineValue("-name");
+
+        if (!string.IsNullOrWhiteSpace(mppmName))
         {
-            string trimmed = name.Trim();
-
-            // "Player 1" と "Player1" のどちらでも MachineProfiles 側は Player1 で書けるようにする
-            if (trimmed.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Player" + trimmed.Substring("Player ".Length).Trim();
-            }
-
-            return trimmed;
+            return NormalizePlayerName(mppmName);
         }
 
-        private static string GetCommandLineValue(string key)
+        // 通常起動時は従来通りPC名。
+        return SystemInfo.deviceName;
+    }
+
+    private static string NormalizePlayerName(string value)
+    {
+        string trimmed = value.Trim();
+
+        // "Player 2" と "Player2" の両方に対応
+        if (trimmed.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
         {
-            string[] args = Environment.GetCommandLineArgs();
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                string arg = args[i];
-
-                if (string.Equals(arg, key, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (i + 1 < args.Length)
-                    {
-                        return args[i + 1];
-                    }
-
-                    return null;
-                }
-
-                string prefix = key + "=";
-                if (arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    return arg.Substring(prefix.Length);
-                }
-            }
-
-            return null;
+            string index = trimmed.Substring("Player ".Length).Trim();
+            return "Player" + index;
         }
 
-        private static string TryGetProfileFromMppmTags()
+        return trimmed;
+    }
+
+    private static string GetCommandLineValue(string key)
+    {
+        string[] args = Environment.GetCommandLineArgs();
+
+        for (int i = 0; i < args.Length; i++)
         {
-            foreach (string tag in TryGetCurrentPlayerTagsByReflection())
+            string arg = args[i];
+
+            if (string.Equals(arg, key, StringComparison.OrdinalIgnoreCase))
             {
-                if (string.IsNullOrWhiteSpace(tag))
+                if (i + 1 < args.Length)
                 {
-                    continue;
+                    return args[i + 1];
                 }
 
-                const string profilePrefix = "profile:";
-                const string machinePrefix = "machine:";
-
-                if (tag.StartsWith(profilePrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    return tag.Substring(profilePrefix.Length);
-                }
-
-                if (tag.StartsWith(machinePrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    return tag.Substring(machinePrefix.Length);
-                }
+                return null;
             }
 
-            return null;
-        }
-
-        private static IEnumerable<string> TryGetCurrentPlayerTagsByReflection()
-        {
-            // com.unity.multiplayer.playmode が無い環境でもコンパイルを壊さないため、直接参照せずReflectionで読む。
-            Type currentPlayerType = FindType(
-                "Unity.Multiplayer.PlayMode.CurrentPlayer",
-                "Unity.Multiplayer.Playmode.CurrentPlayer");
-
-            if (currentPlayerType == null)
+            string prefix = key + "=";
+            if (arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
-                yield break;
-            }
-
-            PropertyInfo tagsProperty = currentPlayerType.GetProperty(
-                "Tags",
-                BindingFlags.Public | BindingFlags.Static);
-
-            if (tagsProperty == null)
-            {
-                yield break;
-            }
-
-            object value = null;
-
-            try
-            {
-                value = tagsProperty.GetValue(null);
-            }
-            catch
-            {
-                yield break;
-            }
-
-            if (value is IEnumerable enumerable)
-            {
-                foreach (object item in enumerable)
-                {
-                    if (item != null)
-                    {
-                        yield return item.ToString();
-                    }
-                }
+                return arg.Substring(prefix.Length);
             }
         }
 
-        private static Type FindType(params string[] fullNames)
-        {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                foreach (string fullName in fullNames)
-                {
-                    Type type = assembly.GetType(fullName);
-                    if (type != null)
-                    {
-                        return type;
-                    }
-                }
-            }
-
-            return null;
-        }
+        return null;
     }
 }

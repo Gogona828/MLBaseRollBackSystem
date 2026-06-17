@@ -475,7 +475,7 @@ MonoBehaviour:
   transport: {fileID: 1948372533}
   sessionManager: {fileID: 1948372535}
   machineProfiles:
-  - profileName: Player0
+  - profileName: Player1
     aliases:
     - MSI
     remoteIp: 192.168.0.90
@@ -483,9 +483,8 @@ MonoBehaviour:
     remotePort: 6000
     playerId: 0
     startDelayFrames: 60
-  - profileName: Player1
-    aliases:
-    - mklab-03
+  - profileName: Player2
+    aliases: []
     remoteIp: 192.168.0.90
     localPort: 5001
     remotePort: 6000
@@ -1478,6 +1477,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a0e8a456386ae94dbef864c8bafe59a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initializeOnAwake: 1
+  overrideMachineLabel: 
   machineLabel: PCA
   playerId: 0
   remoteIp: 192.168.0.90
