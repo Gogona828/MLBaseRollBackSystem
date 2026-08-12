@@ -368,25 +368,27 @@ namespace Footsies
 
         public DamageResult NotifyDamaged(AttackData attackData, Vector2 damagePos)
         {
-            bool isGuardBreak = false;
+            bool isGuardDepleted = false;
             if (attackData.guardHealthDamage > 0)
             {
                 guardHealth -= attackData.guardHealthDamage;
-                if (guardHealth < 0)
+                if (guardHealth <= 0)
                 {
-                    isGuardBreak = true;
+                    isGuardDepleted = true;
                     guardHealth = 0;
                 }
             }
 
-            if (currentActionID == (int)CommonActionID.BACKWARD
-                || fighterData.actions[currentActionID].Type == ActionType.Guard)
+            bool isGuarding = currentActionID == (int)CommonActionID.BACKWARD
+                || fighterData.actions[currentActionID].Type == ActionType.Guard;
+
+            if (isGuarding)
             {
-                if (isGuardBreak)
+                if (isGuardDepleted)
                 {
-                    SetCurrentAction(attackData.guardActionID);
-                    reserveDamageActionID = (int)CommonActionID.GUARD_BREAK;
-                    SoundManager.Instance.playFighterSE(fighterData.actions[reserveDamageActionID].audioClip, isFaceRight, position.x);
+                    // 画面上のGuardを3つ失った時点でラウンド敗北になる。
+                    vitalHealth = 0;
+                    RequestDeadAction();
                     return DamageResult.GuardBreak;
                 }
                 else
@@ -397,14 +399,17 @@ namespace Footsies
             }
             else
             {
-                if(attackData.vitalHealthDamage > 0)
+                // 通常攻撃はGuardを1つ削る。Specialの直撃だけは残りGuardを無視してKOする。
+                if (isGuardDepleted || attackData.instantKOOnHit)
                 {
-                    vitalHealth -= attackData.vitalHealthDamage;
-                    if (vitalHealth <= 0)
-                        vitalHealth = 0;
+                    vitalHealth = 0;
+                    RequestDeadAction();
                 }
-                
-                SetCurrentAction(attackData.damageActionID);
+                else
+                {
+                    SetCurrentAction(attackData.damageActionID);
+                }
+
                 return DamageResult.Damage;
             }
         }
@@ -473,6 +478,18 @@ namespace Footsies
         public void RequestWinAction()
         {
             hasWon = true;
+        }
+
+        public void RequestDeadAction()
+        {
+            if (currentActionID == (int)CommonActionID.DEAD)
+            {
+                return;
+            }
+
+            hasWon = false;
+            velocity_x = 0f;
+            SetCurrentAction((int)CommonActionID.DEAD);
         }
 
         public bool RequestAction(int actionID, int startFrame = 0)

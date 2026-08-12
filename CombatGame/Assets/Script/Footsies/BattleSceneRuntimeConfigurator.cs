@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
+using Footsies;
 using UnityEngine;
 
+[DefaultExecutionOrder(-10000)]
 public class BattleSceneRuntimeConfigurator : MonoBehaviour
 {
     [Serializable]
@@ -66,6 +68,12 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
     [SerializeField] private UdpP2PTransport transport;
     [SerializeField] private NetworkSessionManager sessionManager;
 
+    [Header("Offline Battle")]
+    [SerializeField] private BattleCore battleCore;
+    [SerializeField] private FootsiesBattleInputRouter battleInputRouter;
+    [SerializeField] private FootsiesLocalPlayerInputSource player1LocalInputSource;
+    [SerializeField] private GameObject rollbackRoot;
+
     [Header("Profiles")]
     [SerializeField] private MachineProfile[] machineProfiles;
 
@@ -79,9 +87,70 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
     private void Awake()
     {
+        if (IsOfflineBattleRequested())
+        {
+            ConfigureOfflineBattle();
+            return;
+        }
+
         if (configureOnAwake)
         {
             Configure();
+        }
+    }
+
+    private bool IsOfflineBattleRequested()
+    {
+        GameManager gameManager = FindObjectOfType<GameManager>();
+        return gameManager != null && gameManager.isOfflineMode;
+    }
+
+    private void ConfigureOfflineBattle()
+    {
+        ResolveOfflineReferences();
+
+        if (transport != null)
+        {
+            transport.StopTransport();
+            transport.gameObject.SetActive(false);
+        }
+
+        if (rollbackRoot != null)
+        {
+            rollbackRoot.SetActive(false);
+        }
+
+        if (battleInputRouter != null)
+        {
+            battleInputRouter.ConfigureSources(player1LocalInputSource, null);
+        }
+
+        if (battleCore != null)
+        {
+            battleCore.ConfigureOfflineBattle();
+            battleCore.enabled = true;
+        }
+
+        Debug.Log("[BattleSceneRuntimeConfigurator] Offline VS CPU mode enabled. Network and rollback are disabled.");
+    }
+
+    private void ResolveOfflineReferences()
+    {
+        if (battleCore == null)
+        {
+            battleCore = FindObjectOfType<BattleCore>(true);
+        }
+
+        if (battleInputRouter == null)
+        {
+            battleInputRouter = FindObjectOfType<FootsiesBattleInputRouter>(true);
+        }
+
+        if (player1LocalInputSource == null)
+        {
+            FootsiesLocalPlayerInputSource[] localSources =
+                FindObjectsOfType<FootsiesLocalPlayerInputSource>(true);
+            player1LocalInputSource = localSources.FirstOrDefault(source => source.IsPlayer1);
         }
     }
 

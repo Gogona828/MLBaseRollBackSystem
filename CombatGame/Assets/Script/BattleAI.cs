@@ -1,15 +1,18 @@
-﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Footsies
 {
-
+    /// <summary>
+    /// オフライン対戦用のルールベースCPU。
+    /// 距離と相手の行動を見て、プレイヤーと同じ左右・攻撃入力だけを生成する。
+    /// </summary>
     public class BattleAI
     {
         public class FightState
         {
             public float distanceX;
+            public int opponentActionId;
             public bool isOpponentDamage;
             public bool isOpponentGuardBreak;
             public bool isOpponentBlocking;
@@ -17,15 +20,19 @@ namespace Footsies
             public bool isOpponentSpecialAttack;
         }
 
-        private BattleCore battleCore;
+        private const float FarDistance = 4.2f;
+        private const float ApproachDistance = 3.0f;
+        private const float AttackDistance = 2.8f;
+        private const float TooCloseDistance = 1.8f;
 
-        private Queue<int> moveQueue = new Queue<int>();
-        private Queue<int> attackQueue = new Queue<int>();
+        private readonly BattleCore battleCore;
+        private readonly Queue<int> moveQueue = new Queue<int>();
+        private readonly Queue<int> attackQueue = new Queue<int>();
 
-        // previous fight state data
-        private FightState[] fightStates = new FightState[maxFightStateRecord];
-        public static readonly uint maxFightStateRecord = 10;
-        private int fightStateReadIndex = 5;
+        private int movementChoiceIndex;
+        private int attackChoiceIndex;
+        private int defensiveFramesRemaining;
+        private int lastOpponentActionId = -1;
 
         public BattleAI(BattleCore core)
         {
@@ -34,291 +41,278 @@ namespace Footsies
 
         public int getNextAIInput()
         {
-            int input = 0;
+            return GetNextAIInput();
+        }
 
-            UpdateFightState();
-            var fightState = GetCurrentFightState();
-            if (fightState != null)
+        public int GetNextAIInput()
+        {
+            FightState fightState = ReadFightState();
+            if (fightState == null)
             {
-                //Debug.Log(fightState.distanceX);
-                if (moveQueue.Count > 0)
-                    input |= moveQueue.Dequeue();
-                else if (moveQueue.Count == 0)
-                {
-                    SelectMovement(fightState);
-                }
+                return 0;
+            }
 
-                if (attackQueue.Count > 0)
-                    input |= attackQueue.Dequeue();
-                else if (attackQueue.Count == 0)
-                {
-                    SelectAttack(fightState);
-                }
+            bool opponentActionChanged = fightState.opponentActionId != lastOpponentActionId;
+            lastOpponentActionId = fightState.opponentActionId;
+
+            ApplyReactionRules(fightState, opponentActionChanged);
+            if (defensiveFramesRemaining > 0)
+            {
+                defensiveFramesRemaining--;
+                return GetBackwardInput();
+            }
+
+            if (moveQueue.Count == 0)
+            {
+                SelectMovement(fightState);
+            }
+
+            if (attackQueue.Count == 0)
+            {
+                SelectAttack(fightState);
+            }
+
+            int input = 0;
+            if (moveQueue.Count > 0)
+            {
+                input |= moveQueue.Dequeue();
+            }
+
+            if (attackQueue.Count > 0)
+            {
+                input |= attackQueue.Dequeue();
             }
 
             return input;
         }
 
+        private void ApplyReactionRules(FightState fightState, bool opponentActionChanged)
+        {
+            if (!opponentActionChanged)
+            {
+                return;
+            }
+
+            // 必殺技と近距離の通常技には後退入力でガードする。
+            if (fightState.isOpponentSpecialAttack
+                || (fightState.isOpponentNormalAttack && fightState.distanceX <= AttackDistance))
+            {
+                moveQueue.Clear();
+                attackQueue.Clear();
+                defensiveFramesRemaining = fightState.isOpponentSpecialAttack ? 20 : 10;
+                return;
+            }
+
+            // 被弾・ガード崩れを確認したら、現在のプランを破棄して反撃する。
+            if (fightState.isOpponentDamage || fightState.isOpponentGuardBreak)
+            {
+                moveQueue.Clear();
+                attackQueue.Clear();
+
+                if (fightState.distanceX > AttackDistance)
+                {
+                    AddMidApproach2();
+                }
+
+                AddTwoHitImmediateAttack();
+            }
+        }
+
         private void SelectMovement(FightState fightState)
         {
-            if (fightState.distanceX > 4f)
+            if (fightState.distanceX > FarDistance)
             {
-                var rand = Random.Range(0, 2);
-                if (rand == 0)
+                if (movementChoiceIndex++ % 2 == 0)
+                {
                     AddFarApproach1();
+                }
                 else
+                {
                     AddFarApproach2();
+                }
+
+                return;
             }
-            else if (fightState.distanceX > 3f)
+
+            if (fightState.distanceX > ApproachDistance)
             {
-                var rand = Random.Range(0, 7);
-                if (rand <= 1)
+                if (movementChoiceIndex++ % 2 == 0)
+                {
                     AddMidApproach1();
-                else if (rand <= 3)
+                }
+                else
+                {
                     AddMidApproach2();
-                else if (rand == 4)
-                    AddFarApproach1();
-                else if (rand == 5)
-                    AddFarApproach2();
-                else
-                    AddNeutralMovement();
+                }
+
+                return;
             }
-            else if (fightState.distanceX > 2.5f)
+
+            if (fightState.distanceX < TooCloseDistance)
             {
-                var rand = Random.Range(0, 5);
-                if (rand == 0)
-                    AddMidApproach1();
-                else if (rand == 1)
-                    AddMidApproach2();
-                else if (rand == 2)
+                if (movementChoiceIndex++ % 2 == 0)
+                {
                     AddFallBack1();
-                else if (rand == 3)
-                    AddFallBack2();
+                }
                 else
-                    AddNeutralMovement();
+                {
+                    AddFallBack2();
+                }
+
+                return;
             }
-            else if (fightState.distanceX > 2f)
+
+            // 相手がガードを固めている間は一度間合いを外す。
+            if (fightState.isOpponentBlocking)
             {
-                var rand = Random.Range(0, 4);
-                if (rand == 0)
-                    AddFallBack1();
-                else if (rand == 1)
-                    AddFallBack2();
-                else
-                    AddNeutralMovement();
+                AddFallBack1();
             }
             else
             {
-                var rand = Random.Range(0, 3);
-                if (rand == 0)
-                    AddFallBack1();
-                else if (rand == 1)
-                    AddFallBack2();
-                else
-                    AddNeutralMovement();
+                AddNeutralMovement();
             }
         }
 
         private void SelectAttack(FightState fightState)
         {
-            if (fightState.isOpponentDamage
-                || fightState.isOpponentGuardBreak
-                || fightState.isOpponentSpecialAttack)
+            if (fightState.isOpponentDamage || fightState.isOpponentGuardBreak)
             {
                 AddTwoHitImmediateAttack();
+                return;
             }
-            else if (fightState.distanceX > 4f)
+
+            if (fightState.distanceX > FarDistance)
             {
-                var rand = Random.Range(0, 4);
-                if (rand <= 3)
-                    AddNoAttack();
-                else
+                // 遠距離では接近を優先し、ときどき接近中に必殺技を溜める。
+                if (attackChoiceIndex++ % 3 == 2)
+                {
                     AddDelaySpecialAttack();
+                }
+                else
+                {
+                    AddNoAttack();
+                }
+
+                return;
             }
-            else if (fightState.distanceX > 3f)
+
+            if (fightState.distanceX > AttackDistance)
             {
                 if (fightState.isOpponentNormalAttack)
                 {
                     AddTwoHitImmediateAttack();
-                    return;
+                }
+                else if (attackChoiceIndex++ % 3 == 2)
+                {
+                    AddDelaySpecialAttack();
+                }
+                else
+                {
+                    AddNoAttack();
                 }
 
-                var rand = Random.Range(0, 5);
-                if (rand <= 1)
-                    AddNoAttack();
-                else if (rand <= 3)
-                    AddOneHitImmediateAttack();
-                else
-                    AddDelaySpecialAttack();
+                return;
             }
-            else if (fightState.distanceX > 2.5f)
+
+            // 攻撃間合いでは単発、連係、必殺技を順番に使う。
+            switch (attackChoiceIndex++ % 4)
             {
-                var rand = Random.Range(0, 3);
-                if (rand == 0)
-                    AddNoAttack();
-                else if (rand== 1)
+                case 0:
                     AddOneHitImmediateAttack();
-                else
+                    break;
+                case 1:
+                case 3:
                     AddTwoHitImmediateAttack();
-            }
-            else if (fightState.distanceX > 2f)
-            {
-                var rand = Random.Range(0, 6);
-                if (rand <= 1)
-                    AddOneHitImmediateAttack();
-                else if (rand <= 3)
-                    AddTwoHitImmediateAttack();
-                else if(rand == 4)
+                    break;
+                default:
                     AddImmediateSpecialAttack();
-                else
-                    AddDelaySpecialAttack();
-            }
-            else
-            {
-                var rand = Random.Range(0, 3);
-                if (rand == 0)
-                    AddOneHitImmediateAttack();
-                else
-                    AddTwoHitImmediateAttack();
+                    break;
             }
         }
 
         private void AddNeutralMovement()
         {
-            for (int i = 0; i < 30; i++)
-            {
-                moveQueue.Enqueue(0);
-            }
-
-            Debug.Log("AddNeutral");
+            Enqueue(moveQueue, 0, 18);
         }
 
         private void AddFarApproach1()
         {
-            AddForwardInputQueue(40);
-            AddBackwardInputQueue(10);
-            AddForwardInputQueue(30);
-            AddBackwardInputQueue(10);
-
-            Debug.Log("AddFarApproach1");
+            AddForwardInputQueue(24);
+            Enqueue(moveQueue, 0, 6);
         }
 
         private void AddFarApproach2()
         {
             AddForwardDashInputQueue();
-            AddBackwardInputQueue(25);
-            AddForwardDashInputQueue();
-            AddBackwardInputQueue(25);
-
-            Debug.Log("AddFarApproach2");
+            AddForwardInputQueue(18);
+            Enqueue(moveQueue, 0, 6);
         }
-        
+
         private void AddMidApproach1()
         {
-            AddForwardInputQueue(30);
-            AddBackwardInputQueue(10);
-            AddForwardInputQueue(20);
-            AddBackwardInputQueue(10);
-
-            Debug.Log("AddMidApproach1");
+            AddForwardInputQueue(14);
+            Enqueue(moveQueue, 0, 8);
         }
 
         private void AddMidApproach2()
         {
             AddForwardDashInputQueue();
-            AddBackwardInputQueue(30);
-
-            Debug.Log("AddMidApproach2");
+            Enqueue(moveQueue, 0, 12);
         }
 
         private void AddFallBack1()
         {
-            AddBackwardInputQueue(60);
-
-            Debug.Log("AddFallBack1");
+            AddBackwardInputQueue(16);
+            Enqueue(moveQueue, 0, 8);
         }
 
         private void AddFallBack2()
         {
             AddBackwardDashInputQueue();
-            AddBackwardInputQueue(60);
-
-            Debug.Log("AddFallBack2");
+            Enqueue(moveQueue, 0, 12);
         }
 
         private void AddNoAttack()
         {
-            for (int i = 0; i < 30; i++)
-            {
-                attackQueue.Enqueue(0);
-            }
-
-            Debug.Log("AddNoAttack");
+            Enqueue(attackQueue, 0, 24);
         }
 
         private void AddOneHitImmediateAttack()
         {
             attackQueue.Enqueue(GetAttackInput());
-            for (int i = 0; i < 18; i++)
-            {
-                attackQueue.Enqueue(0);
-            }
-
-            Debug.Log("AddOneHitImmediateAttack");
+            Enqueue(attackQueue, 0, 18);
         }
 
         private void AddTwoHitImmediateAttack()
         {
             attackQueue.Enqueue(GetAttackInput());
-            for (int i = 0; i < 3; i++)
-            {
-                attackQueue.Enqueue(0);
-            }
+            Enqueue(attackQueue, 0, 3);
             attackQueue.Enqueue(GetAttackInput());
-            for (int i = 0; i < 18; i++)
-            {
-                attackQueue.Enqueue(0);
-            }
-
-            Debug.Log("AddTwoHitImmediateAttack");
+            Enqueue(attackQueue, 0, 18);
         }
 
         private void AddImmediateSpecialAttack()
         {
-            for (int i = 0; i < 60; i++)
-            {
-                attackQueue.Enqueue(GetAttackInput());
-            }
+            Enqueue(attackQueue, GetAttackInput(), 60);
             attackQueue.Enqueue(0);
-
-            Debug.Log("AddImmediateSpecialAttack");
+            Enqueue(attackQueue, 0, 18);
         }
 
         private void AddDelaySpecialAttack()
         {
-            for (int i = 0; i < 120; i++)
-            {
-                attackQueue.Enqueue(GetAttackInput());
-            }
+            Enqueue(attackQueue, GetAttackInput(), 90);
             attackQueue.Enqueue(0);
-
-            Debug.Log("AddDelaySpecialAttack");
+            Enqueue(attackQueue, 0, 18);
         }
 
-        private void AddForwardInputQueue(int frame)
+        private void AddForwardInputQueue(int frameCount)
         {
-            for(int i = 0; i < frame; i++)
-            {
-                moveQueue.Enqueue(GetForwardInput());
-            }
+            Enqueue(moveQueue, GetForwardInput(), frameCount);
         }
 
-        private void AddBackwardInputQueue(int frame)
+        private void AddBackwardInputQueue(int frameCount)
         {
-            for (int i = 0; i < frame; i++)
-            {
-                moveQueue.Enqueue(GetBackwardInput());
-            }
+            Enqueue(moveQueue, GetBackwardInput(), frameCount);
         }
 
         private void AddForwardDashInputQueue()
@@ -330,57 +324,57 @@ namespace Footsies
 
         private void AddBackwardDashInputQueue()
         {
-            moveQueue.Enqueue(GetForwardInput());
+            moveQueue.Enqueue(GetBackwardInput());
             moveQueue.Enqueue(0);
-            moveQueue.Enqueue(GetForwardInput());
+            moveQueue.Enqueue(GetBackwardInput());
         }
 
-        private void UpdateFightState()
+        private FightState ReadFightState()
         {
-            var currentFightState = new FightState();
-            currentFightState.distanceX = GetDistanceX();
-            currentFightState.isOpponentDamage = battleCore.fighter1.currentActionID == (int)CommonActionID.DAMAGE;
-            currentFightState.isOpponentGuardBreak= battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_BREAK;
-            currentFightState.isOpponentBlocking = (battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_CROUCH
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_STAND
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_M);
-            currentFightState.isOpponentNormalAttack = (battleCore.fighter1.currentActionID == (int)CommonActionID.N_ATTACK
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.B_ATTACK);
-            currentFightState.isOpponentSpecialAttack = (battleCore.fighter1.currentActionID == (int)CommonActionID.N_SPECIAL
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.B_SPECIAL);
-
-            for (int i = 1; i < fightStates.Length; i++)
+            if (battleCore == null || battleCore.fighter1 == null || battleCore.fighter2 == null)
             {
-                fightStates[i] = fightStates[i - 1];
+                return null;
             }
-            fightStates[0] = currentFightState;
+
+            int opponentActionId = battleCore.fighter1.currentActionID;
+            return new FightState
+            {
+                distanceX = Mathf.Abs(battleCore.fighter2.position.x - battleCore.fighter1.position.x),
+                opponentActionId = opponentActionId,
+                isOpponentDamage = opponentActionId == (int)CommonActionID.DAMAGE,
+                isOpponentGuardBreak = opponentActionId == (int)CommonActionID.GUARD_BREAK,
+                isOpponentBlocking = opponentActionId == (int)CommonActionID.GUARD_CROUCH
+                    || opponentActionId == (int)CommonActionID.GUARD_STAND
+                    || opponentActionId == (int)CommonActionID.GUARD_M,
+                isOpponentNormalAttack = opponentActionId == (int)CommonActionID.N_ATTACK
+                    || opponentActionId == (int)CommonActionID.B_ATTACK,
+                isOpponentSpecialAttack = opponentActionId == (int)CommonActionID.N_SPECIAL
+                    || opponentActionId == (int)CommonActionID.B_SPECIAL
+            };
         }
 
-        private FightState GetCurrentFightState()
+        private static void Enqueue(Queue<int> queue, int input, int frameCount)
         {
-            return fightStates[fightStateReadIndex];
+            for (int i = 0; i < frameCount; i++)
+            {
+                queue.Enqueue(input);
+            }
         }
 
-        private float GetDistanceX()
-        {
-            return Mathf.Abs(battleCore.fighter2.position.x - battleCore.fighter1.position.x);
-        }
-
-        private int GetAttackInput()
+        private static int GetAttackInput()
         {
             return (int)InputDefine.Attack;
         }
 
-        private int GetForwardInput()
+        // CPUは2P側（左向き）なので、左が前進、右が後退。
+        private static int GetForwardInput()
         {
             return (int)InputDefine.Left;
         }
 
-        private int GetBackwardInput()
+        private static int GetBackwardInput()
         {
             return (int)InputDefine.Right;
         }
-
     }
-
 }

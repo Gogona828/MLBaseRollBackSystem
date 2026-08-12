@@ -474,6 +474,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   transport: {fileID: 1948372533}
   sessionManager: {fileID: 1948372535}
+  battleCore: {fileID: 1856329101}
+  battleInputRouter: {fileID: 2065654612}
+  player1LocalInputSource: {fileID: 1638377579}
+  rollbackRoot: {fileID: 675947965}
   machineProfiles:
   - profileName: Player1
     aliases:

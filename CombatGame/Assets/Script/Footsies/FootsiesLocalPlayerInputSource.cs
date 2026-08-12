@@ -6,6 +6,8 @@ namespace Footsies
     {
         [SerializeField] private bool isPlayer1 = true;
 
+        public bool IsPlayer1 => isPlayer1;
+
         public FootsiesInputFrame GetCurrentInput()
         {
             if (InputManager.Instance == null)

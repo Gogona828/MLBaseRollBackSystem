@@ -1,5 +1,12 @@
 # Footsies
 
+## Offline play
+
+Select **VS CPU** on the title screen to play a complete match without starting the
+relay server. Player 1 uses the normal P1 controls. The CPU chooses only the same
+left, right, and attack inputs available to a player, using distance and the
+opponent's current action to approach, retreat/guard, or attack.
+
 FOOTSIES is a 2D fighting game where players can control character movement horizontally 
 and use one attack button to perform normal and special moves to defeat their opponent.
 While the controls (and graphics) are super simple, 
@@ -30,8 +37,8 @@ XInput controller should work fine in the game.
 
 
 <h3>Mechanics</h3> 
-- There is no health bar. The round is lost after being hit by special moves.
-- There is, however, guard bar. You can block opponent attack up to three times. After that, every attack will cause guard break.
+- There is no health bar. Each connected attack removes one Guard, and losing all three Guards loses the round.
+- A special move that connects without being blocked causes an immediate K.O. regardless of the remaining Guards.
 - There are two type of normal moves, neutral attack and forward/backward attack.
 - There are two type of special moves which can be performed by holding and then release attack button.
 One can be performed by neutral release, and forward/backward release for the other one.
