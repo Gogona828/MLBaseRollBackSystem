@@ -87,6 +87,74 @@ namespace Footsies
             useOverrideInputs = false;
         }
 
+        public string GetInputSource(int playerNumber)
+        {
+            if (useOverrideInputs)
+            {
+                return "resimulation_override";
+            }
+
+            MonoBehaviour behaviour = playerNumber == 1
+                ? player1InputSourceBehaviour
+                : player2InputSourceBehaviour;
+
+            FootsiesNetworkPlayerInputSource networkSource =
+                behaviour as FootsiesNetworkPlayerInputSource;
+            if (networkSource != null)
+            {
+                if (networkSource.CurrentReadMode == FootsiesNetworkPlayerInputSource.ReadMode.RemoteConfirmed)
+                {
+                    return "remote_confirmed";
+                }
+
+                return networkSource.UsesDebugAutoInput ? "debug_auto_input" : "human";
+            }
+
+            FootsiesPredictedRemoteInputSource predictedSource =
+                behaviour as FootsiesPredictedRemoteInputSource;
+            if (predictedSource != null)
+            {
+                return predictedSource.LastReadWasConfirmed
+                    ? "remote_confirmed"
+                    : "remote_predicted";
+            }
+
+            if (behaviour is FootsiesLocalPlayerInputSource)
+            {
+                return "human";
+            }
+
+            return behaviour != null ? behaviour.GetType().Name : "unknown";
+        }
+
+        public int GetPredictedRemotePlayerId()
+        {
+            FootsiesPredictedRemoteInputSource p1 =
+                player1InputSourceBehaviour as FootsiesPredictedRemoteInputSource;
+            if (p1 != null)
+            {
+                return p1.RemotePlayerId;
+            }
+
+            FootsiesPredictedRemoteInputSource p2 =
+                player2InputSourceBehaviour as FootsiesPredictedRemoteInputSource;
+            return p2 != null ? p2.RemotePlayerId : -1;
+        }
+
+        public string GetPredictionMode()
+        {
+            FootsiesPredictedRemoteInputSource p1 =
+                player1InputSourceBehaviour as FootsiesPredictedRemoteInputSource;
+            if (p1 != null)
+            {
+                return p1.PredictionMode.ToString();
+            }
+
+            FootsiesPredictedRemoteInputSource p2 =
+                player2InputSourceBehaviour as FootsiesPredictedRemoteInputSource;
+            return p2 != null ? p2.PredictionMode.ToString() : string.Empty;
+        }
+
         private string GetSourceName(MonoBehaviour behaviour)
         {
             return behaviour != null ? behaviour.name : "null";

@@ -40,6 +40,9 @@ namespace Footsies
         [SerializeField]
         private FootsiesBattleRollbackCoordinator rollbackCoordinator;
 
+        [SerializeField]
+        private NetworkFrameClock networkFrameClock;
+
         public bool debugP1Attack = false;
         public bool debugP2Attack = false;
         public bool debugP1Guard = false;
@@ -70,6 +73,13 @@ namespace Footsies
         private Animator roundUIAnimator;
         private BattleAI battleAI = null;
         private bool isOfflineBattle;
+        private MatchLogger matchLogger;
+        private bool isResimulating;
+        private int resimulationNetworkFrame = -1;
+
+        public int CurrentFrameCount { get { return frameCount; } }
+        public bool IsResimulating { get { return isResimulating; } }
+        public int ResimulationNetworkFrame { get { return resimulationNetworkFrame; } }
 
         private static uint maxRecordingInputFrame = 60 * 60 * 5;
         private InputData[] recordingP1Input = new InputData[maxRecordingInputFrame];
@@ -130,6 +140,24 @@ namespace Footsies
             {
                 rollbackCoordinator = FindObjectOfType<FootsiesBattleRollbackCoordinator>();
             }
+
+            if (networkFrameClock == null)
+            {
+                networkFrameClock = FindObjectOfType<NetworkFrameClock>();
+            }
+
+            matchLogger = new MatchLogger(
+                this,
+                battleInputRouter,
+                networkInputReceiver,
+                networkFrameClock,
+                FindObjectOfType<PredictionMismatchDetector>());
+        }
+
+        private void OnDestroy()
+        {
+            matchLogger?.Dispose();
+            matchLogger = null;
         }
 
         void FixedUpdate()
@@ -167,10 +195,28 @@ namespace Footsies
                         break;
                     }
 
+                    var frameStopwatch = System.Diagnostics.Stopwatch.StartNew();
                     frameCount++;
 
                     UpdateFightState();
                     UpdatePendingKOState();
+
+                    frameStopwatch.Stop();
+                    int networkFrame = isResimulating
+                        ? resimulationNetworkFrame
+                        : networkFrameClock != null
+                            ? networkFrameClock.CurrentFrame
+                            : -1;
+                    matchLogger?.RecordFrame(
+                        frameCount,
+                        networkFrame,
+                        isResimulating,
+                        frameStopwatch.Elapsed.TotalMilliseconds);
+
+                    if (_roundState == RoundStateType.KO && !isResimulating)
+                    {
+                        matchLogger?.EndRound("ko");
+                    }
 
                     break;
 
@@ -245,6 +291,7 @@ namespace Footsies
                     roundStartTime = Time.fixedTime;
                     frameCount = -1;
                     currentRecordingInputIndex = 0;
+                    matchLogger?.BeginRound(IsOfflineBattle());
                     break;
 
                 case RoundStateType.KO:
@@ -618,6 +665,8 @@ namespace Footsies
 
                     if (isHit)
                     {
+                        int healthBefore = damaged.vitalHealth;
+                        int guardBefore = damaged.guardHealth;
                         attacker.NotifyAttackHit(damaged, damagePos);
                         var damageResult = damaged.NotifyDamaged(attacker.getAttackData(hitAttackID), damagePos);
 
@@ -625,6 +674,15 @@ namespace Footsies
                         attacker.SetHitStun(hitStunFrame);
                         damaged.SetHitStun(hitStunFrame);
                         damaged.SetSpriteShakeFrame(hitStunFrame / 3);
+
+                        matchLogger?.RecordCombatEvent(
+                            attacker,
+                            damaged,
+                            hitAttackID,
+                            damageResult,
+                            hitStunFrame,
+                            healthBefore,
+                            guardBefore);
 
                         damageHandler?.Invoke(damaged, damagePos, damageResult);
                     }
@@ -707,6 +765,50 @@ namespace Footsies
                 return p2FrameLeft - p1FrameLeft;
             else
                 return p1FrameLeft - p2FrameLeft;
+        }
+
+        public void BeginResimulationFrame(int networkFrame)
+        {
+            isResimulating = true;
+            resimulationNetworkFrame = networkFrame;
+        }
+
+        public void CompleteResimulation()
+        {
+            isResimulating = false;
+            resimulationNetworkFrame = -1;
+
+            if (_roundState == RoundStateType.KO)
+            {
+                matchLogger?.EndRound("ko");
+            }
+        }
+
+        public void RecordRollback(
+            int rollbackTargetFrame,
+            int rollbackFromFrame,
+            byte predictedBits,
+            byte confirmedBits,
+            double restoreTimeMs,
+            double resimulationTimeMs,
+            float p1PositionBefore,
+            float p2PositionBefore)
+        {
+            matchLogger?.RecordRollback(
+                rollbackTargetFrame,
+                rollbackFromFrame,
+                predictedBits,
+                confirmedBits,
+                restoreTimeMs,
+                resimulationTimeMs,
+                p1PositionBefore,
+                p2PositionBefore);
+        }
+
+        private bool IsOfflineBattle()
+        {
+            return isOfflineBattle
+                || (GameManager.Instance != null && GameManager.Instance.isVsCPU);
         }
 
         public FootsiesBattleSnapshot CaptureSnapshot()

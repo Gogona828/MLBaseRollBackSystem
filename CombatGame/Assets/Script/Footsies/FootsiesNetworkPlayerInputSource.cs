@@ -20,6 +20,13 @@ namespace Footsies
         [Header("Remote Player")]
         [SerializeField] private int remotePlayerId = 0;
 
+        public ReadMode CurrentReadMode => readMode;
+        public int RemotePlayerId => remotePlayerId;
+        public bool UsesDebugAutoInput =>
+            readMode == ReadMode.LocalSender
+            && networkInputSender != null
+            && networkInputSender.UsesDebugAutoInput;
+
         public void Configure(ReadMode readMode, int remotePlayerId)
         {
             this.readMode = readMode;

@@ -1,7 +1,9 @@
 using UnityEngine;
+using System;
 
 public class PredictionMismatchDetector : MonoBehaviour
 {
+    public event Action<PredictionRecord> PredictionEvaluated;
     [Header("Observation")]
     [SerializeField] private RollbackObservationMonitor rollbackObservationMonitor;
 
@@ -58,6 +60,8 @@ public class PredictionMismatchDetector : MonoBehaviour
             FileLogger.WriteLine(
                 $"[PredictionMismatchDetector] MISS frame={frame}, predicted={record.PredictedBits}, confirmed={confirmedBits}");
         }
+
+        PredictionEvaluated?.Invoke(record);
     }
 
     private void RegisterPendingMiss(PredictionMissInfo missInfo)

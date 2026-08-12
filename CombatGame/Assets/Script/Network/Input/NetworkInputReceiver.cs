@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
@@ -14,6 +15,9 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     [Header("Prediction")]
     [SerializeField] private PredictionMismatchDetector predictionMismatchDetector;
+    [SerializeField] private NetworkFrameClock frameClock;
+
+    public event Action<InputPacket, int> InputPacketReceived;
 
     private RemoteInputBuffer remoteInputBuffer = new RemoteInputBuffer();
 
@@ -36,6 +40,10 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     private void Awake()
     {
+        if (frameClock == null)
+        {
+            frameClock = FindObjectOfType<NetworkFrameClock>();
+        }
     }
 
     public void UseFixedDelayForTest(int delayFrames)
@@ -92,6 +100,9 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         }
 
         UpdateLatestContiguousConfirmedRemoteFrame();
+
+        int receivedAtFrame = frameClock != null ? frameClock.CurrentFrame : -1;
+        InputPacketReceived?.Invoke(inputPacket, receivedAtFrame);
     }
 
     private int ResolveDelayFrames()

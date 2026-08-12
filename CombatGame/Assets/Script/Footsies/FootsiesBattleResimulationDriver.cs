@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Diagnostics;
 
 namespace Footsies
 {
@@ -36,20 +37,39 @@ namespace Footsies
             FileLogger.WriteLine(
                 $"[FootsiesBattleResimulationDriver] Begin resim from={fromFrame} to={toFrame}");
 
-            for (int frame = fromFrame; frame <= toFrame; frame++)
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            try
             {
-                byte p1Bits = ResolveBitsForPlayer(0, frame);
-                byte p2Bits = ResolveBitsForPlayer(1, frame);
+                for (int frame = fromFrame; frame <= toFrame; frame++)
+                {
+                    byte p1Bits = ResolveBitsForPlayer(0, frame);
+                    byte p2Bits = ResolveBitsForPlayer(1, frame);
 
-                inputRouter.SetOverrideInputs(
-                    FootsiesInputFrame.FromBits(p1Bits),
-                    FootsiesInputFrame.FromBits(p2Bits)
-                );
+                    inputRouter.SetOverrideInputs(
+                        FootsiesInputFrame.FromBits(p1Bits),
+                        FootsiesInputFrame.FromBits(p2Bits)
+                    );
 
-                battleCore.DoFixedUpdate();
+                    battleCore.BeginResimulationFrame(frame);
+                    battleCore.DoFixedUpdate();
+                }
             }
+            finally
+            {
+                stopwatch.Stop();
+                inputRouter.ClearOverrideInputs();
 
-            inputRouter.ClearOverrideInputs();
+                battleCore.RecordRollback(
+                    fromFrame,
+                    toFrame,
+                    rollbackCoordinator.LastPredictedBits,
+                    rollbackCoordinator.LastConfirmedBits,
+                    rollbackCoordinator.LastRestoreTimeMs,
+                    stopwatch.Elapsed.TotalMilliseconds,
+                    rollbackCoordinator.LastP1PositionBeforeRollback,
+                    rollbackCoordinator.LastP2PositionBeforeRollback);
+                battleCore.CompleteResimulation();
+            }
 
             FileLogger.WriteLine(
                 $"[FootsiesBattleResimulationDriver] End resim from={fromFrame} to={toFrame}");

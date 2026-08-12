@@ -26,6 +26,7 @@ public class NetworkInputSender : MonoBehaviour
     private int lastSentFrame = -1;
 
     public byte LastLocalInputBits { get; private set; }
+    public bool UsesDebugAutoInput => useDebugAutoInput;
 
     public void ConfigureRuntime(
         int playerId,

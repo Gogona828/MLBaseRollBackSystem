@@ -78,7 +78,10 @@ public class AutoRollbackTrigger : MonoBehaviour
             return;
         }
 
-        battleRollbackCoordinator.RequestRollback(targetFrame);
+        battleRollbackCoordinator.RequestRollback(
+            targetFrame,
+            missInfo.PredictedBits,
+            missInfo.ConfirmedBits);
 
         lastRequestedFrame = targetFrame;
         lastRollbackExecutedAtFrame = currentFrame;
