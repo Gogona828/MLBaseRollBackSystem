@@ -106,6 +106,11 @@ namespace Footsies
         private int bufferActionID = -1;
         private int reserveDamageActionID = -1;
 
+        public int currentInputBits { get { return lastResolvedInput; } }
+        public int currentInputDownBits { get { return lastResolvedInputDown; } }
+        public int currentInputUpBits { get { return lastResolvedInputUp; } }
+        public int bufferedActionID { get { return bufferActionID; } }
+
         public int spriteShakePosition { get; private set; }
         private int maxSpriteShakeFrame = 6;
 

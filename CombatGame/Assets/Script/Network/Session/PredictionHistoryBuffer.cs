@@ -35,7 +35,7 @@ public class PredictionHistoryBuffer
         if (record.ResultState != PredictionResultState.Pending)
         {
             updatedRecord = record;
-            return true;
+            return false;
         }
 
         record.Confirm(confirmedBits);

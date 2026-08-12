@@ -31,6 +31,8 @@ namespace Footsies
         private byte lastPredictedBits = 0;
         private int lastPredictionFrame = -1;
 
+        public bool LastReadWasConfirmed { get; private set; }
+
         public int RemotePlayerId => remotePlayerId;
         public RemotePredictionMode PredictionMode => predictionMode;
         public int DirectionalHoldFrames => directionalHoldFrames;
@@ -92,12 +94,14 @@ namespace Footsies
 
             if (networkInputReceiver.TryGetRemoteInput(frame, out byte confirmedBits))
             {
+                LastReadWasConfirmed = true;
                 RememberConfirmedInput(frame, confirmedBits);
                 RecordPredictionOnce(frame, confirmedBits);
                 return FootsiesInputFrame.FromBits(confirmedBits);
             }
 
             byte predictedBits = BuildPredictedBits(frame);
+            LastReadWasConfirmed = false;
             lastPredictedBits = predictedBits;
 
             RecordPredictionOnce(frame, predictedBits);
