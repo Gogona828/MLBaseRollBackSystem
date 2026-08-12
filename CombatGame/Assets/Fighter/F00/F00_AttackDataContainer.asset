@@ -17,8 +17,9 @@ MonoBehaviour:
     damageActionID: 200
     guardActionID: 306
     numberOfHit: 1
-    vitalHealthDamage: 1
+    vitalHealthDamage: 0
     guardHealthDamage: 1
+    instantKOOnHit: 0
     hitStunFrame: 12
     guardStunFrame: 12
     guardBreakStunFrame: 30
@@ -29,6 +30,7 @@ MonoBehaviour:
     numberOfHit: 1
     vitalHealthDamage: 1
     guardHealthDamage: 1
+    instantKOOnHit: 1
     hitStunFrame: 12
     guardStunFrame: 15
     guardBreakStunFrame: 30
@@ -37,8 +39,9 @@ MonoBehaviour:
     damageActionID: 200
     guardActionID: 305
     numberOfHit: 1
-    vitalHealthDamage: 1
+    vitalHealthDamage: 0
     guardHealthDamage: 1
+    instantKOOnHit: 0
     hitStunFrame: 12
     guardStunFrame: 12
     guardBreakStunFrame: 30
@@ -49,6 +52,7 @@ MonoBehaviour:
     numberOfHit: 1
     vitalHealthDamage: 1
     guardHealthDamage: 1
+    instantKOOnHit: 1
     hitStunFrame: 12
     guardStunFrame: 15
     guardBreakStunFrame: 30

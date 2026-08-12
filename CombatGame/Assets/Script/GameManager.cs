@@ -7,6 +7,12 @@ namespace Footsies
 {
     public class GameManager : Singleton<GameManager>
     {
+        public enum BattleMode
+        {
+            OnlineVsPlayer,
+            OfflineVsCPU,
+        }
+
         public enum SceneIndex
         {
             Title = 1,
@@ -16,7 +22,9 @@ namespace Footsies
         public AudioClip menuSelectAudioClip;
 
         public SceneIndex currentScene { get; private set; }
-        public bool isVsCPU { get; private set; }
+        public BattleMode battleMode { get; private set; } = BattleMode.OnlineVsPlayer;
+        public bool isVsCPU { get { return battleMode == BattleMode.OfflineVsCPU; } }
+        public bool isOfflineMode { get { return battleMode == BattleMode.OfflineVsCPU; } }
 
         private void Awake()
         {
@@ -49,13 +57,13 @@ namespace Footsies
 
         public void LoadVsPlayerScene()
         {
-            isVsCPU = false;
+            battleMode = BattleMode.OnlineVsPlayer;
             LoadBattleScene();
         }
 
         public void LoadVsCPUScene()
         {
-            isVsCPU = true;
+            battleMode = BattleMode.OfflineVsCPU;
             LoadBattleScene();
         }
 

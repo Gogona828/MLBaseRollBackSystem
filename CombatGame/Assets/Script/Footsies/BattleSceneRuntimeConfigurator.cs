@@ -1,6 +1,7 @@
 using System;
-using UnityEngine;
+using System.Linq;
 using Footsies;
+using UnityEngine;
 
 [DefaultExecutionOrder(-10000)]
 public class BattleSceneRuntimeConfigurator : MonoBehaviour
@@ -8,319 +9,289 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
     [Serializable]
     public class MachineProfile
     {
-        [Header("Machine")]
-        public string machineName = "PCA";
-        public string machineLabel = "PCA";
+        [Header("Match")]
+        public string profileName;
 
-        [Header("Role")]
-        public int localPlayerId = 0;
+        [Tooltip("実PC名、Player1、Player2などの別名")]
+        public string[] aliases;
+
+        [Header("Transport")]
+        public string remoteIp = "127.0.0.1";
+        public int localPort = 5000;
+        public int remotePort = 6000;
+
+        [Header("Session")]
+        public int playerId = 0;
         public int startDelayFrames = 60;
 
-        [Header("Network")]
-        public string remoteIp = "127.0.0.1";
-        public int localPort = 5100;
-        public int remotePort = 5101;
-
-        [Header("Local Input")]
-        public bool enableDebugAutoInput = false;
-        public KeyCode leftKey = KeyCode.A;
-        public KeyCode rightKey = KeyCode.D;
-        public KeyCode attackKey = KeyCode.Space;
-
-        [Header("Temporary Delay Simplification")]
-        public bool useFixedDelayForTest = false;
-        public int fixedDelayFramesForTest = 2;
-
-        [Header("Remote Prediction")]
-        public FootsiesPredictedRemoteInputSource.RemotePredictionMode remotePredictionMode
-            = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold;
-
-        public int remoteDirectionalHoldFrames = 30;
-    }
-
-    [Header("Editor Override")]
-    [SerializeField] private bool useOverrideMachineNameInEditor = false;
-    [SerializeField] private string overrideMachineName = "PCA";
-
-    [Header("Runtime Rule Overrides")]
-    [SerializeField] private bool forceDisablePlayer0DebugAutoInput = true;
-    [SerializeField] private bool forceDirectionPredictionForRelay = true;
-    [SerializeField] private int relayDirectionalHoldFrames = 30;
-    [SerializeField] private bool installThreeHitRoundRule = true;
-    [SerializeField] private int hitsToWinRound = 3;
-
-    [Header("Machine Profiles")]
-    [SerializeField] private MachineProfile[] machineProfiles =
-    {
-        new MachineProfile
+        public bool Matches(string key)
         {
-            machineName = "MSI",
-            machineLabel = "PCA",
-            localPlayerId = 0,
-            startDelayFrames = 60,
-            remoteIp = "192.168.0.90",
-            localPort = 5000,
-            remotePort = 6000,
-            enableDebugAutoInput = false,
-            leftKey = KeyCode.A,
-            rightKey = KeyCode.D,
-            attackKey = KeyCode.Space,
-            useFixedDelayForTest = false,
-            fixedDelayFramesForTest = 4,
-            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold,
-            remoteDirectionalHoldFrames = 30
-        },
-        new MachineProfile
-        {
-            machineName = "MKLAB03",
-            machineLabel = "PCB",
-            localPlayerId = 1,
-            startDelayFrames = 60,
-            remoteIp = "192.168.0.90",
-            localPort = 5001,
-            remotePort = 6000,
-            enableDebugAutoInput = false,
-            leftKey = KeyCode.LeftArrow,
-            rightKey = KeyCode.RightArrow,
-            attackKey = KeyCode.Return,
-            useFixedDelayForTest = false,
-            fixedDelayFramesForTest = 4,
-            remotePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold,
-            remoteDirectionalHoldFrames = 30
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            if (IsSameName(profileName, key))
+            {
+                return true;
+            }
+
+            if (aliases == null)
+            {
+                return false;
+            }
+
+            return aliases.Any(alias => IsSameName(alias, key));
         }
-    };
+
+        private static bool IsSameName(string a, string b)
+        {
+            if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b))
+            {
+                return false;
+            }
+
+            return Normalize(a) == Normalize(b);
+        }
+
+        private static string Normalize(string value)
+        {
+            return value
+                .Trim()
+                .Replace(" ", string.Empty)
+                .Replace("　", string.Empty)
+                .ToLowerInvariant();
+        }
+    }
 
     [Header("References")]
     [SerializeField] private UdpP2PTransport transport;
     [SerializeField] private NetworkSessionManager sessionManager;
-    [SerializeField] private FileLoggerBootstrap fileLoggerBootstrap;
-    [SerializeField] private NetworkInputSender inputSender;
-    [SerializeField] private NetworkInputReceiver inputReceiver;
-    [SerializeField] private FootsiesBattleInputRouter inputRouter;
 
-    [Header("Input Sources")]
-    [SerializeField] private FootsiesNetworkPlayerInputSource footsiesP1NetworkInputSource;
-    [SerializeField] private FootsiesNetworkPlayerInputSource footsiesP2NetworkInputSource;
-    [SerializeField] private FootsiesPredictedRemoteInputSource footsiesP1PredictedRemoteInputSource;
-    [SerializeField] private FootsiesPredictedRemoteInputSource footsiesP2PredictedRemoteInputSource;
+    [Header("Offline Battle")]
+    [SerializeField] private BattleCore battleCore;
+    [SerializeField] private FootsiesBattleInputRouter battleInputRouter;
+    [SerializeField] private FootsiesLocalPlayerInputSource player1LocalInputSource;
+    [SerializeField] private GameObject rollbackRoot;
 
-    [Header("Round Result Agreement")]
-    [SerializeField] private RoundResultAgreementController roundResultAgreementController;
+    [Header("Profiles")]
+    [SerializeField] private MachineProfile[] machineProfiles;
 
-    [Header("Optional")]
-    [SerializeField] private DebugAutoInputSequence debugAutoInputSequence;
-    [SerializeField] private bool resetDebugSequenceOnConfigure = true;
+    [SerializeField] private MachineProfile fallbackProfile;
+
+    [Header("Apply")]
+    [SerializeField] private bool configureOnAwake = true;
+
+    [Tooltip("UdpP2PTransportが先に起動していた場合、止めてから設定し直す")]
+    [SerializeField] private bool restartTransportAfterConfigure = true;
 
     private void Awake()
     {
-        string currentMachineName = ResolveMachineName();
-        MachineProfile profile = FindProfile(currentMachineName);
-
-        if (profile == null)
+        if (IsOfflineBattleRequested())
         {
-            Debug.LogError(
-                $"[BattleSceneRuntimeConfigurator] Machine profile not found. machineName={currentMachineName}");
+            ConfigureOfflineBattle();
             return;
         }
 
-        ApplyProfile(profile, currentMachineName);
-    }
-
-    private string ResolveMachineName()
-    {
-#if UNITY_EDITOR
-        if (useOverrideMachineNameInEditor && !string.IsNullOrWhiteSpace(overrideMachineName))
+        if (configureOnAwake)
         {
-            return overrideMachineName.Trim();
+            Configure();
         }
-#endif
-        return Environment.MachineName;
     }
 
-    private MachineProfile FindProfile(string currentMachineName)
+    private bool IsOfflineBattleRequested()
     {
-        if (machineProfiles == null || machineProfiles.Length == 0)
+        GameManager gameManager = FindObjectOfType<GameManager>();
+        return gameManager != null && gameManager.isOfflineMode;
+    }
+
+    private void ConfigureOfflineBattle()
+    {
+        ResolveOfflineReferences();
+
+        if (transport != null)
+        {
+            transport.StopTransport();
+            transport.gameObject.SetActive(false);
+        }
+
+        if (rollbackRoot != null)
+        {
+            rollbackRoot.SetActive(false);
+        }
+
+        if (battleInputRouter != null)
+        {
+            battleInputRouter.ConfigureSources(player1LocalInputSource, null);
+        }
+
+        if (battleCore != null)
+        {
+            battleCore.ConfigureOfflineBattle();
+            battleCore.enabled = true;
+        }
+
+        Debug.Log("[BattleSceneRuntimeConfigurator] Offline VS CPU mode enabled. Network and rollback are disabled.");
+    }
+
+    private void ResolveOfflineReferences()
+    {
+        if (battleCore == null)
+        {
+            battleCore = FindObjectOfType<BattleCore>(true);
+        }
+
+        if (battleInputRouter == null)
+        {
+            battleInputRouter = FindObjectOfType<FootsiesBattleInputRouter>(true);
+        }
+
+        if (player1LocalInputSource == null)
+        {
+            FootsiesLocalPlayerInputSource[] localSources =
+                FindObjectsOfType<FootsiesLocalPlayerInputSource>(true);
+            player1LocalInputSource = localSources.FirstOrDefault(source => source.IsPlayer1);
+        }
+    }
+
+    public void Configure()
+    {
+        string runtimeKey = ResolveRuntimeProfileKey();
+        MachineProfile profile = FindProfile(runtimeKey);
+
+        if (profile == null)
+        {
+            Debug.LogWarning(
+                $"[BattleSceneRuntimeConfigurator] No profile matched runtimeKey='{runtimeKey}'. " +
+                $"fallback={(fallbackProfile != null ? fallbackProfile.profileName : "null")}");
+
+            profile = fallbackProfile;
+        }
+
+        if (profile == null)
+        {
+            Debug.LogError("[BattleSceneRuntimeConfigurator] No valid MachineProfile. Configuration skipped.");
+            return;
+        }
+
+        ApplyProfile(profile, runtimeKey);
+    }
+
+    private MachineProfile FindProfile(string runtimeKey)
+    {
+        if (machineProfiles == null)
         {
             return null;
         }
 
-        for (int i = 0; i < machineProfiles.Length; i++)
-        {
-            MachineProfile profile = machineProfiles[i];
-            if (profile == null || string.IsNullOrWhiteSpace(profile.machineName))
-            {
-                continue;
-            }
-
-            if (string.Equals(
-                    profile.machineName.Trim(),
-                    currentMachineName.Trim(),
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return profile;
-            }
-        }
-
-        return null;
+        return machineProfiles.FirstOrDefault(profile =>
+            profile != null && profile.Matches(runtimeKey));
     }
 
-    private void ApplyProfile(MachineProfile profile, string currentMachineName)
+    private void ApplyProfile(MachineProfile profile, string runtimeKey)
     {
-        bool runtimeDebugAutoInput = profile.enableDebugAutoInput;
-        if (forceDisablePlayer0DebugAutoInput && profile.localPlayerId == 0)
-        {
-            runtimeDebugAutoInput = false;
-        }
+        string message =
+            $"[BattleSceneRuntimeConfigurator] Apply profile='{profile.profileName}' " +
+            $"runtimeKey='{runtimeKey}' " +
+            $"playerId={profile.playerId} " +
+            $"localPort={profile.localPort} " +
+            $"remote={profile.remoteIp}:{profile.remotePort} " +
+            $"startDelayFrames={profile.startDelayFrames}";
 
-        FootsiesPredictedRemoteInputSource.RemotePredictionMode runtimePredictionMode = profile.remotePredictionMode;
-        int runtimeDirectionalHoldFrames = Mathf.Max(0, profile.remoteDirectionalHoldFrames);
-
-        if (forceDirectionPredictionForRelay)
-        {
-            runtimePredictionMode = FootsiesPredictedRemoteInputSource.RemotePredictionMode.DirectionOnlyShortHold;
-            runtimeDirectionalHoldFrames = Mathf.Max(runtimeDirectionalHoldFrames, relayDirectionalHoldFrames);
-        }
+        Debug.Log(message);
+        FileLogger.WriteLine(message);
 
         if (transport != null)
         {
+            if (restartTransportAfterConfigure && transport.IsStarted)
+            {
+                transport.StopTransport();
+            }
+
             transport.Configure(profile.remoteIp, profile.localPort, profile.remotePort);
+
+            if (restartTransportAfterConfigure && !transport.IsStarted)
+            {
+                transport.StartTransport();
+            }
         }
 
         if (sessionManager != null)
         {
-            sessionManager.ConfigureRuntime(profile.localPlayerId, profile.startDelayFrames);
+            sessionManager.ConfigureRuntime(profile.playerId, profile.startDelayFrames);
         }
-
-        if (fileLoggerBootstrap != null)
-        {
-            fileLoggerBootstrap.Configure(
-                profile.machineLabel,
-                profile.localPlayerId,
-                profile.remoteIp,
-                profile.localPort,
-                profile.remotePort
-            );
-        }
-
-        if (inputSender != null)
-        {
-            inputSender.ConfigureRuntime(
-                profile.localPlayerId,
-                profile.leftKey,
-                profile.rightKey,
-                profile.attackKey,
-                runtimeDebugAutoInput
-            );
-        }
-
-        if (debugAutoInputSequence != null && resetDebugSequenceOnConfigure)
-        {
-            debugAutoInputSequence.ResetSequence();
-        }
-
-        if (inputReceiver != null)
-        {
-            inputReceiver.ClearBuffer();
-
-            if (profile.useFixedDelayForTest)
-            {
-                inputReceiver.UseFixedDelayForTest(profile.fixedDelayFramesForTest);
-            }
-            else
-            {
-                inputReceiver.UseSceneConfiguredDelayMode();
-            }
-        }
-
-        if (footsiesP1NetworkInputSource != null)
-        {
-            footsiesP1NetworkInputSource.Configure(
-                FootsiesNetworkPlayerInputSource.ReadMode.LocalSender,
-                0
-            );
-        }
-
-        if (footsiesP2NetworkInputSource != null)
-        {
-            footsiesP2NetworkInputSource.Configure(
-                FootsiesNetworkPlayerInputSource.ReadMode.LocalSender,
-                1
-            );
-        }
-
-        if (footsiesP1PredictedRemoteInputSource != null)
-        {
-            footsiesP1PredictedRemoteInputSource.ConfigureRemotePlayer(
-                0,
-                runtimePredictionMode,
-                runtimeDirectionalHoldFrames
-            );
-        }
-
-        if (footsiesP2PredictedRemoteInputSource != null)
-        {
-            footsiesP2PredictedRemoteInputSource.ConfigureRemotePlayer(
-                1,
-                runtimePredictionMode,
-                runtimeDirectionalHoldFrames
-            );
-        }
-
-        if (inputRouter != null)
-        {
-            if (profile.localPlayerId == 0)
-            {
-                inputRouter.ConfigureSources(
-                    footsiesP1NetworkInputSource,
-                    footsiesP2PredictedRemoteInputSource
-                );
-            }
-            else
-            {
-                inputRouter.ConfigureSources(
-                    footsiesP1PredictedRemoteInputSource,
-                    footsiesP2NetworkInputSource
-                );
-            }
-        }
-
-        if (roundResultAgreementController != null)
-        {
-            roundResultAgreementController.ConfigureRuntime(
-                profile.localPlayerId,
-                profile.remoteIp
-            );
-        }
-
-        InstallThreeHitRoundRule();
-
-        Debug.Log(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={runtimeDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={runtimePredictionMode}, remoteDirectionalHoldFrames={runtimeDirectionalHoldFrames}, hitsToWinRound={hitsToWinRound}");
-
-        FileLogger.WriteLine(
-            $"[BattleSceneRuntimeConfigurator] Applied profile machine={currentMachineName}, label={profile.machineLabel}, playerId={profile.localPlayerId}, remote={profile.remoteIp}:{profile.remotePort}, localPort={profile.localPort}, useDebugAutoInput={runtimeDebugAutoInput}, useFixedDelayForTest={profile.useFixedDelayForTest}, fixedDelayFramesForTest={profile.fixedDelayFramesForTest}, remotePredictionMode={runtimePredictionMode}, remoteDirectionalHoldFrames={runtimeDirectionalHoldFrames}, hitsToWinRound={hitsToWinRound}");
     }
 
-    private void InstallThreeHitRoundRule()
+    private static string ResolveRuntimeProfileKey()
     {
-        if (!installThreeHitRoundRule)
+        // 手動指定を最優先。
+        // 例: -machineProfile Player2
+        // 例: -machineProfile=Player2
+        string explicitProfile =
+            GetCommandLineValue("-machineProfile") ??
+            GetCommandLineValue("-profile") ??
+            GetCommandLineValue("-runtimeProfile");
+
+        if (!string.IsNullOrWhiteSpace(explicitProfile))
         {
-            return;
+            return NormalizePlayerName(explicitProfile);
         }
 
-        BattleCore battleCore = FindObjectOfType<BattleCore>();
-        if (battleCore == null)
+        // Unity Multiplayer Play Mode。
+        // Main Editor: Player1
+        // Virtual Player 1: Player2
+        // Virtual Player 2: Player3
+        // Virtual Player 3: Player4
+        string mppmName = GetCommandLineValue("-name");
+
+        if (!string.IsNullOrWhiteSpace(mppmName))
         {
-            Debug.LogWarning("[BattleSceneRuntimeConfigurator] BattleCore not found. ThreeHitRoundRule was not installed.");
-            return;
+            return NormalizePlayerName(mppmName);
         }
 
-        ThreeHitRoundRule rule = battleCore.GetComponent<ThreeHitRoundRule>();
-        if (rule == null)
+        // 通常起動時は従来通りPC名。
+        return SystemInfo.deviceName;
+    }
+
+    private static string NormalizePlayerName(string value)
+    {
+        string trimmed = value.Trim();
+
+        // "Player 2" と "Player2" の両方に対応
+        if (trimmed.StartsWith("Player ", StringComparison.OrdinalIgnoreCase))
         {
-            rule = battleCore.gameObject.AddComponent<ThreeHitRoundRule>();
+            string index = trimmed.Substring("Player ".Length).Trim();
+            return "Player" + index;
         }
 
-        rule.Configure(hitsToWinRound);
+        return trimmed;
+    }
+
+    private static string GetCommandLineValue(string key)
+    {
+        string[] args = Environment.GetCommandLineArgs();
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            string arg = args[i];
+
+            if (string.Equals(arg, key, StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Length)
+                {
+                    return args[i + 1];
+                }
+
+                return null;
+            }
+
+            string prefix = key + "=";
+            if (arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return arg.Substring(prefix.Length);
+            }
+        }
+
+        return null;
     }
 }

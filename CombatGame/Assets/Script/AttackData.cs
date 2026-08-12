@@ -18,6 +18,9 @@ namespace Footsies
         public int vitalHealthDamage;
         public int guardHealthDamage;
 
+        [Tooltip("ガードされずに命中した場合、残りGuardに関係なくKOする")]
+        public bool instantKOOnHit;
+
         public int hitStunFrame;
         public int guardStunFrame;
         public int guardBreakStunFrame;

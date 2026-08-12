@@ -69,6 +69,7 @@ namespace Footsies
 
         private Animator roundUIAnimator;
         private BattleAI battleAI = null;
+        private bool isOfflineBattle;
 
         private static uint maxRecordingInputFrame = 60 * 60 * 5;
         private InputData[] recordingP1Input = new InputData[maxRecordingInputFrame];
@@ -197,6 +198,11 @@ namespace Footsies
             }
         }
 
+        public void ConfigureOfflineBattle()
+        {
+            isOfflineBattle = true;
+        }
+
         void ChangeRoundState(RoundStateType state)
         {
             _roundState = state;
@@ -228,7 +234,7 @@ namespace Footsies
                         roundUIAnimator.SetTrigger("RoundStart");
                     }
 
-                    if (GameManager.Instance.isVsCPU)
+                    if (isOfflineBattle || GameManager.Instance.isVsCPU)
                         battleAI = new BattleAI(this);
 
                     break;
@@ -405,6 +411,12 @@ namespace Footsies
             if (pendingKOStableFrames < koConfirmStableFrames)
             {
                 return false;
+            }
+
+            // オフラインでは確認対象となる相手パケットが存在しない。
+            if (isOfflineBattle)
+            {
+                return true;
             }
 
             if (rollbackCoordinator != null && rollbackCoordinator.DidRollbackThisStep)
