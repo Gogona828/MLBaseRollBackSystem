@@ -42,6 +42,7 @@ namespace Footsies
             {
                 for (int frame = fromFrame; frame <= toFrame; frame++)
                 {
+                    rollbackCoordinator.StoreSnapshot(frame,battleCore.CaptureSnapshot());
                     byte p1Bits = ResolveBitsForPlayer(0, frame);
                     byte p2Bits = ResolveBitsForPlayer(1, frame);
 
@@ -75,12 +76,45 @@ namespace Footsies
                 $"[FootsiesBattleResimulationDriver] End resim from={fromFrame} to={toFrame}");
         }
 
+        public bool TryEvaluateCorrection(FootsiesBattleSnapshot origin, int fromFrame, int currentFrame,
+            out FootsiesBattleSnapshot corrected, out System.Collections.Generic.Dictionary<int,FootsiesBattleSnapshot> repaired)
+        {
+            corrected=null;
+            repaired=new System.Collections.Generic.Dictionary<int,FootsiesBattleSnapshot>();
+            if(battleCore == null || inputRouter == null || inputHistory == null || origin == null
+                || origin.roundState != BattleCore.RoundStateType.Fight || battleCore.roundState != BattleCore.RoundStateType.Fight) return false;
+            var shown=battleCore.CaptureSnapshot();
+            battleCore.BeginPredictionVerification();
+            try
+            {
+                battleCore.RestoreSnapshot(origin);
+                for(int frame=fromFrame;frame<currentFrame;frame++)
+                {
+                    repaired[frame]=battleCore.CaptureSnapshot();
+                    inputRouter.SetOverrideInputs(FootsiesInputFrame.FromBits(ResolveBitsForPlayer(0,frame)), FootsiesInputFrame.FromBits(ResolveBitsForPlayer(1,frame)));
+                    battleCore.BeginResimulationFrame(frame);
+                    battleCore.DoFixedUpdate();
+                    if(battleCore.roundState != BattleCore.RoundStateType.Fight) return false;
+                }
+                corrected=battleCore.CaptureSnapshot();
+                return true;
+            }
+            finally
+            {
+                inputRouter.ClearOverrideInputs();
+                battleCore.RestoreSnapshot(shown);
+                battleCore.EndPredictionVerification();
+            }
+        }
+
         private byte ResolveBitsForPlayer(int playerId, int frame)
         {
             if (inputHistory.TryGetInput(playerId, frame, out byte exactBits))
             {
                 return exactBits;
             }
+
+            if(inputHistory.TryGetAppliedPrediction(playerId,frame,out byte predictedBits)) return predictedBits;
 
             if (inputHistory.TryGetLatestInputAtOrBefore(playerId, frame, out byte latestBits))
             {

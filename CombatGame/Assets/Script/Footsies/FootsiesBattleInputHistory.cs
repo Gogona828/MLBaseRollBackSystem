@@ -8,6 +8,12 @@ namespace Footsies
         private readonly Dictionary<int, byte> player0Inputs = new Dictionary<int, byte>();
         private readonly Dictionary<int, byte> player1Inputs = new Dictionary<int, byte>();
 
+        private readonly Dictionary<int, byte> predicted0 = new Dictionary<int, byte>();
+        private readonly Dictionary<int, byte> predicted1 = new Dictionary<int, byte>();
+        public void StoreAppliedPrediction(int playerId, int frame, byte bits)
+        { (playerId == 0 ? predicted0 : predicted1)[frame]=bits; }
+        public bool TryGetAppliedPrediction(int playerId, int frame, out byte bits)
+        { return (playerId == 0 ? predicted0 : predicted1).TryGetValue(frame,out bits); }
         public void StoreInput(int playerId, int frame, byte bits)
         {
             if (playerId == 0)
@@ -80,6 +86,7 @@ namespace Footsies
 
         public void ClearAll()
         {
+            predicted0.Clear(); predicted1.Clear();
             player0Inputs.Clear();
             player1Inputs.Clear();
         }

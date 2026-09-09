@@ -32,6 +32,9 @@ public class AutoRollbackTrigger : MonoBehaviour
             return;
         }
 
+        // Leave the miss pending during cooldown; consuming here would lose corrections.
+        if(frameClock.CurrentFrame-lastRollbackExecutedAtFrame < rollbackCooldownFrames) return;
+
         if (!predictionMismatchDetector.TryConsumeEarliestPendingMiss(out PredictionMissInfo missInfo))
         {
             return;
@@ -67,16 +70,6 @@ public class AutoRollbackTrigger : MonoBehaviour
         }
 
         int targetFrame = Mathf.Max(0, missInfo.Frame - rollbackSafetyOffsetFrames);
-
-        if (targetFrame == lastRequestedFrame)
-        {
-            SuppressedRollbackRequests++;
-
-            FileLogger.WriteLine(
-                $"[AutoRollbackTrigger] Suppressed rollback because targetFrame={targetFrame} was already requested.");
-
-            return;
-        }
 
         battleRollbackCoordinator.RequestRollback(
             targetFrame,

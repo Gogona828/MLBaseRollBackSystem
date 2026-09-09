@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
     "net8.0": {}
   },
@@ -8,36 +8,29 @@
     "net8.0": []
   },
   "packageFolders": {
-    "C:\\Users\\tomita\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "/Users/hw21a084/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\tomita\\MLBaseRollBackSystem\\Tools\\DelayRelayServer\\DelayRelayServer\\DelayRelayServer.csproj",
+      "projectUniqueName": "/Users/hw21a084/MLBaseRollBackSystem/Tools/DelayRelayServer/DelayRelayServer/DelayRelayServer.csproj",
       "projectName": "DelayRelayServer",
-      "projectPath": "C:\\Users\\tomita\\MLBaseRollBackSystem\\Tools\\DelayRelayServer\\DelayRelayServer\\DelayRelayServer.csproj",
-      "packagesPath": "C:\\Users\\tomita\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\tomita\\MLBaseRollBackSystem\\Tools\\DelayRelayServer\\DelayRelayServer\\obj\\",
+      "projectPath": "/Users/hw21a084/MLBaseRollBackSystem/Tools/DelayRelayServer/DelayRelayServer/DelayRelayServer.csproj",
+      "packagesPath": "/Users/hw21a084/.nuget/packages/",
+      "outputPath": "/Users/hw21a084/MLBaseRollBackSystem/Tools/DelayRelayServer/DelayRelayServer/obj/",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\tomita\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "/Users/hw21a084/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "projectReferences": {}
         }
@@ -52,10 +45,11 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
       "net8.0": {
+        "framework": "net8.0",
         "targetAlias": "net8.0",
         "imports": [
           "net461",
@@ -68,12 +62,26 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.osx-x64",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.28, 8.0.28]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.301/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

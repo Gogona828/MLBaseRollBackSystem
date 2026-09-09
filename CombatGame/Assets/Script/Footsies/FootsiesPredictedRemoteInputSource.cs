@@ -8,7 +8,8 @@ namespace Footsies
         {
             NeutralWhenUnknown = 0,
             DirectionOnlyShortHold = 1,
-            LastConfirmedUnsafe = 2
+            LastConfirmedUnsafe = 2,
+            FepSupervised = 3
         }
 
         [Header("References")]
@@ -24,6 +25,35 @@ namespace Footsies
 
         [Tooltip("DirectionOnlyShortHold のときだけ使う。リレー遅延中に最後の方向入力を何フレーム保持するか。")]
         [SerializeField] private int directionalHoldFrames = 30;
+
+        private FepSupervisedPredictor fep;
+        private BattleCore core;
+        private FootsiesBattleInputHistory inputHistory;
+        private float hits, guards, breaks;
+        public int FepPredictionCount { get; private set; }
+        public byte LatestFepPrediction { get; private set; }
+        private int preparedFrame = -1;
+        private int lastCapture = -1;
+        private int lastBattleFrame = -1;
+        public void ConfigureReferences(NetworkInputReceiver receiver, NetworkFrameClock clock, PredictionMismatchDetector mismatch)
+        { networkInputReceiver=receiver; frameClock=clock; predictionMismatchDetector=mismatch; }
+        public void EnableFep()
+        {
+            core = FindObjectOfType<BattleCore>(true);
+            inputHistory = FindObjectOfType<FootsiesBattleInputHistory>(true);
+            fep = new FepSupervisedPredictor();
+            predictionMode = RemotePredictionMode.FepSupervised;
+            if (core != null) core.damageHandler += OnDamage;
+            Debug.Log("[FEP] Loaded supervised XGBoost + FEP (50/100/200ms), managed CPU inference.");
+        }
+        private void OnDamage(Fighter fighter, Vector2 position, DamageResult result)
+        {
+            if (core.IsResimulating) return;
+            if(result == DamageResult.Guard) guards++;
+            else if(result == DamageResult.GuardBreak) breaks++;
+            else hits++;
+        }
+        private void OnDestroy() { if(core != null) core.damageHandler -= OnDamage; }
 
         private byte lastConfirmedBits = 0;
         private int lastConfirmedFrame = -1;
@@ -72,6 +102,34 @@ namespace Footsies
                 $"[FootsiesPredictedRemoteInputSource] ConfigureRemotePlayer remotePlayerId={remotePlayerId}, predictionMode={this.predictionMode}, directionalHoldFrames={this.directionalHoldFrames}");
         }
 
+        public void PreparePredictionForFrame(int frame)
+        {
+            if(frame == preparedFrame) return;
+            if(fep != null && core != null && core.fighter1 != null && core.fighter2 != null && !core.IsResimulating)
+            {
+                if(frame < lastCapture || core.CurrentFrameCount < lastBattleFrame) fep.Reset();
+                lastBattleFrame = core.CurrentFrameCount;
+                if(frame != lastCapture)
+                {
+                    fep.Capture(frame, remotePlayerId == 0 ? core.fighter1 : core.fighter2,
+                        remotePlayerId == 0 ? core.fighter2 : core.fighter1, core, hits, guards, breaks);
+                    hits=guards=breaks=0; lastCapture=frame;
+                }
+                fep.ObserveConfirmed(frame, networkInputReceiver);
+            }
+            if(fep == null || core == null || core.fighter1 == null || core.fighter2 == null) return;
+            var fighter = remotePlayerId == 0 ? core.fighter1 : core.fighter2;
+            SyncLatestReceivedRemoteInput(frame);
+            LatestFepPrediction = fep.Predict(Mathf.Max(1, frame-fep.ObservedFrame), fighter.isFaceRight, lastConfirmedBits);
+            FepPredictionCount++;
+            preparedFrame=frame;
+            if(!networkInputReceiver.TryGetRemoteInput(frame,out _))
+            {
+                inputHistory?.StoreAppliedPrediction(remotePlayerId,frame,LatestFepPrediction);
+                RecordPredictionOnce(frame,LatestFepPrediction);
+            }
+        }
+
         public FootsiesInputFrame GetCurrentInput()
         {
             if (networkInputReceiver == null || frameClock == null)
@@ -90,19 +148,20 @@ namespace Footsies
                 return FootsiesInputFrame.Empty();
             }
 
-            SyncLatestReceivedRemoteInput();
+            PreparePredictionForFrame(frame);
+            SyncLatestReceivedRemoteInput(frame);
 
             if (networkInputReceiver.TryGetRemoteInput(frame, out byte confirmedBits))
             {
                 LastReadWasConfirmed = true;
                 RememberConfirmedInput(frame, confirmedBits);
-                RecordPredictionOnce(frame, confirmedBits);
                 return FootsiesInputFrame.FromBits(confirmedBits);
             }
 
             byte predictedBits = BuildPredictedBits(frame);
             LastReadWasConfirmed = false;
             lastPredictedBits = predictedBits;
+            inputHistory?.StoreAppliedPrediction(remotePlayerId,frame,predictedBits);
 
             RecordPredictionOnce(frame, predictedBits);
 
@@ -115,7 +174,7 @@ namespace Footsies
             return GetInputForFrame(frame);
         }
 
-        private void SyncLatestReceivedRemoteInput()
+        private void SyncLatestReceivedRemoteInput(int upToFrame)
         {
             if (networkInputReceiver == null)
             {
@@ -127,6 +186,11 @@ namespace Footsies
                 return;
             }
 
+            if(latestFrame > upToFrame)
+            {
+                latestFrame=upToFrame;
+                while(latestFrame >= 0 && !networkInputReceiver.Buffer.TryGetInput(latestFrame,out latestBits)) latestFrame--;
+            }
             if (latestFrame > lastConfirmedFrame)
             {
                 RememberConfirmedInput(latestFrame, latestBits);
@@ -156,6 +220,8 @@ namespace Footsies
         {
             switch (predictionMode)
             {
+                case RemotePredictionMode.FepSupervised:
+                    return LatestFepPrediction;
                 case RemotePredictionMode.NeutralWhenUnknown:
                     return 0;
 

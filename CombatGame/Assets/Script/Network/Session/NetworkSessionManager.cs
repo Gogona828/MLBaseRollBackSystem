@@ -22,6 +22,8 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
     public bool PeerReadyReceived { get; private set; }
     public bool StartReceived { get; private set; }
 
+    public bool UseRelayStartEcho { get; set; }
+
     private float helloTimer = 0f;
     private float readyTimer = 0f;
     private bool localReadySent = false;
@@ -135,8 +137,8 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
             {
                 SendStart(startDelayFrames);
                 localStartSent = true;
-                StartReceived = true;
-                BeginStartCountdown(startDelayFrames);
+                StartReceived = !UseRelayStartEcho;
+                if (!UseRelayStartEcho) BeginStartCountdown(startDelayFrames);
                 State = NetworkSessionState.WaitingForStart;
 
                 FileLogger.WriteLine(
@@ -216,6 +218,7 @@ public class NetworkSessionManager : MonoBehaviour, INetworkPacketHandler
                 break;
 
             case NetworkPacketType.Start:
+                if (StartReceived || Running) break;
                 StartReceived = true;
                 BeginStartCountdown(packet.startDelayFrames);
                 State = NetworkSessionState.WaitingForStart;

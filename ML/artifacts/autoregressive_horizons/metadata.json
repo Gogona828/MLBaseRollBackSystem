@@ -1,0 +1,63 @@
+{
+  "experiment": "one-frame autoregressive action rollout",
+  "random_seed": 42,
+  "source_logs": "/Users/hw21a084/MLBaseRollBackSystem/CombatGame/MatchLogs.zip",
+  "feature_state_policy": "predicted action-derived features; physical/opponent/event features held at rollout start",
+  "horizons": {
+    "50ms": {
+      "milliseconds": 50,
+      "frames": 3,
+      "rollouts": 6574
+    },
+    "100ms": {
+      "milliseconds": 100,
+      "frames": 6,
+      "rollouts": 6466
+    },
+    "200ms": {
+      "milliseconds": 200,
+      "frames": 12,
+      "rollouts": 6250
+    },
+    "500ms": {
+      "milliseconds": 500,
+      "frames": 30,
+      "rollouts": 5609
+    },
+    "1000ms": {
+      "milliseconds": 1000,
+      "frames": 60,
+      "rollouts": 4747
+    },
+    "2000ms": {
+      "milliseconds": 2000,
+      "frames": 120,
+      "rollouts": 3133
+    },
+    "3000ms": {
+      "milliseconds": 3000,
+      "frames": 180,
+      "rollouts": 1722
+    }
+  },
+  "xgboost": {
+    "model_json": "model_1frame.json",
+    "prediction_frames": 1,
+    "prediction_milliseconds_at_60fps": 16.666666666666668,
+    "best_iteration": 197,
+    "sample_counts": {
+      "train": 22475,
+      "validation": 3242,
+      "test": 6649
+    }
+  },
+  "fep": {
+    "prediction_frames": 1,
+    "scoring_parameters": {
+      "utility_scale": 2.0,
+      "information_gain_weight": 0.5,
+      "habit_scale": 1.0
+    },
+    "validation_log_loss": 1.067351269363171
+  }
+}

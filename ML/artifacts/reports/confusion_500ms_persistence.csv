@@ -1,0 +1,6 @@
+actual/predicted,Wait,Approach,Retreat,Attack,Guard
+Wait,237,31,288,216,132
+Approach,31,18,43,58,11
+Retreat,280,103,430,341,148
+Attack,561,118,137,1277,300
+Guard,139,33,332,105,327

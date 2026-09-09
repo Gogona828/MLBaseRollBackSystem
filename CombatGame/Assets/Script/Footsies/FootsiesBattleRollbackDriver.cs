@@ -14,6 +14,8 @@ namespace Footsies
         [SerializeField] private FootsiesBattleRollbackCoordinator battleRollbackCoordinator;
         [SerializeField] private FootsiesBattleResimulationDriver battleResimulationDriver;
 
+        private FootsiesPredictedRemoteInputSource[] predictionSources;
+        private void Start() { predictionSources = FindObjectsOfType<FootsiesPredictedRemoteInputSource>(); }
         private void FixedUpdate()
         {
             if (battleCore == null ||
@@ -45,6 +47,10 @@ namespace Footsies
             {
                 inputReceiver.ProcessDelayedInputsForCurrentStep();
             }
+
+            // Update the model on every network simulation frame, even when input arrived.
+            if(predictionSources != null)
+                foreach(var source in predictionSources) source.PreparePredictionForFrame(currentFrame);
 
             // 4. miss があれば rollback request
             if (autoRollbackTrigger != null)

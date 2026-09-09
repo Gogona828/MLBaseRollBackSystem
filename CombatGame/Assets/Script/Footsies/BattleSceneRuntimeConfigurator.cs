@@ -156,6 +156,15 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
     public void Configure()
     {
+        if (PlayerPrefs.GetInt("CombatGame.LAN.Enabled", 0) == 1)
+        {
+            int port = PlayerPrefs.GetInt("CombatGame.LAN.Port", 6000);
+            var lan = new MachineProfile { profileName = "Mac LAN + FEP", remoteIp = PlayerPrefs.GetString("CombatGame.LAN.IP", "127.0.0.1"), remotePort = port, localPort = 0, playerId = port % 2 };
+            Application.runInBackground = true;
+            ApplyProfile(lan, "LAN settings");
+            ConfigureLanBattle(lan.playerId);
+            return;
+        }
         string runtimeKey = ResolveRuntimeProfileKey();
         MachineProfile profile = FindProfile(runtimeKey);
 
@@ -175,6 +184,27 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         }
 
         ApplyProfile(profile, runtimeKey);
+    }
+
+    private void ConfigureLanBattle(int playerId)
+    {
+        var sender = FindObjectOfType<NetworkInputSender>(true);
+        var receiver = FindObjectOfType<NetworkInputReceiver>(true);
+        var clock = FindObjectOfType<NetworkFrameClock>(true);
+        var mismatch = FindObjectOfType<PredictionMismatchDetector>(true);
+        var local = FindObjectOfType<FootsiesNetworkPlayerInputSource>(true);
+        var predicted = FindObjectOfType<FootsiesPredictedRemoteInputSource>(true);
+        var router = FindObjectOfType<FootsiesBattleInputRouter>(true);
+        if(sender == null || receiver == null || local == null || predicted == null || router == null)
+            throw new InvalidOperationException("LAN requires the CombatGame battle scene with network and rollback components.");
+        sender.ConfigureRuntime(playerId, KeyCode.A, KeyCode.D, KeyCode.Space, false);
+        local.Configure(FootsiesNetworkPlayerInputSource.ReadMode.LocalSender, 1-playerId);
+        predicted.ConfigureReferences(receiver, clock, mismatch);
+        predicted.ConfigureRemotePlayer(1-playerId, FootsiesPredictedRemoteInputSource.RemotePredictionMode.FepSupervised, 12);
+        predicted.EnableFep();
+        router.ConfigureSources(playerId == 0 ? (MonoBehaviour)local : predicted, playerId == 0 ? (MonoBehaviour)predicted : local);
+        sessionManager.UseRelayStartEcho = true;
+        FindObjectOfType<RoundResultAgreementController>(true)?.ConfigureRelay(playerId, transport);
     }
 
     private MachineProfile FindProfile(string runtimeKey)

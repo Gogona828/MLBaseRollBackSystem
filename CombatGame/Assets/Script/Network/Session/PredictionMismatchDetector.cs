@@ -71,11 +71,6 @@ public class PredictionMismatchDetector : MonoBehaviour
             return;
         }
 
-        if (missInfo.Frame <= lastConsumedMissFrame)
-        {
-            return;
-        }
-
         if (!earliestPendingMissInfo.IsValid)
         {
             earliestPendingMissInfo = missInfo;

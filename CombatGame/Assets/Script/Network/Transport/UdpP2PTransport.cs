@@ -26,6 +26,18 @@ public class UdpP2PTransport : MonoBehaviour
 
     private readonly ConcurrentQueue<NetworkPacket> receivedPackets = new ConcurrentQueue<NetworkPacket>();
 
+    private readonly ConcurrentQueue<byte[]> controlPackets = new ConcurrentQueue<byte[]>();
+    public bool TryDequeueControl(out byte[] payload) => controlPackets.TryDequeue(out payload);
+    public void SendControl(byte[] payload)
+    {
+        if (!started || payload == null || payload.Length > 4096) return;
+        byte[] data = new byte[payload.Length + 4];
+        data[0]=82; data[1]=82; data[2]=65; data[3]=49;
+        Buffer.BlockCopy(payload,0,data,4,payload.Length);
+        try { socket.Send(data,data.Length,remoteEndPoint); }
+        catch(SocketException e) { Debug.LogWarning("[LAN] Control send failed: "+e.Message); }
+    }
+
     public bool IsStarted => started;
 
     public void Configure(string remoteIp, int localPort, int remotePort)
@@ -75,6 +87,7 @@ public class UdpP2PTransport : MonoBehaviour
         }
         catch (Exception e)
         {
+            started = false; socket?.Close(); socket = null;
             Debug.LogError($"[UdpP2PTransport] StartTransport failed: {e}");
             FileLogger.WriteLine($"[UdpP2PTransport] StartTransport failed: {e}");
         }
@@ -100,6 +113,8 @@ public class UdpP2PTransport : MonoBehaviour
 
         socket = null;
         remoteEndPoint = null;
+        while(receivedPackets.TryDequeue(out _)) {}
+        while(controlPackets.TryDequeue(out _)) {}
 
         Debug.Log("[UdpP2PTransport] Stopped");
         FileLogger.WriteLine("[UdpP2PTransport] Stopped");
@@ -167,7 +182,7 @@ public class UdpP2PTransport : MonoBehaviour
 
         try
         {
-            socket.BeginReceive(OnReceive, null);
+            socket.BeginReceive(OnReceive, socket);
         }
         catch (Exception e)
         {
@@ -189,7 +204,14 @@ public class UdpP2PTransport : MonoBehaviour
         try
         {
             IPEndPoint any = new IPEndPoint(IPAddress.Any, 0);
-            byte[] data = socket.EndReceive(ar, ref any);
+            var receivingSocket = (UdpClient)ar.AsyncState;
+            byte[] data = receivingSocket.EndReceive(ar, ref any);
+            if (receivingSocket != socket || !any.Equals(remoteEndPoint)) return;
+            if (data.Length >= 4 && data.Length <= 4100 && data[0]==82 && data[1]==82 && data[2]==65 && data[3]==49)
+            {
+                var payload = new byte[data.Length-4]; Buffer.BlockCopy(data,4,payload,0,payload.Length);
+                controlPackets.Enqueue(payload); return;
+            }
 
             if (data.Length != SerializedNetworkPacketSize)
             {
@@ -222,7 +244,7 @@ public class UdpP2PTransport : MonoBehaviour
         }
         finally
         {
-            if (started)
+            if (started && ReferenceEquals(ar.AsyncState, socket))
             {
                 BeginReceive();
             }

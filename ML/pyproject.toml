@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fighting-game-action-prediction"
+version = "0.1.0"
+description = "XGBoost models for multi-horizon fighting-game action prediction"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib>=3.8,<4",
+    "numpy>=1.26,<3",
+    "pandas>=2.1,<3",
+    "scikit-learn>=1.4,<2",
+    "xgboost>=2.0,<4",
+    "catboost>=1.2,<2",
+    "scipy>=1.11,<2",
+    "joblib>=1.3,<2",
+]
+
+[project.scripts]
+train-action-models = "action_prediction.train:main"
+predict-actions = "action_prediction.predict:main"
+evaluate-autoregressive-horizons = "action_prediction.autoregressive:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["action_prediction*"]

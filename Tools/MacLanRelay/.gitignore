@@ -1,0 +1,6 @@
+__pycache__/
+*.log
+*.pid
+parity_cases.json
+tests/bin/
+tests/obj/

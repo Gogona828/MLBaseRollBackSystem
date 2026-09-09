@@ -1,0 +1,1898 @@
+{
+  "50ms": {
+    "majority": {
+      "accuracy": 0.4019444022482151,
+      "top2_accuracy": 0.5483821965669148,
+      "macro_f1": 0.11468198071296998,
+      "log_loss": 20.656108562473555,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          1269,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          374,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1330,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2646,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          964,
+          0
+        ]
+      ],
+      "changed_action_samples": 1116,
+      "changed_action_accuracy": 0.25089605734767023,
+      "unchanged_action_samples": 5467,
+      "unchanged_action_accuracy": 0.4327784891165173
+    },
+    "persistence": {
+      "accuracy": 0.8306243354093878,
+      "top2_accuracy": 0.8496126386146134,
+      "macro_f1": 0.7933276528026489,
+      "log_loss": 5.810146929091855,
+      "confusion_matrix": [
+        [
+          906,
+          73,
+          101,
+          143,
+          46
+        ],
+        [
+          108,
+          248,
+          14,
+          2,
+          2
+        ],
+        [
+          94,
+          34,
+          1100,
+          50,
+          52
+        ],
+        [
+          229,
+          22,
+          23,
+          2367,
+          5
+        ],
+        [
+          13,
+          6,
+          89,
+          9,
+          847
+        ]
+      ],
+      "changed_action_samples": 1116,
+      "changed_action_accuracy": 0.0008960573476702509,
+      "unchanged_action_samples": 5467,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.8306243354093878,
+      "top2_accuracy": 0.902779887589245,
+      "macro_f1": 0.7933276528026489,
+      "log_loss": 0.6104113301809906,
+      "confusion_matrix": [
+        [
+          906,
+          73,
+          101,
+          143,
+          46
+        ],
+        [
+          108,
+          248,
+          14,
+          2,
+          2
+        ],
+        [
+          94,
+          34,
+          1100,
+          50,
+          52
+        ],
+        [
+          229,
+          22,
+          23,
+          2367,
+          5
+        ],
+        [
+          13,
+          6,
+          89,
+          9,
+          847
+        ]
+      ],
+      "changed_action_samples": 1116,
+      "changed_action_accuracy": 0.0008960573476702509,
+      "unchanged_action_samples": 5467,
+      "unchanged_action_accuracy": 1.0
+    },
+    "active_inference": {
+      "accuracy": 0.5565851435515722,
+      "top2_accuracy": 0.7703174844295914,
+      "macro_f1": 0.3645807805223333,
+      "log_loss": 1.1301265746032991,
+      "confusion_matrix": [
+        [
+          0,
+          943,
+          0,
+          179,
+          147
+        ],
+        [
+          0,
+          354,
+          0,
+          4,
+          16
+        ],
+        [
+          0,
+          125,
+          0,
+          53,
+          1152
+        ],
+        [
+          0,
+          244,
+          0,
+          2374,
+          28
+        ],
+        [
+          0,
+          19,
+          0,
+          9,
+          936
+        ]
+      ],
+      "changed_action_samples": 1116,
+      "changed_action_accuracy": 0.18189964157706093,
+      "unchanged_action_samples": 5467,
+      "unchanged_action_accuracy": 0.6330711541979147
+    },
+    "xgboost": {
+      "accuracy": 0.8790824851891235,
+      "top2_accuracy": 0.966580586358803,
+      "macro_f1": 0.8347022783047893,
+      "log_loss": 0.3320943484394786,
+      "confusion_matrix": [
+        [
+          949,
+          71,
+          122,
+          120,
+          7
+        ],
+        [
+          120,
+          232,
+          13,
+          7,
+          2
+        ],
+        [
+          81,
+          25,
+          1221,
+          1,
+          2
+        ],
+        [
+          110,
+          12,
+          21,
+          2500,
+          3
+        ],
+        [
+          7,
+          3,
+          68,
+          1,
+          885
+        ]
+      ],
+      "changed_action_samples": 1116,
+      "changed_action_accuracy": 0.4345878136200717,
+      "unchanged_action_samples": 5467,
+      "unchanged_action_accuracy": 0.9698189134808853
+    }
+  },
+  "100ms": {
+    "majority": {
+      "accuracy": 0.40623072177668107,
+      "top2_accuracy": 0.5549043800123381,
+      "macro_f1": 0.11555165606492653,
+      "log_loss": 20.50806433072273,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          1194,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          362,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1330,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2634,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          964,
+          0
+        ]
+      ],
+      "changed_action_samples": 1950,
+      "changed_action_accuracy": 0.2558974358974359,
+      "unchanged_action_samples": 4534,
+      "unchanged_action_accuracy": 0.4708866343184826
+    },
+    "persistence": {
+      "accuracy": 0.7003392967304133,
+      "top2_accuracy": 0.7382788402220851,
+      "macro_f1": 0.6263383533651569,
+      "log_loss": 10.295195891716372,
+      "confusion_matrix": [
+        [
+          631,
+          89,
+          170,
+          228,
+          76
+        ],
+        [
+          182,
+          127,
+          43,
+          8,
+          2
+        ],
+        [
+          153,
+          87,
+          894,
+          101,
+          95
+        ],
+        [
+          350,
+          64,
+          55,
+          2142,
+          23
+        ],
+        [
+          24,
+          16,
+          160,
+          17,
+          747
+        ]
+      ],
+      "changed_action_samples": 1950,
+      "changed_action_accuracy": 0.0035897435897435897,
+      "unchanged_action_samples": 4534,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.7003392967304133,
+      "top2_accuracy": 0.8183220234423195,
+      "macro_f1": 0.6263383533651569,
+      "log_loss": 0.8993857256674922,
+      "confusion_matrix": [
+        [
+          631,
+          89,
+          170,
+          228,
+          76
+        ],
+        [
+          182,
+          127,
+          43,
+          8,
+          2
+        ],
+        [
+          153,
+          87,
+          894,
+          101,
+          95
+        ],
+        [
+          350,
+          64,
+          55,
+          2142,
+          23
+        ],
+        [
+          24,
+          16,
+          160,
+          17,
+          747
+        ]
+      ],
+      "changed_action_samples": 1950,
+      "changed_action_accuracy": 0.0035897435897435897,
+      "unchanged_action_samples": 4534,
+      "unchanged_action_accuracy": 1.0
+    },
+    "active_inference": {
+      "accuracy": 0.534083898827884,
+      "top2_accuracy": 0.73673658235657,
+      "macro_f1": 0.2615469025078568,
+      "log_loss": 1.2031668897640115,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          948,
+          246
+        ],
+        [
+          0,
+          0,
+          0,
+          317,
+          45
+        ],
+        [
+          0,
+          0,
+          0,
+          341,
+          989
+        ],
+        [
+          0,
+          0,
+          0,
+          2556,
+          78
+        ],
+        [
+          0,
+          0,
+          0,
+          57,
+          907
+        ]
+      ],
+      "changed_action_samples": 1950,
+      "changed_action_accuracy": 0.29794871794871797,
+      "unchanged_action_samples": 4534,
+      "unchanged_action_accuracy": 0.6356418173797971
+    },
+    "xgboost": {
+      "accuracy": 0.8240283775447255,
+      "top2_accuracy": 0.9380012338062924,
+      "macro_f1": 0.7566380330304577,
+      "log_loss": 0.4807116174688249,
+      "confusion_matrix": [
+        [
+          790,
+          75,
+          220,
+          106,
+          3
+        ],
+        [
+          142,
+          160,
+          36,
+          22,
+          2
+        ],
+        [
+          93,
+          29,
+          1188,
+          13,
+          7
+        ],
+        [
+          144,
+          23,
+          62,
+          2399,
+          6
+        ],
+        [
+          13,
+          2,
+          141,
+          2,
+          806
+        ]
+      ],
+      "changed_action_samples": 1950,
+      "changed_action_accuracy": 0.5215384615384615,
+      "unchanged_action_samples": 4534,
+      "unchanged_action_accuracy": 0.9541243934715483
+    }
+  },
+  "200ms": {
+    "majority": {
+      "accuracy": 0.41329939548202355,
+      "top2_accuracy": 0.5666560610881324,
+      "macro_f1": 0.1169743358847366,
+      "log_loss": 20.263920990205317,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          1071,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          323,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1330,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2598,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          964,
+          0
+        ]
+      ],
+      "changed_action_samples": 2769,
+      "changed_action_accuracy": 0.28999638858793786,
+      "unchanged_action_samples": 3517,
+      "unchanged_action_accuracy": 0.5103781632072789
+    },
+    "persistence": {
+      "accuracy": 0.5625198854597518,
+      "top2_accuracy": 0.6317212853961184,
+      "macro_f1": 0.46229793444114975,
+      "log_loss": 15.02406642200949,
+      "confusion_matrix": [
+        [
+          397,
+          35,
+          263,
+          274,
+          102
+        ],
+        [
+          202,
+          26,
+          70,
+          25,
+          0
+        ],
+        [
+          231,
+          125,
+          669,
+          195,
+          110
+        ],
+        [
+          434,
+          146,
+          115,
+          1814,
+          89
+        ],
+        [
+          61,
+          45,
+          197,
+          31,
+          630
+        ]
+      ],
+      "changed_action_samples": 2769,
+      "changed_action_accuracy": 0.006861682918020947,
+      "unchanged_action_samples": 3517,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.5816099268215081,
+      "top2_accuracy": 0.7343302577155584,
+      "macro_f1": 0.4480037600335162,
+      "log_loss": 1.121597244336022,
+      "confusion_matrix": [
+        [
+          397,
+          0,
+          263,
+          309,
+          102
+        ],
+        [
+          202,
+          0,
+          70,
+          51,
+          0
+        ],
+        [
+          231,
+          0,
+          669,
+          320,
+          110
+        ],
+        [
+          434,
+          0,
+          115,
+          1960,
+          89
+        ],
+        [
+          61,
+          0,
+          197,
+          76,
+          630
+        ]
+      ],
+      "changed_action_samples": 2769,
+      "changed_action_accuracy": 0.059588299024918745,
+      "unchanged_action_samples": 3517,
+      "unchanged_action_accuracy": 0.9926073357975548
+    },
+    "active_inference": {
+      "accuracy": 0.5124085268851416,
+      "top2_accuracy": 0.5860642698059179,
+      "macro_f1": 0.24732366338065512,
+      "log_loss": 1.302211203731844,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          706,
+          365
+        ],
+        [
+          0,
+          0,
+          0,
+          253,
+          70
+        ],
+        [
+          0,
+          0,
+          0,
+          551,
+          779
+        ],
+        [
+          0,
+          0,
+          0,
+          2394,
+          204
+        ],
+        [
+          0,
+          0,
+          0,
+          137,
+          827
+        ]
+      ],
+      "changed_action_samples": 2769,
+      "changed_action_accuracy": 0.28746840014445646,
+      "unchanged_action_samples": 3517,
+      "unchanged_action_accuracy": 0.6895081034972989
+    },
+    "xgboost": {
+      "accuracy": 0.7554883868915049,
+      "top2_accuracy": 0.9139357301940821,
+      "macro_f1": 0.6664293887570862,
+      "log_loss": 0.6156855942259114,
+      "confusion_matrix": [
+        [
+          445,
+          65,
+          306,
+          251,
+          4
+        ],
+        [
+          125,
+          107,
+          56,
+          33,
+          2
+        ],
+        [
+          99,
+          22,
+          1122,
+          58,
+          29
+        ],
+        [
+          130,
+          22,
+          130,
+          2308,
+          8
+        ],
+        [
+          3,
+          0,
+          185,
+          9,
+          767
+        ]
+      ],
+      "changed_action_samples": 2769,
+      "changed_action_accuracy": 0.5568797399783315,
+      "unchanged_action_samples": 3517,
+      "unchanged_action_accuracy": 0.911856696047768
+    }
+  },
+  "300ms": {
+    "majority": {
+      "accuracy": 0.41967805519053875,
+      "top2_accuracy": 0.5780223390275953,
+      "macro_f1": 0.11824597940529909,
+      "log_loss": 20.043609888833686,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          1007,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          237,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1325,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2555,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          964,
+          0
+        ]
+      ],
+      "changed_action_samples": 3253,
+      "changed_action_accuracy": 0.3264678758069474,
+      "unchanged_action_samples": 2835,
+      "unchanged_action_accuracy": 0.52663139329806
+    },
+    "persistence": {
+      "accuracy": 0.4707621550591327,
+      "top2_accuracy": 0.5721090670170828,
+      "macro_f1": 0.3712989991990957,
+      "log_loss": 18.15976515611777,
+      "confusion_matrix": [
+        [
+          293,
+          17,
+          306,
+          288,
+          103
+        ],
+        [
+          121,
+          2,
+          75,
+          39,
+          0
+        ],
+        [
+          255,
+          128,
+          518,
+          289,
+          135
+        ],
+        [
+          536,
+          177,
+          154,
+          1524,
+          164
+        ],
+        [
+          108,
+          43,
+          235,
+          49,
+          529
+        ]
+      ],
+      "changed_action_samples": 3253,
+      "changed_action_accuracy": 0.009529664924684907,
+      "unchanged_action_samples": 2835,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.5394218134034166,
+      "top2_accuracy": 0.7332457293035479,
+      "macro_f1": 0.3302482595717491,
+      "log_loss": 1.2243246082473143,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          306,
+          598,
+          103
+        ],
+        [
+          0,
+          0,
+          75,
+          162,
+          0
+        ],
+        [
+          0,
+          0,
+          518,
+          672,
+          135
+        ],
+        [
+          0,
+          0,
+          154,
+          2237,
+          164
+        ],
+        [
+          0,
+          0,
+          235,
+          200,
+          529
+        ]
+      ],
+      "changed_action_samples": 3253,
+      "changed_action_accuracy": 0.22871195819243775,
+      "unchanged_action_samples": 2835,
+      "unchanged_action_accuracy": 0.8959435626102292
+    },
+    "active_inference": {
+      "accuracy": 0.41967805519053875,
+      "top2_accuracy": 0.5780223390275953,
+      "macro_f1": 0.11824597940529909,
+      "log_loss": 1.3542283075050827,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          1007,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          237,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1325,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2555,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          964,
+          0
+        ]
+      ],
+      "changed_action_samples": 3253,
+      "changed_action_accuracy": 0.3264678758069474,
+      "unchanged_action_samples": 2835,
+      "unchanged_action_accuracy": 0.52663139329806
+    },
+    "xgboost": {
+      "accuracy": 0.7169842312746386,
+      "top2_accuracy": 0.8930683311432326,
+      "macro_f1": 0.6218148783621699,
+      "log_loss": 0.7115324049856723,
+      "confusion_matrix": [
+        [
+          297,
+          56,
+          345,
+          296,
+          13
+        ],
+        [
+          65,
+          85,
+          51,
+          32,
+          4
+        ],
+        [
+          122,
+          15,
+          1067,
+          56,
+          65
+        ],
+        [
+          124,
+          37,
+          224,
+          2161,
+          9
+        ],
+        [
+          19,
+          0,
+          146,
+          44,
+          755
+        ]
+      ],
+      "changed_action_samples": 3253,
+      "changed_action_accuracy": 0.5853058715032278,
+      "unchanged_action_samples": 2835,
+      "unchanged_action_accuracy": 0.8680776014109347
+    }
+  },
+  "500ms": {
+    "majority": {
+      "accuracy": 0.4201193820224719,
+      "top2_accuracy": 0.5844452247191011,
+      "macro_f1": 0.11833353937445915,
+      "log_loss": 20.02836700006847,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          904,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          161,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1302,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2393,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          936,
+          0
+        ]
+      ],
+      "changed_action_samples": 3454,
+      "changed_action_accuracy": 0.33671105964099596,
+      "unchanged_action_samples": 2242,
+      "unchanged_action_accuracy": 0.5486173059768065
+    },
+    "persistence": {
+      "accuracy": 0.4018609550561798,
+      "top2_accuracy": 0.5651334269662921,
+      "macro_f1": 0.3144052906078819,
+      "log_loss": 20.43760757604693,
+      "confusion_matrix": [
+        [
+          237,
+          31,
+          288,
+          216,
+          132
+        ],
+        [
+          31,
+          18,
+          43,
+          58,
+          11
+        ],
+        [
+          280,
+          103,
+          430,
+          341,
+          148
+        ],
+        [
+          561,
+          118,
+          137,
+          1277,
+          300
+        ],
+        [
+          139,
+          33,
+          332,
+          105,
+          327
+        ]
+      ],
+      "changed_action_samples": 3454,
+      "changed_action_accuracy": 0.01360741169658367,
+      "unchanged_action_samples": 2242,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.47155898876404495,
+      "top2_accuracy": 0.7143609550561798,
+      "macro_f1": 0.1994948577151087,
+      "log_loss": 1.3193134848980674,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          288,
+          616,
+          0
+        ],
+        [
+          0,
+          0,
+          43,
+          118,
+          0
+        ],
+        [
+          0,
+          0,
+          430,
+          872,
+          0
+        ],
+        [
+          0,
+          0,
+          137,
+          2256,
+          0
+        ],
+        [
+          0,
+          0,
+          332,
+          604,
+          0
+        ]
+      ],
+      "changed_action_samples": 3454,
+      "changed_action_accuracy": 0.29704690214244356,
+      "unchanged_action_samples": 2242,
+      "unchanged_action_accuracy": 0.7404103479036575
+    },
+    "active_inference": {
+      "accuracy": 0.4201193820224719,
+      "top2_accuracy": 0.6207865168539326,
+      "macro_f1": 0.11833353937445915,
+      "log_loss": 1.3862691752367784,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          904,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          161,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1302,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2393,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          936,
+          0
+        ]
+      ],
+      "changed_action_samples": 3454,
+      "changed_action_accuracy": 0.33671105964099596,
+      "unchanged_action_samples": 2242,
+      "unchanged_action_accuracy": 0.5486173059768065
+    },
+    "xgboost": {
+      "accuracy": 0.6976825842696629,
+      "top2_accuracy": 0.8792134831460674,
+      "macro_f1": 0.5423681942554222,
+      "log_loss": 0.8269255895492971,
+      "confusion_matrix": [
+        [
+          208,
+          10,
+          333,
+          301,
+          52
+        ],
+        [
+          31,
+          16,
+          70,
+          41,
+          3
+        ],
+        [
+          41,
+          18,
+          1065,
+          70,
+          108
+        ],
+        [
+          35,
+          28,
+          319,
+          2003,
+          8
+        ],
+        [
+          9,
+          0,
+          192,
+          53,
+          682
+        ]
+      ],
+      "changed_action_samples": 3454,
+      "changed_action_accuracy": 0.603358425014476,
+      "unchanged_action_samples": 2242,
+      "unchanged_action_accuracy": 0.8429973238180196
+    }
+  },
+  "1s": {
+    "majority": {
+      "accuracy": 0.3965659908978072,
+      "top2_accuracy": 0.5889532478278858,
+      "macro_f1": 0.11358317286327953,
+      "log_loss": 20.84187230946514,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          762,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          137,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1088,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1917,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          930,
+          0
+        ]
+      ],
+      "changed_action_samples": 3463,
+      "changed_action_accuracy": 0.33958995090961597,
+      "unchanged_action_samples": 1371,
+      "unchanged_action_accuracy": 0.5404814004376368
+    },
+    "persistence": {
+      "accuracy": 0.29292511377741004,
+      "top2_accuracy": 0.5500620604054614,
+      "macro_f1": 0.22290690792027673,
+      "log_loss": 24.14571237128692,
+      "confusion_matrix": [
+        [
+          220,
+          50,
+          150,
+          276,
+          66
+        ],
+        [
+          24,
+          8,
+          26,
+          76,
+          3
+        ],
+        [
+          291,
+          96,
+          296,
+          323,
+          82
+        ],
+        [
+          391,
+          84,
+          264,
+          786,
+          392
+        ],
+        [
+          128,
+          55,
+          349,
+          292,
+          106
+        ]
+      ],
+      "changed_action_samples": 3463,
+      "changed_action_accuracy": 0.012994513427663876,
+      "unchanged_action_samples": 1371,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.31112949937939594,
+      "top2_accuracy": 0.5041373603640877,
+      "macro_f1": 0.1528827298775723,
+      "log_loss": 1.5089701700028102,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          411,
+          351,
+          0
+        ],
+        [
+          0,
+          0,
+          102,
+          35,
+          0
+        ],
+        [
+          0,
+          0,
+          592,
+          496,
+          0
+        ],
+        [
+          0,
+          0,
+          1005,
+          912,
+          0
+        ],
+        [
+          0,
+          0,
+          641,
+          289,
+          0
+        ]
+      ],
+      "changed_action_samples": 3463,
+      "changed_action_accuracy": 0.34883049379151027,
+      "unchanged_action_samples": 1371,
+      "unchanged_action_accuracy": 0.21590080233406272
+    },
+    "active_inference": {
+      "accuracy": 0.3965659908978072,
+      "top2_accuracy": 0.554199420769549,
+      "macro_f1": 0.11358317286327953,
+      "log_loss": 1.4516909762697807,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          762,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          137,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1088,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1917,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          930,
+          0
+        ]
+      ],
+      "changed_action_samples": 3463,
+      "changed_action_accuracy": 0.33958995090961597,
+      "unchanged_action_samples": 1371,
+      "unchanged_action_accuracy": 0.5404814004376368
+    },
+    "xgboost": {
+      "accuracy": 0.5715763342987175,
+      "top2_accuracy": 0.788580885395118,
+      "macro_f1": 0.4227966209020816,
+      "log_loss": 1.1004551375294123,
+      "confusion_matrix": [
+        [
+          102,
+          3,
+          252,
+          246,
+          159
+        ],
+        [
+          35,
+          7,
+          43,
+          50,
+          2
+        ],
+        [
+          95,
+          4,
+          659,
+          116,
+          214
+        ],
+        [
+          47,
+          6,
+          361,
+          1384,
+          119
+        ],
+        [
+          11,
+          3,
+          139,
+          166,
+          611
+        ]
+      ],
+      "changed_action_samples": 3463,
+      "changed_action_accuracy": 0.5524112041582443,
+      "unchanged_action_samples": 1371,
+      "unchanged_action_accuracy": 0.6199854121079504
+    }
+  },
+  "2s": {
+    "majority": {
+      "accuracy": 0.2803360298693217,
+      "top2_accuracy": 0.693528313627878,
+      "macro_f1": 0.0875820170109356,
+      "log_loss": 24.856312943817187,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          396
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          46
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          543
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1328
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          901
+        ]
+      ],
+      "changed_action_samples": 2271,
+      "changed_action_accuracy": 0.3852928225451343,
+      "unchanged_action_samples": 943,
+      "unchanged_action_accuracy": 0.027571580063626724
+    },
+    "persistence": {
+      "accuracy": 0.2968263845675171,
+      "top2_accuracy": 0.6095208462974486,
+      "macro_f1": 0.20710073517622712,
+      "log_loss": 23.565092308486065,
+      "confusion_matrix": [
+        [
+          156,
+          9,
+          57,
+          150,
+          24
+        ],
+        [
+          16,
+          6,
+          16,
+          7,
+          1
+        ],
+        [
+          152,
+          75,
+          97,
+          149,
+          70
+        ],
+        [
+          271,
+          47,
+          211,
+          658,
+          141
+        ],
+        [
+          254,
+          99,
+          225,
+          286,
+          37
+        ]
+      ],
+      "changed_action_samples": 2271,
+      "changed_action_accuracy": 0.0048436811977102595,
+      "unchanged_action_samples": 943,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.41132545115121344,
+      "top2_accuracy": 0.6537025513378967,
+      "macro_f1": 0.18394736057706637,
+      "log_loss": 1.3688563369635138,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          231,
+          165
+        ],
+        [
+          0,
+          0,
+          0,
+          24,
+          22
+        ],
+        [
+          0,
+          0,
+          0,
+          298,
+          245
+        ],
+        [
+          0,
+          0,
+          0,
+          958,
+          370
+        ],
+        [
+          0,
+          0,
+          0,
+          537,
+          364
+        ]
+      ],
+      "changed_action_samples": 2271,
+      "changed_action_accuracy": 0.29238221047996477,
+      "unchanged_action_samples": 943,
+      "unchanged_action_accuracy": 0.6977730646871686
+    },
+    "active_inference": {
+      "accuracy": 0.4131922837585563,
+      "top2_accuracy": 0.693528313627878,
+      "macro_f1": 0.1169528841919859,
+      "log_loss": 1.4547094657993933,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          396,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          46,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          543,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1328,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          901,
+          0
+        ]
+      ],
+      "changed_action_samples": 2271,
+      "changed_action_accuracy": 0.2950242184059885,
+      "unchanged_action_samples": 943,
+      "unchanged_action_accuracy": 0.6977730646871686
+    },
+    "xgboost": {
+      "accuracy": 0.5084007467330429,
+      "top2_accuracy": 0.7358431860609832,
+      "macro_f1": 0.2865464041279909,
+      "log_loss": 1.1655451688414404,
+      "confusion_matrix": [
+        [
+          2,
+          0,
+          24,
+          213,
+          157
+        ],
+        [
+          0,
+          0,
+          7,
+          12,
+          27
+        ],
+        [
+          25,
+          0,
+          100,
+          201,
+          217
+        ],
+        [
+          23,
+          2,
+          178,
+          963,
+          162
+        ],
+        [
+          4,
+          0,
+          93,
+          235,
+          569
+        ]
+      ],
+      "changed_action_samples": 2271,
+      "changed_action_accuracy": 0.4456186701893439,
+      "unchanged_action_samples": 943,
+      "unchanged_action_accuracy": 0.6595970307529162
+    }
+  },
+  "3s": {
+    "majority": {
+      "accuracy": 0.4471730439748715,
+      "top2_accuracy": 0.7195888063963449,
+      "macro_f1": 0.12359905288082082,
+      "log_loss": 19.093966619231043,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          199,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          275,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          783,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          477,
+          0
+        ]
+      ],
+      "changed_action_samples": 1257,
+      "changed_action_accuracy": 0.32537788385043753,
+      "unchanged_action_samples": 494,
+      "unchanged_action_accuracy": 0.757085020242915
+    },
+    "persistence": {
+      "accuracy": 0.28212450028555114,
+      "top2_accuracy": 0.5750999428897773,
+      "macro_f1": 0.17974949586578723,
+      "log_loss": 24.260259217038655,
+      "confusion_matrix": [
+        [
+          62,
+          34,
+          5,
+          93,
+          5
+        ],
+        [
+          0,
+          1,
+          8,
+          7,
+          1
+        ],
+        [
+          139,
+          2,
+          54,
+          36,
+          44
+        ],
+        [
+          204,
+          75,
+          85,
+          374,
+          45
+        ],
+        [
+          161,
+          37,
+          147,
+          129,
+          3
+        ]
+      ],
+      "changed_action_samples": 1257,
+      "changed_action_accuracy": 0.0,
+      "unchanged_action_samples": 494,
+      "unchanged_action_accuracy": 1.0
+    },
+    "markov": {
+      "accuracy": 0.4471730439748715,
+      "top2_accuracy": 0.7070245573957739,
+      "macro_f1": 0.12359905288082082,
+      "log_loss": 1.335348149779536,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          199,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          275,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          783,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          477,
+          0
+        ]
+      ],
+      "changed_action_samples": 1257,
+      "changed_action_accuracy": 0.32537788385043753,
+      "unchanged_action_samples": 494,
+      "unchanged_action_accuracy": 0.757085020242915
+    },
+    "active_inference": {
+      "accuracy": 0.4471730439748715,
+      "top2_accuracy": 0.7195888063963449,
+      "macro_f1": 0.12359905288082082,
+      "log_loss": 1.400046232099892,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          199,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          275,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          783,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          477,
+          0
+        ]
+      ],
+      "changed_action_samples": 1257,
+      "changed_action_accuracy": 0.32537788385043753,
+      "unchanged_action_samples": 494,
+      "unchanged_action_accuracy": 0.757085020242915
+    },
+    "xgboost": {
+      "accuracy": 0.3797829811536265,
+      "top2_accuracy": 0.7155910908052542,
+      "macro_f1": 0.15671539431436837,
+      "log_loss": 1.3222180476226175,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          17,
+          162,
+          20
+        ],
+        [
+          0,
+          0,
+          6,
+          11,
+          0
+        ],
+        [
+          0,
+          0,
+          23,
+          239,
+          13
+        ],
+        [
+          0,
+          0,
+          65,
+          599,
+          119
+        ],
+        [
+          0,
+          0,
+          31,
+          403,
+          43
+        ]
+      ],
+      "changed_action_samples": 1257,
+      "changed_action_accuracy": 0.2967382657120127,
+      "unchanged_action_samples": 494,
+      "unchanged_action_accuracy": 0.5910931174089069
+    }
+  }
+}

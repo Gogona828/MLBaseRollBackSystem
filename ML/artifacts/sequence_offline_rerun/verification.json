@@ -1,0 +1,28 @@
+{
+  "completed_utc": "2026-09-07T10:16:59.009340+00:00",
+  "process_exit_code": 0,
+  "unittest_passed": 26,
+  "comparison": [
+    {
+      "horizon": "50ms",
+      "model_count": 6,
+      "test_paths": 6574,
+      "metrics_recomputed": true,
+      "predictions_match_previous_run": true
+    },
+    {
+      "horizon": "100ms",
+      "model_count": 6,
+      "test_paths": 6466,
+      "metrics_recomputed": true,
+      "predictions_match_previous_run": true
+    },
+    {
+      "horizon": "200ms",
+      "model_count": 6,
+      "test_paths": 6250,
+      "metrics_recomputed": true,
+      "predictions_match_previous_run": true
+    }
+  ]
+}

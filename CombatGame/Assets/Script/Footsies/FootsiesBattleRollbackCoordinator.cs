@@ -12,6 +12,14 @@ namespace Footsies
         [Header("Settings")]
         [SerializeField] private int snapshotCapacity = 300;
 
+        [Header("State-based rollback")]
+        [SerializeField] private bool skipRollbackWhenStateMatches = true;
+        [Tooltip("両者それぞれの位置差がこの距離以内で、HP・ガードHP・行動進行が一致すれば画面を巻き戻さない。ゲーム座標単位。")]
+        [Min(0f)] [SerializeField] private float allowedPositionError = 0.05f;
+        [SerializeField] private FootsiesBattleResimulationDriver resimulationDriver;
+        public float AllowedPositionError => Mathf.Max(0, allowedPositionError);
+        public int StateMatchedContinuations { get; private set; }
+        private bool pendingStateCheck;
         private FootsiesBattleSnapshotRingBuffer snapshotRingBuffer;
         private int pendingRollbackFrame = -1;
         private byte pendingPredictedBits;
@@ -29,6 +37,7 @@ namespace Footsies
 
         private void Awake()
         {
+            if(resimulationDriver == null) resimulationDriver=FindObjectOfType<FootsiesBattleResimulationDriver>();
             snapshotRingBuffer = new FootsiesBattleSnapshotRingBuffer(snapshotCapacity);
         }
 
@@ -67,13 +76,17 @@ namespace Footsies
                 $"{FootsiesBattleSnapshotDebugFormatter.BuildSummary(snapshot)}");
         }
 
+        public void StoreSnapshot(int frame, FootsiesBattleSnapshot snapshot) { snapshotRingBuffer.Store(frame,snapshot); }
         public void RequestRollback(int targetFrame)
         {
             RequestRollback(targetFrame, 0, 0);
+            pendingStateCheck=false;
         }
 
         public void RequestRollback(int targetFrame, byte predictedBits, byte confirmedBits)
         {
+            if(pendingRollbackFrame >= 0 && pendingRollbackFrame <= targetFrame) return;
+            pendingStateCheck=true;
             pendingRollbackFrame = targetFrame;
             pendingPredictedBits = predictedBits;
             pendingConfirmedBits = confirmedBits;
@@ -106,6 +119,21 @@ namespace Footsies
             }
 
             FootsiesBattleSnapshot currentSnapshot = battleStateBridge.CaptureSnapshot();
+            if(pendingStateCheck && skipRollbackWhenStateMatches && resimulationDriver != null
+                && resimulationDriver.TryEvaluateCorrection(snapshot,pendingRollbackFrame,currentFrame,out var corrected,out var repaired)
+                && RollbackStateComparison.CanContinue(currentSnapshot,corrected,allowedPositionError))
+            {
+                // Commit corrected input buffers without snapping either visible position.
+                corrected.fighter1.position=currentSnapshot.fighter1.position;
+                corrected.fighter2.position=currentSnapshot.fighter2.position;
+                battleStateBridge.RestoreSnapshot(corrected);
+                foreach(var pair in repaired) snapshotRingBuffer.Store(pair.Key,pair.Value);
+                snapshotRingBuffer.Store(currentFrame,corrected);
+                StateMatchedContinuations++;
+                FileLogger.WriteLine($"[Rollback] Continue without rollback: HP/action match, position tolerance={allowedPositionError}, source={pendingRollbackFrame}, current={currentFrame}");
+                pendingRollbackFrame=-1; pendingStateCheck=false;
+                return;
+            }
             LastP1PositionBeforeRollback = currentSnapshot != null && currentSnapshot.fighter1 != null
                 ? currentSnapshot.fighter1.position.x
                 : 0f;
@@ -137,6 +165,7 @@ namespace Footsies
         public void ClearAll()
         {
             snapshotRingBuffer?.Clear();
+            StateMatchedContinuations=0; pendingStateCheck=false;
             pendingRollbackFrame = -1;
             DidRollbackThisStep = false;
             LastRollbackFrame = -1;

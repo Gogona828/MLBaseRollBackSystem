@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "test_model_horizon_results_recomputed": 80,
+  "metric_records": 160,
+  "oof_session_coverage": 38,
+  "saved_prediction_shapes_and_normalization": "passed",
+  "session_disjointness_and_inner_fold_exclusion": "passed",
+  "source_hash_and_exact_target_alignment": "passed",
+  "xgboost_reproduction_max_probability_error": 0.0,
+  "fep_reproduction_max_A_error": 0.0
+}

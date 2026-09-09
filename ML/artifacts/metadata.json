@@ -1,0 +1,803 @@
+{
+  "format_version": 2,
+  "model_types": [
+    "XGBoost multi-class probability classifier",
+    "discrete active inference with three latent tactical states"
+  ],
+  "random_seed": 42,
+  "source_logs": "/Users/hw21a084/MLBaseRollBackSystem/CombatGame/MatchLogs.zip",
+  "class_names": [
+    "Wait",
+    "Approach",
+    "Retreat",
+    "Attack",
+    "Guard"
+  ],
+  "feature_names": [
+    "fixed_delta_time",
+    "input_bits",
+    "input_left",
+    "input_right",
+    "input_attack",
+    "input_down_bits",
+    "input_up_bits",
+    "self_position_x",
+    "self_position_y",
+    "self_velocity_x",
+    "self_is_face_right",
+    "self_vital_health",
+    "self_guard_health",
+    "self_is_dead",
+    "self_action_id",
+    "self_action_group",
+    "self_action_frame",
+    "self_hitstun_frame",
+    "self_is_in_hitstun",
+    "self_is_cornered",
+    "opponent_position_x",
+    "opponent_position_y",
+    "opponent_velocity_x",
+    "opponent_is_face_right",
+    "opponent_vital_health",
+    "opponent_guard_health",
+    "opponent_is_dead",
+    "opponent_action_id",
+    "opponent_action_group",
+    "opponent_action_frame",
+    "opponent_hitstun_frame",
+    "opponent_is_in_hitstun",
+    "opponent_is_cornered",
+    "signed_distance_to_opponent",
+    "absolute_distance",
+    "opponent_relative_velocity",
+    "distance_3_frames_ago",
+    "distance_6_frames_ago",
+    "distance_12_frames_ago",
+    "relative_velocity_mean_12",
+    "distance_change_12",
+    "previous_action_id_1",
+    "previous_action_id_2",
+    "attack_frames_last_30",
+    "guard_frames_last_30",
+    "attack_hits_last_30",
+    "guards_succeeded_last_30",
+    "guard_breaks_last_30"
+  ],
+  "excluded_leakage_fields": [
+    "p1_buffer_action_id",
+    "p2_buffer_action_id"
+  ],
+  "evaluation_subgroups": {
+    "action_change_definition": "current action class differs from the ground-truth action class at t+h",
+    "metrics": [
+      "changed_action_samples",
+      "changed_action_accuracy",
+      "unchanged_action_samples",
+      "unchanged_action_accuracy"
+    ]
+  },
+  "session_counts": {
+    "train": 38,
+    "validation": 8,
+    "test": 8
+  },
+  "frame_rows_loaded": 33685,
+  "horizons": {
+    "50ms": {
+      "milliseconds": 50,
+      "frames": 3,
+      "model_json": "model_50ms.json",
+      "best_iteration": 176,
+      "sample_counts": {
+        "train": 22193,
+        "validation": 3190,
+        "test": 6583
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 4427,
+          "Approach": 2077,
+          "Retreat": 4785,
+          "Attack": 7325,
+          "Guard": 3579
+        },
+        "validation": {
+          "Wait": 566,
+          "Approach": 393,
+          "Retreat": 632,
+          "Attack": 1168,
+          "Guard": 431
+        },
+        "test": {
+          "Wait": 1269,
+          "Approach": 374,
+          "Retreat": 1330,
+          "Attack": 2646,
+          "Guard": 964
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.6987926727726894,
+          0.12510407993338885,
+          0.07785179017485429,
+          0.08305578684429642,
+          0.015195670274771023
+        ],
+        [
+          0.18159922928709055,
+          0.6599229287090559,
+          0.07177263969171484,
+          0.06984585741811175,
+          0.016859344894026976
+        ],
+        [
+          0.081419624217119,
+          0.018789144050104383,
+          0.8296450939457203,
+          0.013569937369519834,
+          0.05657620041753653
+        ],
+        [
+          0.02375500858614768,
+          0.0017172295363480253,
+          0.020177447052089296,
+          0.953062392673154,
+          0.0012879221522610188
+        ],
+        [
+          0.03992128197919595,
+          0.002530222097272983,
+          0.04188923249929716,
+          0.017149283103739105,
+          0.8985099803204948
+        ]
+      ]
+    },
+    "100ms": {
+      "milliseconds": 100,
+      "frames": 6,
+      "model_json": "model_100ms.json",
+      "best_iteration": 150,
+      "sample_counts": {
+        "train": 21770,
+        "validation": 3112,
+        "test": 6484
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 4050,
+          "Approach": 2039,
+          "Retreat": 4779,
+          "Attack": 7323,
+          "Guard": 3579
+        },
+        "validation": {
+          "Wait": 494,
+          "Approach": 387,
+          "Retreat": 632,
+          "Attack": 1168,
+          "Guard": 431
+        },
+        "test": {
+          "Wait": 1194,
+          "Approach": 362,
+          "Retreat": 1330,
+          "Attack": 2634,
+          "Guard": 964
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.5225414132941917,
+          0.1981547494233592,
+          0.12476410148878171,
+          0.1302159781924932,
+          0.02432375760117425
+        ],
+        [
+          0.20272904483430798,
+          0.38596491228070173,
+          0.1730019493177388,
+          0.17787524366471735,
+          0.06042884990253411
+        ],
+        [
+          0.13210316628223948,
+          0.054309079471587335,
+          0.6900817781505557,
+          0.028936884042776265,
+          0.09456909205284127
+        ],
+        [
+          0.0468187274909964,
+          0.00510204081632653,
+          0.040216086434573826,
+          0.9038115246098439,
+          0.004051620648259304
+        ],
+        [
+          0.05799151343705799,
+          0.0039603960396039604,
+          0.07609618104667609,
+          0.0512022630834512,
+          0.8107496463932108
+        ]
+      ]
+    },
+    "200ms": {
+      "milliseconds": 200,
+      "frames": 12,
+      "model_json": "model_200ms.json",
+      "best_iteration": 132,
+      "sample_counts": {
+        "train": 20924,
+        "validation": 2956,
+        "test": 6286
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 3455,
+          "Approach": 1839,
+          "Retreat": 4755,
+          "Attack": 7296,
+          "Guard": 3579
+        },
+        "validation": {
+          "Wait": 381,
+          "Approach": 351,
+          "Retreat": 632,
+          "Attack": 1161,
+          "Guard": 431
+        },
+        "test": {
+          "Wait": 1071,
+          "Approach": 323,
+          "Retreat": 1330,
+          "Attack": 2598,
+          "Guard": 964
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.34535752401280684,
+          0.23137673425827107,
+          0.1967982924226254,
+          0.18591248665955176,
+          0.04055496264674493
+        ],
+        [
+          0.10873882820258193,
+          0.09334657398212512,
+          0.2830188679245283,
+          0.39225422045680236,
+          0.12264150943396226
+        ],
+        [
+          0.18382041507835664,
+          0.09551037695891572,
+          0.5266836086404066,
+          0.059932232105040235,
+          0.1340533672172808
+        ],
+        [
+          0.08399734395750331,
+          0.017762284196547146,
+          0.08183930942895086,
+          0.8034528552456839,
+          0.012948207171314742
+        ],
+        [
+          0.07130584192439862,
+          0.004009163802978236,
+          0.07903780068728522,
+          0.14805269186712486,
+          0.697594501718213
+        ]
+      ]
+    },
+    "300ms": {
+      "milliseconds": 300,
+      "frames": 18,
+      "model_json": "model_300ms.json",
+      "best_iteration": 116,
+      "sample_counts": {
+        "train": 20078,
+        "validation": 2800,
+        "test": 6088
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 3043,
+          "Approach": 1492,
+          "Retreat": 4727,
+          "Attack": 7237,
+          "Guard": 3579
+        },
+        "validation": {
+          "Wait": 329,
+          "Approach": 268,
+          "Retreat": 628,
+          "Attack": 1144,
+          "Guard": 431
+        },
+        "test": {
+          "Wait": 1007,
+          "Approach": 237,
+          "Retreat": 1325,
+          "Attack": 2555,
+          "Guard": 964
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.25027156202476647,
+          0.16880295459482947,
+          0.22072561373017596,
+          0.2935042363675864,
+          0.06669563328264176
+        ],
+        [
+          0.049820236260914225,
+          0.02773497688751926,
+          0.3189522342064715,
+          0.4586543400102722,
+          0.1448382126348228
+        ],
+        [
+          0.19129116117850953,
+          0.10246967071057192,
+          0.43500866551126516,
+          0.08665511265164645,
+          0.18457538994800693
+        ],
+        [
+          0.11823021846888196,
+          0.034697998898476225,
+          0.14026069395997798,
+          0.6858821369561227,
+          0.020928951716541216
+        ],
+        [
+          0.07834101382488479,
+          0.001152073732718894,
+          0.08784562211981567,
+          0.24827188940092165,
+          0.584389400921659
+        ]
+      ]
+    },
+    "500ms": {
+      "milliseconds": 500,
+      "frames": 30,
+      "model_json": "model_500ms.json",
+      "best_iteration": 84,
+      "sample_counts": {
+        "train": 18404,
+        "validation": 2492,
+        "test": 5696
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 2582,
+          "Approach": 1013,
+          "Retreat": 4651,
+          "Attack": 6656,
+          "Guard": 3502
+        },
+        "validation": {
+          "Wait": 265,
+          "Approach": 162,
+          "Retreat": 620,
+          "Attack": 1024,
+          "Guard": 421
+        },
+        "test": {
+          "Wait": 904,
+          "Approach": 161,
+          "Retreat": 1302,
+          "Attack": 2393,
+          "Guard": 936
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.1609141791044776,
+          0.050606343283582086,
+          0.26842350746268656,
+          0.41767723880597013,
+          0.10237873134328358
+        ],
+        [
+          0.11967418546365914,
+          0.06015037593984962,
+          0.2593984962406015,
+          0.34273182957393483,
+          0.21804511278195488
+        ],
+        [
+          0.16155419222903886,
+          0.06725744149057032,
+          0.3837764144512611,
+          0.10974778459441036,
+          0.2776641672347194
+        ],
+        [
+          0.14550822437789962,
+          0.07612821594264024,
+          0.23133698861239982,
+          0.48544917756221,
+          0.061577393504850274
+        ],
+        [
+          0.09042395493625853,
+          0.014230655203083309,
+          0.08182626741772903,
+          0.45597391046546104,
+          0.35754521197746814
+        ]
+      ]
+    },
+    "1s": {
+      "milliseconds": 1000,
+      "frames": 60,
+      "model_json": "model_1s.json",
+      "best_iteration": 57,
+      "sample_counts": {
+        "train": 14940,
+        "validation": 1921,
+        "test": 4834
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 2097,
+          "Approach": 847,
+          "Retreat": 3963,
+          "Attack": 4686,
+          "Guard": 3347
+        },
+        "validation": {
+          "Wait": 228,
+          "Approach": 147,
+          "Retreat": 511,
+          "Attack": 647,
+          "Guard": 388
+        },
+        "test": {
+          "Wait": 762,
+          "Approach": 137,
+          "Retreat": 1088,
+          "Attack": 1917,
+          "Guard": 930
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.15077282006415865,
+          0.041703120443277925,
+          0.23038786818314377,
+          0.3449985418489355,
+          0.2321376494604841
+        ],
+        [
+          0.10923185341789993,
+          0.023255813953488372,
+          0.25299506694855534,
+          0.3460183227625088,
+          0.26849894291754756
+        ],
+        [
+          0.1402454949072865,
+          0.04178636719770175,
+          0.3021676677983808,
+          0.21624445024810657,
+          0.2995560198485244
+        ],
+        [
+          0.18584070796460178,
+          0.11934943793350873,
+          0.34608945228414256,
+          0.13130829944989236,
+          0.21741210236785458
+        ],
+        [
+          0.05582290664100096,
+          0.008180943214629451,
+          0.08950914340712224,
+          0.7892204042348412,
+          0.05726660250240616
+        ]
+      ]
+    },
+    "2s": {
+      "milliseconds": 2000,
+      "frames": 120,
+      "model_json": "model_2s.json",
+      "best_iteration": 44,
+      "sample_counts": {
+        "train": 9226,
+        "validation": 1092,
+        "test": 3214
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 844,
+          "Approach": 312,
+          "Retreat": 1993,
+          "Attack": 2986,
+          "Guard": 3091
+        },
+        "validation": {
+          "Wait": 83,
+          "Approach": 70,
+          "Retreat": 225,
+          "Attack": 364,
+          "Guard": 350
+        },
+        "test": {
+          "Wait": 396,
+          "Approach": 46,
+          "Retreat": 543,
+          "Attack": 1328,
+          "Guard": 901
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.10056107034958998,
+          0.045317220543806644,
+          0.19594302977988778,
+          0.29175658178679326,
+          0.36642209753992233
+        ],
+        [
+          0.07609860664523044,
+          0.03429796355841372,
+          0.18863879957127547,
+          0.2315112540192926,
+          0.4694533762057878
+        ],
+        [
+          0.08900279589934762,
+          0.03215284249767009,
+          0.28238583410997203,
+          0.34995340167753963,
+          0.24650512581547065
+        ],
+        [
+          0.09153175591531756,
+          0.030510585305105854,
+          0.18866749688667497,
+          0.35211706102117063,
+          0.337173100871731
+        ],
+        [
+          0.08860759493670886,
+          0.020569620253164556,
+          0.2468354430379747,
+          0.3322784810126582,
+          0.31170886075949367
+        ]
+      ]
+    },
+    "3s": {
+      "milliseconds": 3000,
+      "frames": 180,
+      "model_json": "model_3s.json",
+      "best_iteration": 17,
+      "sample_counts": {
+        "train": 4698,
+        "validation": 555,
+        "test": 1751
+      },
+      "class_counts": {
+        "train": {
+          "Wait": 401,
+          "Approach": 102,
+          "Retreat": 1036,
+          "Attack": 2199,
+          "Guard": 960
+        },
+        "validation": {
+          "Wait": 30,
+          "Approach": 37,
+          "Retreat": 78,
+          "Attack": 245,
+          "Guard": 165
+        },
+        "test": {
+          "Wait": 199,
+          "Approach": 17,
+          "Retreat": 275,
+          "Attack": 783,
+          "Guard": 477
+        }
+      },
+      "markov_transition_matrix": [
+        [
+          0.09921259842519685,
+          0.01968503937007874,
+          0.19291338582677164,
+          0.5574803149606299,
+          0.13070866141732285
+        ],
+        [
+          0.07559055118110236,
+          0.004724409448818898,
+          0.24251968503937008,
+          0.5543307086614173,
+          0.12283464566929134
+        ],
+        [
+          0.050793650793650794,
+          0.024603174603174603,
+          0.25952380952380955,
+          0.3682539682539683,
+          0.2968253968253968
+        ],
+        [
+          0.09575233981281497,
+          0.02591792656587473,
+          0.19438444924406048,
+          0.45428365730741543,
+          0.22966162706983442
+        ],
+        [
+          0.20710059171597633,
+          0.07100591715976332,
+          0.26627218934911245,
+          0.28994082840236685,
+          0.16568047337278108
+        ]
+      ]
+    }
+  },
+  "active_inference": {
+    "model_npz": "model_active_inference.npz",
+    "latent_states": [
+      "aggressive",
+      "defensive",
+      "approaching"
+    ],
+    "observation_classes": [
+      "Wait",
+      "Approach",
+      "Retreat",
+      "Attack",
+      "Guard"
+    ],
+    "probe_mapping": "Wait",
+    "fit_iterations": 17,
+    "final_fit_log_likelihood": -13691.101075886823,
+    "observation_likelihood": [
+      [
+        0.00017208003818221416,
+        0.00015824295833222272,
+        0.6967897195145497
+      ],
+      [
+        0.0002782391265723381,
+        4.86802836769021e-05,
+        0.3025730247195175
+      ],
+      [
+        6.733824940154871e-05,
+        0.5719336184249503,
+        0.0002961861609863722
+      ],
+      [
+        0.9993725493005774,
+        9.909249784884928e-05,
+        0.0001795739143065875
+      ],
+      [
+        0.00010979328526646335,
+        0.42776036583519167,
+        0.00016149569063968167
+      ]
+    ],
+    "transition": [
+      [
+        0.9847598139717098,
+        0.004436518267720019,
+        0.027046189090817827
+      ],
+      [
+        0.0070942716098663355,
+        0.9688776224805711,
+        0.031166877238471453
+      ],
+      [
+        0.008145914418424,
+        0.026685859251708882,
+        0.9417869336707108
+      ]
+    ],
+    "initial_belief": [
+      0.017897137110166477,
+      0.024604300462072876,
+      0.9574985624277608
+    ],
+    "habit_prior": [
+      0.213518412094956,
+      0.09261305866230493,
+      0.2117501436718094,
+      0.32385836169930593,
+      0.15826002387162372
+    ],
+    "horizons": {
+      "50ms": {
+        "frames": 3,
+        "scoring_parameters": {
+          "utility_scale": 2.0,
+          "information_gain_weight": 0.5,
+          "habit_scale": 0.5
+        },
+        "validation_log_loss": 1.1380211800792532
+      },
+      "100ms": {
+        "frames": 6,
+        "scoring_parameters": {
+          "utility_scale": 2.0,
+          "information_gain_weight": 2.0,
+          "habit_scale": 0.5
+        },
+        "validation_log_loss": 1.211989924810987
+      },
+      "200ms": {
+        "frames": 12,
+        "scoring_parameters": {
+          "utility_scale": 2.0,
+          "information_gain_weight": 2.0,
+          "habit_scale": 0.5
+        },
+        "validation_log_loss": 1.3401768735034687
+      },
+      "300ms": {
+        "frames": 18,
+        "scoring_parameters": {
+          "utility_scale": 2.0,
+          "information_gain_weight": 0.5,
+          "habit_scale": 1.0
+        },
+        "validation_log_loss": 1.4241378861041945
+      },
+      "500ms": {
+        "frames": 30,
+        "scoring_parameters": {
+          "utility_scale": 1.0,
+          "information_gain_weight": 0.5,
+          "habit_scale": 1.0
+        },
+        "validation_log_loss": 1.4488894726104706
+      },
+      "1s": {
+        "frames": 60,
+        "scoring_parameters": {
+          "utility_scale": 0.5,
+          "information_gain_weight": 0.5,
+          "habit_scale": 1.0
+        },
+        "validation_log_loss": 1.5448520111792865
+      },
+      "2s": {
+        "frames": 120,
+        "scoring_parameters": {
+          "utility_scale": 1.0,
+          "information_gain_weight": 0.5,
+          "habit_scale": 0.5
+        },
+        "validation_log_loss": 1.5317124793836108
+      },
+      "3s": {
+        "frames": 180,
+        "scoring_parameters": {
+          "utility_scale": 2.0,
+          "information_gain_weight": 0.5,
+          "habit_scale": 0.5
+        },
+        "validation_log_loss": 1.3987955327253654
+      }
+    }
+  }
+}

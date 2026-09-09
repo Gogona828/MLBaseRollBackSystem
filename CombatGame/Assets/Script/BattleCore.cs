@@ -75,6 +75,11 @@ namespace Footsies
         private bool isOfflineBattle;
         private MatchLogger matchLogger;
         private bool isResimulating;
+        private bool isVerifyingPrediction;
+        public bool IsVerifyingPrediction => isVerifyingPrediction;
+        public void BeginPredictionVerification() { isVerifyingPrediction = true; }
+        public void EndPredictionVerification()
+        { isVerifyingPrediction=false; isResimulating=false; resimulationNetworkFrame=-1; }
         private int resimulationNetworkFrame = -1;
 
         public int CurrentFrameCount { get { return frameCount; } }
@@ -207,7 +212,7 @@ namespace Footsies
                         : networkFrameClock != null
                             ? networkFrameClock.CurrentFrame
                             : -1;
-                    matchLogger?.RecordFrame(
+                    if(!isVerifyingPrediction) matchLogger?.RecordFrame(
                         frameCount,
                         networkFrame,
                         isResimulating,
@@ -263,7 +268,7 @@ namespace Footsies
                 case RoundStateType.Stop:
                     if (fighter1RoundWon >= maxRoundWon || fighter2RoundWon >= maxRoundWon)
                     {
-                        GameManager.Instance.LoadTitleScene();
+                        if(!isVerifyingPrediction) GameManager.Instance.LoadTitleScene();
                     }
                     break;
 
@@ -275,7 +280,7 @@ namespace Footsies
 
                     timer = introStateTime;
 
-                    if (roundUIAnimator != null)
+                    if (roundUIAnimator != null && !isVerifyingPrediction)
                     {
                         roundUIAnimator.SetTrigger("RoundStart");
                     }
@@ -291,7 +296,7 @@ namespace Footsies
                     roundStartTime = Time.fixedTime;
                     frameCount = -1;
                     currentRecordingInputIndex = 0;
-                    matchLogger?.BeginRound(IsOfflineBattle());
+                    if(!isVerifyingPrediction) matchLogger?.BeginRound(IsOfflineBattle());
                     break;
 
                 case RoundStateType.KO:
@@ -299,14 +304,14 @@ namespace Footsies
 
                     timer = koStateTime;
 
-                    CopyLastRoundInput();
+                    if(!isVerifyingPrediction) CopyLastRoundInput();
 
                     fighter1.ClearInput();
                     fighter2.ClearInput();
 
                     battleAI = null;
 
-                    if (roundUIAnimator != null)
+                    if (roundUIAnimator != null && !isVerifyingPrediction)
                     {
                         roundUIAnimator.SetTrigger("RoundEnd");
                     }
@@ -675,7 +680,7 @@ namespace Footsies
                         damaged.SetHitStun(hitStunFrame);
                         damaged.SetSpriteShakeFrame(hitStunFrame / 3);
 
-                        matchLogger?.RecordCombatEvent(
+                        if(!isVerifyingPrediction) matchLogger?.RecordCombatEvent(
                             attacker,
                             damaged,
                             hitAttackID,
@@ -684,7 +689,7 @@ namespace Footsies
                             healthBefore,
                             guardBefore);
 
-                        damageHandler?.Invoke(damaged, damagePos, damageResult);
+                        if(!isVerifyingPrediction) damageHandler?.Invoke(damaged, damagePos, damageResult);
                     }
                     else if (isProximity)
                     {
@@ -699,8 +704,11 @@ namespace Footsies
             if (currentRecordingInputIndex >= maxRecordingInputFrame)
                 return;
 
-            recordingP1Input[currentRecordingInputIndex] = p1Input.ShallowCopy();
-            recordingP2Input[currentRecordingInputIndex] = p2Input.ShallowCopy();
+            if(!isVerifyingPrediction)
+            {
+                recordingP1Input[currentRecordingInputIndex] = p1Input.ShallowCopy();
+                recordingP2Input[currentRecordingInputIndex] = p2Input.ShallowCopy();
+            }
             currentRecordingInputIndex++;
 
             if (isReplayingLastRoundInput)
@@ -731,6 +739,7 @@ namespace Footsies
 
         bool CheckUpdateDebugPause()
         {
+            if(isResimulating) return false;
             if (Input.GetKeyDown(KeyCode.F1))
             {
                 isDebugPause = !isDebugPause;

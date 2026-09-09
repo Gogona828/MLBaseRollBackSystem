@@ -17,6 +17,8 @@ namespace Footsies
 
         public int p1Hp;
         public int p2Hp;
+        public int p1GuardHp;
+        public int p2GuardHp;
 
         public int p1Action;
         public int p2Action;
@@ -43,6 +45,8 @@ namespace Footsies
                 loserSlot = ResolveLoserSlot(fighter1, fighter2),
                 p1Hp = fighter1 != null ? fighter1.vitalHealth : -1,
                 p2Hp = fighter2 != null ? fighter2.vitalHealth : -1,
+                p1GuardHp = fighter1 != null ? fighter1.guardHealth : -1,
+                p2GuardHp = fighter2 != null ? fighter2.guardHealth : -1,
                 p1Action = fighter1 != null ? fighter1.currentActionID : -1,
                 p2Action = fighter2 != null ? fighter2.currentActionID : -1,
                 p1PosX1000 = fighter1 != null ? Mathf.RoundToInt(fighter1.position.x * 1000f) : 0,
@@ -72,11 +76,15 @@ namespace Footsies
             }
         }
 
-        public bool EqualsForAgreement(RoundResultSignature other)
+        public bool EqualsForAgreement(RoundResultSignature other, float positionTolerance = 0f)
         {
             return roundSerial == other.roundSerial
                 && loserSlot == other.loserSlot
-                && agreedStateHash == other.agreedStateHash;
+                && p1Hp == other.p1Hp && p2Hp == other.p2Hp
+                && p1GuardHp == other.p1GuardHp && p2GuardHp == other.p2GuardHp
+                && p1Action == other.p1Action && p2Action == other.p2Action
+                && System.Math.Abs((long)p1PosX1000-other.p1PosX1000) <= Mathf.Max(0,positionTolerance)*1000f
+                && System.Math.Abs((long)p2PosX1000-other.p2PosX1000) <= Mathf.Max(0,positionTolerance)*1000f;
         }
 
         public static int ResolveLoserSlot(Fighter fighter1, Fighter fighter2)

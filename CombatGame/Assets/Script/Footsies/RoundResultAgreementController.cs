@@ -33,6 +33,12 @@ namespace Footsies
         private bool runtimeConfigured;
         private bool socketInitialized;
 
+        private UdpP2PTransport relayTransport;
+        public void ConfigureRelay(int playerId, UdpP2PTransport transport)
+        {
+            CloseSocket(); localPlayerId=playerId; relayTransport=transport;
+            runtimeConfigured=true; ClearAgreementState();
+        }
         private UdpClient udp;
         private IPEndPoint receiveEndPoint;
 
@@ -108,7 +114,7 @@ namespace Footsies
 
         private void TryInitializeSocket()
         {
-            if (!runtimeConfigured || socketInitialized)
+            if (!runtimeConfigured || socketInitialized || relayTransport != null)
             {
                 return;
             }
@@ -183,7 +189,8 @@ namespace Footsies
 
             if (localSignatureValid && remoteSignatureValid)
             {
-                if (localSignature.EqualsForAgreement(remoteSignature))
+                if(localSignature.roundSerial != remoteSignature.roundSerial) return;
+                if (localSignature.EqualsForAgreement(remoteSignature, rollbackCoordinator != null ? rollbackCoordinator.AllowedPositionError : 0f))
                 {
                     if (verboseLog)
                     {
@@ -257,7 +264,7 @@ namespace Footsies
 
         private void SendLocalSignature()
         {
-            if (!socketInitialized || !localSignatureValid)
+            if ((!socketInitialized && relayTransport == null) || !localSignatureValid)
             {
                 return;
             }
@@ -270,7 +277,8 @@ namespace Footsies
             string json = JsonUtility.ToJson(envelope);
             byte[] bytes = Encoding.UTF8.GetBytes(json);
 
-            udp.Send(bytes, bytes.Length, remoteIp, remoteSendPort);
+            if(relayTransport != null) relayTransport.SendControl(bytes);
+            else udp.Send(bytes, bytes.Length, remoteIp, remoteSendPort);
             lastSendTime = Time.unscaledTime;
 
             if (verboseLog)
@@ -282,10 +290,19 @@ namespace Footsies
 
         private void PollIncomingMessages()
         {
-            if (!socketInitialized)
+            if(relayTransport != null)
             {
+                while(relayTransport.TryDequeueControl(out byte[] payload))
+                {
+                    try {
+                        var envelope=JsonUtility.FromJson<RoundResultEnvelope>(Encoding.UTF8.GetString(payload));
+                        if(envelope != null && envelope.signature.senderPlayerId != localPlayerId)
+                        { remoteSignature=envelope.signature;remoteSignatureValid=true; }
+                    } catch(ArgumentException) { }
+                }
                 return;
             }
+            if (!socketInitialized) return;
 
             try
             {

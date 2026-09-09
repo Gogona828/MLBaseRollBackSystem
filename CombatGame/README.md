@@ -1,5 +1,9 @@
 # Footsies
 
+## LAN対戦（Mac中継サーバー＋FEP教師あり予測）
+
+Unityの `CombatGame > LAN Match Settings` でMacのLAN IPと接続ポート（P1: 6000 / P2: 6001）を設定します。起動方法・モデル仕様は [Tools/MacLanRelay/README.md](../Tools/MacLanRelay/README.md) を参照してください。
+
 ## Offline play
 
 Select **VS CPU** on the title screen to play a complete match without starting the
