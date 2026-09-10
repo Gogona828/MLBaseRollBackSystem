@@ -12,6 +12,13 @@ namespace Footsies
         private class RoundResultEnvelope
         {
             public RoundResultSignature signature;
+            public string kind;
+            public int round;
+            public int frame;
+            public int nextFrame;
+            public double clientTime;
+            public double serverTime;
+            public double startAt;
         }
 
         [Header("References")]
@@ -33,11 +40,17 @@ namespace Footsies
         private bool runtimeConfigured;
         private bool socketInitialized;
 
+        private readonly LanRoundStartSchedule roundSchedule = new LanRoundStartSchedule();
+        private double lastClockSent = -1;
+        private double lastReadySent = -1;
+        private int readyRound = -1;
         private UdpP2PTransport relayTransport;
         public void ConfigureRelay(int playerId, UdpP2PTransport transport)
         {
             CloseSocket(); localPlayerId=playerId; relayTransport=transport;
             runtimeConfigured=true; ClearAgreementState();
+            if(battleCore == null) battleCore=FindObjectOfType<BattleCore>(true);
+            battleCore.SynchronizeNextRound=true;
         }
         private UdpClient udp;
         private IPEndPoint receiveEndPoint;
@@ -152,6 +165,11 @@ namespace Footsies
         private void Update()
         {
             PollIncomingMessages();
+            if(relayTransport != null)
+            {
+                UpdateLanRoundSync();
+                return;
+            }
 
             if (battleCore == null)
             {
@@ -218,6 +236,37 @@ namespace Footsies
                 ClearAgreementState();
                 // battleCore.ExternalRoundAdvanceBlocked = false;
             }
+        }
+
+        private void UpdateLanRoundSync()
+        {
+            if(battleCore == null || frameClock == null || !relayTransport.IsStarted) return;
+            double now=Time.realtimeSinceStartupAsDouble;
+            if(now-lastClockSent >= 0.5)
+            {
+                SendRelayMessage(new RoundResultEnvelope { kind="clock", clientTime=now });
+                lastClockSent=now;
+            }
+            if(!battleCore.WaitingForSynchronizedRound) return;
+            readyRound=Math.Max(1,roundSchedule.ReleasedRound+1);
+            if(roundSchedule.HasClockSample && now-lastReadySent >= resendIntervalSeconds)
+            {
+                SendRelayMessage(new RoundResultEnvelope { kind="roundReady", round=readyRound, frame=frameClock.CurrentFrame });
+                lastReadySent=now;
+            }
+            if(!roundSchedule.IsDue(now)) return;
+            int nextFrame=roundSchedule.NextFrame;
+            roundSchedule.MarkReleased();
+            var driver=FindObjectOfType<FootsiesBattleRollbackDriver>();
+            driver.BeginSynchronizedRound(nextFrame);
+            battleCore.ReleaseSynchronizedRound();
+            FileLogger.WriteLine($"[LAN] Round {readyRound} released at common deadline; network frame={nextFrame}");
+            readyRound=-1;
+        }
+
+        private void SendRelayMessage(RoundResultEnvelope message)
+        {
+            relayTransport.SendControl(Encoding.UTF8.GetBytes(JsonUtility.ToJson(message)));
         }
 
         private void BeginAgreement()
@@ -296,8 +345,15 @@ namespace Footsies
                 {
                     try {
                         var envelope=JsonUtility.FromJson<RoundResultEnvelope>(Encoding.UTF8.GetString(payload));
-                        if(envelope != null && envelope.signature.senderPlayerId != localPlayerId)
-                        { remoteSignature=envelope.signature;remoteSignatureValid=true; }
+                        if(envelope == null) continue;
+                        if(envelope.kind == "clock")
+                            roundSchedule.ObserveClock(envelope.clientTime,envelope.serverTime,Time.realtimeSinceStartupAsDouble);
+                        else if(envelope.kind == "roundStart" && battleCore.WaitingForSynchronizedRound)
+                        {
+                            int expectedRound=Math.Max(1,roundSchedule.ReleasedRound+1);
+                            if(roundSchedule.Schedule(envelope.round,expectedRound,envelope.nextFrame,frameClock.CurrentFrame,envelope.startAt))
+                                FileLogger.WriteLine($"[LAN] Round start scheduled round={envelope.round}, serverTime={envelope.startAt}, frame={envelope.nextFrame}");
+                        }
                     } catch(ArgumentException) { }
                 }
                 return;

@@ -16,6 +16,19 @@ namespace Footsies
 
         private FootsiesPredictedRemoteInputSource[] predictionSources;
         private void Start() { predictionSources = FindObjectsOfType<FootsiesPredictedRemoteInputSource>(); }
+        public void BeginSynchronizedRound(int nextFrame)
+        {
+            FindObjectOfType<FootsiesBattleInputHistory>()?.ClearAll();
+            FindObjectOfType<PredictionMismatchDetector>()?.ResetDetector();
+            autoRollbackTrigger?.ResetTrigger();
+            battleRollbackCoordinator.ClearAll();
+            inputSender.ResetSenderState();
+            inputReceiver?.BeginSynchronizedRound(nextFrame);
+            frameClock.SetFrame(nextFrame);
+            if(predictionSources != null)
+                foreach(var source in predictionSources) source.ResetForNewRound();
+        }
+
         private void FixedUpdate()
         {
             if (battleCore == null ||
@@ -27,7 +40,7 @@ namespace Footsies
                 return;
             }
 
-            if (!sessionManager.Running)
+            if (!sessionManager.Running || battleCore.WaitingForSynchronizedRound)
             {
                 return;
             }

@@ -102,6 +102,14 @@ namespace Footsies
                 $"[FootsiesPredictedRemoteInputSource] ConfigureRemotePlayer remotePlayerId={remotePlayerId}, predictionMode={this.predictionMode}, directionalHoldFrames={this.directionalHoldFrames}");
         }
 
+        public void ResetForNewRound()
+        {
+            fep?.Reset();
+            preparedFrame=lastCapture=lastBattleFrame=lastConfirmedFrame=lastPredictionFrame=-1;
+            lastConfirmedBits=lastPredictedBits=LatestFepPrediction=0;
+            hits=guards=breaks=0;
+        }
+
         public void PreparePredictionForFrame(int frame)
         {
             if(frame == preparedFrame) return;

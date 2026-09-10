@@ -76,6 +76,15 @@ namespace Footsies
         private MatchLogger matchLogger;
         private bool isResimulating;
         private bool isVerifyingPrediction;
+        public bool SynchronizeNextRound { get; set; }
+        public bool WaitingForSynchronizedRound => SynchronizeNextRound && _roundState == RoundStateType.End && timer <= 0f;
+        public void ReleaseSynchronizedRound()
+        {
+            if(!WaitingForSynchronizedRound) return;
+            ChangeRoundState(RoundStateType.Stop);
+            if(fighter1RoundWon < maxRoundWon && fighter2RoundWon < maxRoundWon)
+                ChangeRoundState(RoundStateType.Intro);
+        }
         public bool IsVerifyingPrediction => isVerifyingPrediction;
         public void BeginPredictionVerification() { isVerifyingPrediction = true; }
         public void EndPredictionVerification()
@@ -240,7 +249,7 @@ namespace Footsies
                     UpdateEndState();
 
                     timer -= Time.fixedDeltaTime;
-                    if (timer <= 0f || (timer <= endStateSkippableTime && IsKOSkipButtonPressed()))
+                    if (!SynchronizeNextRound && (timer <= 0f || (timer <= endStateSkippableTime && IsKOSkipButtonPressed())))
                     {
                         ChangeRoundState(RoundStateType.Stop);
                     }

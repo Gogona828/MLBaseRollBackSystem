@@ -32,6 +32,17 @@ correction=shown.Clone();correction.fighter1.currentActionFrame++;Check(false,co
 correction=shown.Clone();correction.hasPendingKO=true;Check(false,correction,10,"KO mismatch");
 Check(false,shown,float.NaN,"invalid tolerance");
 Console.WriteLine("State comparison: 10 acceptance/rejection checks passed.");
+var mac=new LanRoundStartSchedule();var windows=new LanRoundStartSchedule();
+mac.ObserveClock(100,1000.01,100.02);
+windows.ObserveClock(500,1000.01,500.02);
+if(!mac.Schedule(1,1,408,400,1001) || !windows.Schedule(1,1,408,407,1001))throw new Exception("Round not scheduled");
+if(mac.IsDue(100.9) || windows.IsDue(500.9))throw new Exception("Round started early");
+if(!mac.IsDue(101) || !windows.IsDue(501))throw new Exception("Different local clocks failed to start together");
+if(mac.Schedule(1,1,408,400,1002) || mac.LocalDeadline != 101)throw new Exception("Duplicate postponed start");
+mac.MarkReleased();
+if(mac.IsDue(102) || mac.Schedule(1,2,500,408,1003))throw new Exception("Stale round started again");
+if(mac.Schedule(3,2,500,408,1003) || mac.Schedule(2,2,408,408,1003))throw new Exception("Invalid round/frame accepted");
+Console.WriteLine("Round sync: separate clocks, common deadline, duplicate/stale messages and frame validation passed.");
 namespace UnityEngine {
  public struct Vector2 { public float x,y;public Vector2(float x,float y){this.x=x;this.y=y;}public float sqrMagnitude=>x*x+y*y;public static Vector2 operator -(Vector2 a,Vector2 b)=>new Vector2(a.x-b.x,a.y-b.y); }
  public class TextAsset {public string text;}

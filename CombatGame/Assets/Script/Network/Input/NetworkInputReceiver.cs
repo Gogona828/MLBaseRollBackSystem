@@ -32,6 +32,8 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
     // リレー遅延中の表示予測ではこちらを使うことで、長押し移動が
     // 受信済みの最新方向入力から途切れにくくなる。
     private int latestReceivedRemoteFrame = -1;
+    private int minimumAcceptedFrame;
+    private int lastRemotePlayerId;
 
     public RemoteInputBuffer Buffer => remoteInputBuffer;
     public int FixedInputDelayFrames => fixedInputDelayFrames;
@@ -64,11 +66,12 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
 
     public void HandlePacket(NetworkPacket packet)
     {
-        if (packet.packetType != NetworkPacketType.Input)
+        if (packet.packetType != NetworkPacketType.Input || packet.frame < minimumAcceptedFrame)
         {
             return;
         }
 
+        lastRemotePlayerId=packet.playerId;
         InputPacket inputPacket = new InputPacket(packet.playerId, packet.frame, packet.inputBits);
         remoteInputBuffer.Store(inputPacket);
 
@@ -166,8 +169,29 @@ public class NetworkInputReceiver : MonoBehaviour, INetworkPacketHandler
         return remoteInputBuffer.TryGetInput(frame, out inputBits);
     }
 
+    public void BeginSynchronizedRound(int firstFrame)
+    {
+        minimumAcceptedFrame=firstFrame;
+        remoteInputBuffer.DiscardBefore(firstFrame);
+        lastConfirmedBitsPlayer0=lastConfirmedBitsPlayer1=0;
+        latestContiguousConfirmedRemoteFrame=firstFrame-1;
+        latestReceivedRemoteFrame=firstFrame-1;
+        foreach(var pair in remoteInputBuffer.Entries)
+        {
+            inputHistory?.StoreInput(lastRemotePlayerId,pair.Key,pair.Value);
+            if(pair.Key > latestReceivedRemoteFrame)
+            {
+                latestReceivedRemoteFrame=pair.Key;
+                if(lastRemotePlayerId == 0) lastConfirmedBitsPlayer0=pair.Value;
+                else lastConfirmedBitsPlayer1=pair.Value;
+            }
+        }
+        UpdateLatestContiguousConfirmedRemoteFrame();
+    }
+
     public void ClearBuffer()
     {
+        minimumAcceptedFrame=0;
         remoteInputBuffer.Clear();
 
         lastConfirmedBitsPlayer0 = 0;

@@ -9,6 +9,8 @@ public class NetworkFrameClock : MonoBehaviour
         CurrentFrame = 0;
     }
 
+    public void SetFrame(int frame) { CurrentFrame = Mathf.Max(0, frame); }
+
     public void Tick()
     {
         CurrentFrame++;
