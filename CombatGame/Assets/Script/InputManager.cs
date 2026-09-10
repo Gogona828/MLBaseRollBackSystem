@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using XInputDotNetPure;
@@ -43,6 +43,13 @@ namespace Footsies
         
         private void Awake()
         {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(this.gameObject);
+                return;
+            }
+
+            _instance = this;
             DontDestroyOnLoad(this.gameObject);
 
             for (int i = 0; i < gamePads.Length; i++)

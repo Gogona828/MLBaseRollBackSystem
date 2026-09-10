@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Footsies
 {
@@ -12,9 +12,11 @@ namespace Footsies
     /// </summary>
     public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
-        private static T _instance;
+        protected static T _instance;
 
         private static object _lock = new object();
+
+        public static bool HasInstance => _instance != null;
 
         public static T Instance
         {
@@ -32,13 +34,22 @@ namespace Footsies
                 {
                     if (_instance == null)
                     {
-                        _instance = (T)FindObjectOfType(typeof(T));
-
-                        if (FindObjectsOfType(typeof(T)).Length > 1)
+                        var instances = FindObjectsOfType<T>();
+                        if (instances.Length > 0)
                         {
-                            Debug.LogError("[Singleton] Something went really wrong " +
-                                " - there should never be more than 1 singleton!" +
-                                " Reopening the scene might fix it.");
+                            _instance = instances[0];
+                            if (instances.Length > 1)
+                            {
+                                Debug.LogWarning("[Singleton] Multiple instances of '" + typeof(T) +
+                                    "' found in the scene! Using the first one and destroying duplicates.");
+                                for (int i = 1; i < instances.Length; i++)
+                                {
+                                    if (instances[i] != null && instances[i].gameObject != null)
+                                    {
+                                        Destroy(instances[i].gameObject);
+                                    }
+                                }
+                            }
                             return _instance;
                         }
 
@@ -66,18 +77,19 @@ namespace Footsies
             }
         }
 
-        private static bool applicationIsQuitting = false;
-        /// <summary>
-        /// When Unity quits, it destroys objects in a random order.
-        /// In principle, a Singleton is only destroyed when application quits.
-        /// If any script calls Instance after it have been destroyed, 
-        ///   it will create a buggy ghost object that will stay on the Editor scene
-        ///   even after stopping playing the Application. Really bad!
-        /// So, this was made to be sure we're not creating that buggy ghost object.
-        /// </summary>
-        public void OnDestroy()
+        protected static bool applicationIsQuitting = false;
+
+        protected virtual void OnApplicationQuit()
         {
             applicationIsQuitting = true;
+        }
+
+        public virtual void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                _instance = null;
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -28,6 +28,13 @@ namespace Footsies
 
         private void Awake()
         {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(this.gameObject);
+                return;
+            }
+
+            _instance = this;
             DontDestroyOnLoad(this.gameObject);
 
             Application.targetFrameRate = 60;

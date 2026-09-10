@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,13 +24,60 @@ namespace Footsies
 
         private void Awake()
         {
-            DontDestroyOnLoad(this);
+            if (_instance != null && _instance != this)
+            {
+                Debug.LogWarning($"[SoundManager] Duplicate SoundManager detected on '{gameObject.name}'. Destroying duplicate GameObject.");
+                Destroy(gameObject);
+                return;
+            }
 
-            seSource1 = seSourceObject1.GetComponent<AudioSource>();
-            seSource2 = seSourceObject2.GetComponent<AudioSource>();
-            bgmSource = bgmSourceObject.GetComponent<AudioSource>();
-            defaultBGMVolume = bgmSource.volume;
-            isBGMOn = true;
+            _instance = this;
+
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
+            DontDestroyOnLoad(gameObject);
+
+            InitializeAudioSources();
+        }
+
+        private void InitializeAudioSources()
+        {
+            seSource1 = ResolveSource(ref seSourceObject1, "SE_AudioSource1");
+            seSource2 = ResolveSource(ref seSourceObject2, "SE_AudioSource2");
+            bgmSource = ResolveSource(ref bgmSourceObject, "BGM_AudioSource");
+
+            if (bgmSource != null)
+            {
+                defaultBGMVolume = bgmSource.volume;
+                isBGMOn = true;
+            }
+        }
+
+        private AudioSource ResolveSource(ref GameObject sourceObject, string defaultName)
+        {
+            if (sourceObject != null)
+            {
+                var source = sourceObject.GetComponent<AudioSource>();
+                if (source != null) return source;
+            }
+
+            Transform child = transform.Find(defaultName);
+            if (child != null)
+            {
+                sourceObject = child.gameObject;
+                var source = child.GetComponent<AudioSource>();
+                if (source != null) return source;
+            }
+
+            // フォールバック: 子オブジェクトを新規作成して AudioSource をアタッチ
+            GameObject fallbackObj = new GameObject(defaultName);
+            fallbackObj.transform.SetParent(transform);
+            sourceObject = fallbackObj;
+            AudioSource newSource = fallbackObj.AddComponent<AudioSource>();
+            newSource.playOnAwake = false;
+            return newSource;
         }
 
         // Update is called once per frame
@@ -41,6 +88,8 @@ namespace Footsies
 
         public bool toggleBGM()
         {
+            if (bgmSource == null) return false;
+
             if (isBGMOn)
             {
                 bgmSource.volume = 0;
@@ -55,25 +104,40 @@ namespace Footsies
             return isBGMOn;
         }
 
-
         public void playSE(AudioClip clip)
         {
-            seSource1.clip = clip;
-            seSource1.panStereo = 0;
-            seSource1.Play();
+            if (clip == null) return;
+
+            if (seSource1 == null)
+            {
+                InitializeAudioSources();
+            }
+
+            if (seSource1 != null)
+            {
+                seSource1.clip = clip;
+                seSource1.panStereo = 0;
+                seSource1.Play();
+            }
         }
 
         public void playFighterSE(AudioClip clip, bool isPlayerOne, float posX)
         {
-            var audioSource = seSource1;
-            if (!isPlayerOne)
+            if (clip == null) return;
+
+            var audioSource = isPlayerOne ? seSource1 : seSource2;
+            if (audioSource == null)
             {
-                audioSource = seSource2;
+                InitializeAudioSources();
+                audioSource = isPlayerOne ? seSource1 : seSource2;
             }
 
-            audioSource.clip = clip;
-            audioSource.panStereo = posX / 5;
-            audioSource.Play();
+            if (audioSource != null)
+            {
+                audioSource.clip = clip;
+                audioSource.panStereo = Mathf.Clamp(posX / 5f, -1f, 1f);
+                audioSource.Play();
+            }
         }
     }
 
