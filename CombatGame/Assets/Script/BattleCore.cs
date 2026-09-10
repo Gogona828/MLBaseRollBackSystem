@@ -50,6 +50,12 @@ namespace Footsies
 
         public bool debugPlayLastRoundInput = false;
 
+        [Header("Battle Rules")]
+        [Tooltip("初期ガード耐久値（HP）。0以下の場合はFighterDataの値を使用")]
+        [SerializeField] private int initialGuardHealth = 5;
+
+        public int InitialGuardHealth => initialGuardHealth;
+
         private float timer = 0f;
         private uint maxRoundWon = 3;
 
@@ -284,8 +290,8 @@ namespace Footsies
                 case RoundStateType.Intro:
                     ClearPendingKO();
 
-                    fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
-                    fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
+                    fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true, initialGuardHealth);
+                    fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false, initialGuardHealth);
 
                     timer = introStateTime;
 

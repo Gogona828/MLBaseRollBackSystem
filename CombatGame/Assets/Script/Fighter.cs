@@ -128,14 +128,15 @@ namespace Footsies
         /// <param name="fighterData"></param>
         /// <param name="startPosition"></param>
         /// <param name="isPlayerOne"></param>
-        public void SetupBattleStart(FighterData fighterData, Vector2 startPosition, bool isPlayerOne)
+        /// <param name="overrideGuardHealth"></param>
+        public void SetupBattleStart(FighterData fighterData, Vector2 startPosition, bool isPlayerOne, int overrideGuardHealth = -1)
         {
             this.fighterData = fighterData;
             position = startPosition;
             isFaceRight = isPlayerOne;
 
             vitalHealth = 1;
-            guardHealth = fighterData.startGuardHealth;
+            guardHealth = overrideGuardHealth > 0 ? overrideGuardHealth : fighterData.startGuardHealth;
             hasWon = false;
 
             velocity_x = 0;
@@ -147,6 +148,11 @@ namespace Footsies
             ClearInput();
 
             SetCurrentAction((int)CommonActionID.STAND);
+        }
+
+        public void SetGuardHealth(int health)
+        {
+            guardHealth = health;
         }
         
         /// <summary>
