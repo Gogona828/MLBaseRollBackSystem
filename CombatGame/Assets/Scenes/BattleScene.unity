@@ -389,6 +389,9 @@ MonoBehaviour:
   battleStateBridge: {fileID: 823842452}
   frameClock: {fileID: 1948372536}
   snapshotCapacity: 300
+  skipRollbackWhenStateMatches: 1
+  allowedPositionError: 0.05
+  resimulationDriver: {fileID: 0}
 --- !u!4 &587250377
 Transform:
   m_ObjectHideFlags: 0
@@ -920,6 +923,85 @@ MonoBehaviour:
   enableAutoRollback: 1
   rollbackSafetyOffsetFrames: 0
   rollbackCooldownFrames: 1
+--- !u!1 &1476000769
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1476000770}
+  - component: {fileID: 1476000772}
+  - component: {fileID: 1476000771}
+  m_Layer: 5
+  m_Name: DelayText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1476000770
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1476000769}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 224595835808859895}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 41}
+  m_SizeDelta: {x: 500, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1476000771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1476000769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 54
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 102
+    m_Alignment: 4
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: "\u64EC\u4F3C\u9045\u5EF6\u767A\u751F\u4E2D"
+--- !u!222 &1476000772
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1476000769}
+  m_CullTransparentMesh: 1
 --- !u!1 &1483423050
 GameObject:
   m_ObjectHideFlags: 0
@@ -1276,6 +1358,7 @@ MonoBehaviour:
   battleInputRouter: {fileID: 2065654612}
   networkInputReceiver: {fileID: 1948372539}
   rollbackCoordinator: {fileID: 587250376}
+  networkFrameClock: {fileID: 0}
   debugP1Attack: 0
   debugP2Attack: 0
   debugP1Guard: 0
@@ -1510,6 +1593,7 @@ MonoBehaviour:
   useDebugAutoInput: 1
   updateLocalBitsWithoutSending: 1
   inputHistory: {fileID: 886560970}
+  lanInputBufferFrames: 3
 --- !u!114 &1948372539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1536,6 +1620,7 @@ MonoBehaviour:
   forceFixedDelayForTest: 0
   forcedFixedDelayFrames: 2
   predictionMismatchDetector: {fileID: 1272376372}
+  frameClock: {fileID: 0}
   inputHistory: {fileID: 886560970}
 --- !u!114 &1948372540
 MonoBehaviour:
@@ -3845,6 +3930,7 @@ RectTransform:
   - {fileID: 224968084407576793}
   - {fileID: 224987915807732877}
   - {fileID: 224289591942618323}
+  - {fileID: 1476000770}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

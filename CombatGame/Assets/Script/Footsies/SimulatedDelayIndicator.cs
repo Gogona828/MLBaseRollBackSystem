@@ -1,38 +1,122 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Footsies
 {
     // Server-driven: a prediction miss is not evidence of simulated network delay.
     public sealed class SimulatedDelayIndicator : MonoBehaviour
     {
+        [Header("UI References")]
+        [SerializeField] private Text delayText;
+        [SerializeField] private GameObject targetObject;
+
+        [Header("Display Settings")]
+        [SerializeField] private string textFormat = "擬似遅延発生中（{0:0} ms）";
+        [SerializeField] private bool hideWhenInactive = true;
+
         private readonly SimulatedDelayState state = new SimulatedDelayState();
-        private GUIStyle labelStyle;
-        private Font displayFont;
 
         public void UpdateStatus(int revision, bool active, double expiresAt, float milliseconds)
         {
-            state.Update(revision,active,expiresAt,milliseconds);
+            state.Update(revision, active, expiresAt, milliseconds);
+            RefreshDisplay(Time.realtimeSinceStartupAsDouble);
         }
 
-        private void OnGUI()
+        private void Awake()
         {
-            if(!state.IsActive(Time.realtimeSinceStartupAsDouble)) return;
-            if(labelStyle == null)
-            {
-                displayFont=Font.CreateDynamicFontFromOSFont(new[] { "Hiragino Sans", "Yu Gothic", "Meiryo", "Arial" },24);
-                labelStyle=new GUIStyle(GUI.skin.label) { alignment=TextAnchor.MiddleCenter, font=displayFont };
-                labelStyle.normal.textColor=Color.black;
-            }
-            labelStyle.fontSize=Mathf.Max(18,Mathf.RoundToInt(Screen.height*0.026f));
-            Color previousColor=GUI.color;
-            int previousDepth=GUI.depth;
-            GUI.color=Color.white;
-            GUI.depth=-100;
-            GUI.Label(new Rect(0,Screen.height-52,Screen.width,40),$"擬似遅延発生中（{state.Milliseconds:0} ms）",labelStyle);
-            GUI.color=previousColor;
-            GUI.depth=previousDepth;
+            ResolveReferences();
+            SetVisible(false);
         }
 
-        private void OnDestroy() { if(displayFont != null) Destroy(displayFont); }
+        private void Start()
+        {
+            ResolveReferences();
+            RefreshDisplay(Time.realtimeSinceStartupAsDouble);
+        }
+
+        private void Update()
+        {
+            RefreshDisplay(Time.realtimeSinceStartupAsDouble);
+        }
+
+        private void ResolveReferences()
+        {
+            if (delayText == null)
+            {
+                var texts = Resources.FindObjectsOfTypeAll<Text>();
+                foreach (var t in texts)
+                {
+                    if (t != null && t.gameObject.name == "DelayText" && t.gameObject.scene.isLoaded)
+                    {
+                        delayText = t;
+                        break;
+                    }
+                }
+
+                if (delayText == null)
+                {
+                    delayText = GetComponentInChildren<Text>(true);
+                }
+            }
+
+            if (targetObject == null && delayText != null)
+            {
+                targetObject = delayText.gameObject;
+            }
+        }
+
+        private void RefreshDisplay(double now)
+        {
+            if (delayText == null && targetObject == null)
+            {
+                ResolveReferences();
+            }
+
+            bool active = state.IsActive(now);
+
+            if (active)
+            {
+                SetVisible(true);
+                if (delayText != null)
+                {
+                    delayText.text = string.Format(textFormat, state.Milliseconds);
+                }
+            }
+            else
+            {
+                SetVisible(false);
+            }
+        }
+
+        private void SetVisible(bool visible)
+        {
+            if (!hideWhenInactive && !visible)
+            {
+                if (delayText != null)
+                {
+                    delayText.text = string.Empty;
+                }
+                return;
+            }
+
+            if (targetObject != null)
+            {
+                if (targetObject.activeSelf != visible)
+                {
+                    targetObject.SetActive(visible);
+                }
+            }
+            else if (delayText != null)
+            {
+                if (delayText.enabled != visible)
+                {
+                    delayText.enabled = visible;
+                }
+                if (!visible)
+                {
+                    delayText.text = string.Empty;
+                }
+            }
+        }
     }
 }

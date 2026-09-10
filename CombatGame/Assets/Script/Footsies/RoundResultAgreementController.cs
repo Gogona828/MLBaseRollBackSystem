@@ -62,7 +62,8 @@ namespace Footsies
             lanInputSender=FindObjectOfType<NetworkInputSender>(true);
             enabled=true;
             gameObject.SetActive(true);
-            delayIndicator=GetComponent<SimulatedDelayIndicator>();
+            delayIndicator=FindObjectOfType<SimulatedDelayIndicator>(true);
+            if(delayIndicator == null) delayIndicator=GetComponent<SimulatedDelayIndicator>();
             if(delayIndicator == null) delayIndicator=gameObject.AddComponent<SimulatedDelayIndicator>();
             battleCore.SynchronizeNextRound=true;
             Debug.Log("[LAN] Round synchronization controller active.");
