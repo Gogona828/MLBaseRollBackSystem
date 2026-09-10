@@ -432,7 +432,7 @@ namespace Footsies
         {
             hasPendingKO = true;
             pendingKOFighterSlot = deadSlot;
-            pendingKOFrame = frameCount;
+            pendingKOFrame = isResimulating ? resimulationNetworkFrame : networkFrameClock != null ? networkFrameClock.CurrentFrame : frameCount;
             pendingKOStableFrames = 0;
         }
 

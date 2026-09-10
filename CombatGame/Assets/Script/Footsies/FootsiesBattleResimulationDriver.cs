@@ -33,14 +33,15 @@ namespace Footsies
 
             // 重要:
             // snapshot は「その frame 開始時点の状態」として保存されている前提なので、
-            // rollback target frame 自体を再計算しないと、訂正された入力が反映されない。
+            // fromFrame を含め、現在フレーム toFrame の開始地点まで再計算する。
+            // toFrame 自体は通常ステップで、訂正後に用意した入力を使って一度だけ進める。
             FileLogger.WriteLine(
                 $"[FootsiesBattleResimulationDriver] Begin resim from={fromFrame} to={toFrame}");
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
             {
-                for (int frame = fromFrame; frame <= toFrame; frame++)
+                for (int frame = fromFrame; frame < toFrame; frame++)
                 {
                     rollbackCoordinator.StoreSnapshot(frame,battleCore.CaptureSnapshot());
                     byte p1Bits = ResolveBitsForPlayer(0, frame);

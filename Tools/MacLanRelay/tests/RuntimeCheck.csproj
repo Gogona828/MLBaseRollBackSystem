@@ -2,5 +2,5 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
   <ItemGroup><Compile Include="../../../CombatGame/Assets/Script/Footsies/FepSupervisedPredictor.cs" Link="FepSupervisedPredictor.cs" /><Compile Include="../../../CombatGame/Assets/Script/Footsies/RollbackStateComparison.cs" Link="RollbackStateComparison.cs" />
     <Compile Include="../../../CombatGame/Assets/Script/Footsies/FootsiesBattleSnapshot.cs" Link="FootsiesBattleSnapshot.cs" />
-    <Compile Include="../../../CombatGame/Assets/Script/Footsies/FootsiesFighterSnapshot.cs" Link="FootsiesFighterSnapshot.cs" /><Compile Include="../../../CombatGame/Assets/Script/Footsies/LanRoundStartSchedule.cs" Link="LanRoundStartSchedule.cs" /></ItemGroup>
+    <Compile Include="../../../CombatGame/Assets/Script/Footsies/FootsiesFighterSnapshot.cs" Link="FootsiesFighterSnapshot.cs" /><Compile Include="../../../CombatGame/Assets/Script/Footsies/LanRoundStartSchedule.cs" Link="LanRoundStartSchedule.cs" /><Compile Include="../../../CombatGame/Assets/Script/Footsies/SimulatedDelayState.cs" Link="SimulatedDelayState.cs" /></ItemGroup>
 </Project>

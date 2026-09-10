@@ -5,8 +5,14 @@ from unittest.mock import patch
 from server import Relay, Port, PACKET, DelayEvents
 
 class Client(asyncio.DatagramProtocol):
-    def __init__(self): self.received=asyncio.Queue()
-    def datagram_received(self,data,address): self.received.put_nowait(data)
+    def __init__(self):
+        self.received=asyncio.Queue()
+        self.notices=asyncio.Queue()
+    def datagram_received(self,data,address):
+        if data.startswith(b'RRA1') and json.loads(data[4:]).get('kind') == 'delayStatus':
+            self.notices.put_nowait(json.loads(data[4:]))
+        else:
+            self.received.put_nowait(data)
 
 class RelayTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -96,6 +102,20 @@ class RelayTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(PACKET.unpack(second)[2],11)
         self.assertGreaterEqual(asyncio.get_running_loop().time()-begin,.05)
         self.assertEqual(self.relay.delay_events.wait_seconds(asyncio.get_running_loop().time()),0)
+
+    async def test_delay_status_starts_and_stops_on_both_clients(self):
+        await self.register()
+        self.relay.delay_events=DelayEvents(60,0,'intermittent',8,10)
+        self.relay.delay_events.next_event=asyncio.get_running_loop().time()-1
+        self.send(0,4,10,1)
+        for _,client in self.clients:
+            active=await asyncio.wait_for(client.notices.get(),.2)
+            self.assertTrue(active['delayActive'])
+            ended=await asyncio.wait_for(client.notices.get(),.3)
+            self.assertFalse(ended['delayActive'])
+            self.assertGreater(ended['delayRevision'],active['delayRevision'])
+        self.send_control(0,kind='clock',clientTime=22)
+        self.assertFalse((await self.get_control(0))['delayActive'])
 
     async def test_invalid_and_slot_collision(self):
         await self.register()

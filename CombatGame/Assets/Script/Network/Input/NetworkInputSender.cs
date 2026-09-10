@@ -23,6 +23,20 @@ public class NetworkInputSender : MonoBehaviour
 
     [SerializeField] private Footsies.FootsiesBattleInputHistory inputHistory;
 
+    [Header("LAN input buffer")]
+    [Tooltip("LANの通常の到着差を吸収する入力先送りフレーム数。両PCで同じ値を使用する。")]
+    [Min(0)] [SerializeField] private int lanInputBufferFrames = 3;
+    private bool useLanInputBuffer;
+    private bool seededBuffer;
+    private Footsies.BattleCore battleCore;
+    public int LastSentInputFrame => lastSentFrame < 0 ? -1 : lastSentFrame+InputBufferFrames;
+    public int InputBufferFrames => useLanInputBuffer ? lanInputBufferFrames : 0;
+    public void EnableLanInputBuffer()
+    {
+        useLanInputBuffer=true;
+        lanInputBufferFrames=Mathf.Clamp(lanInputBufferFrames,0,12);
+        battleCore=FindObjectOfType<Footsies.BattleCore>(true);
+    }
     private int lastSentFrame = -1;
 
     public byte LastLocalInputBits { get; private set; }
@@ -54,7 +68,7 @@ public class NetworkInputSender : MonoBehaviour
 
     private void Update()
     {
-        if (!updateLocalBitsWithoutSending)
+        if (!updateLocalBitsWithoutSending || useLanInputBuffer)
         {
             return;
         }
@@ -81,13 +95,28 @@ public class NetworkInputSender : MonoBehaviour
             return;
         }
 
-        byte inputBits = ReadCurrentLocalInputBits();
+        if(useLanInputBuffer && (transport == null || sessionManager == null || !transport.IsStarted || !sessionManager.Running)) return;
+        byte inputBits = useLanInputBuffer && battleCore != null && battleCore.roundState != Footsies.BattleCore.RoundStateType.Fight
+            ? (byte)0 : ReadCurrentLocalInputBits();
+        int sendFrame=frame+InputBufferFrames;
+        if(useLanInputBuffer && !seededBuffer)
+        {
+            for(int initial=frame;initial<sendFrame;initial++)
+            {
+                inputHistory?.StoreInput(playerId,initial,0);
+                transport.Send(new NetworkPacket(NetworkPacketType.Input,playerId,initial,0,0));
+            }
+            seededBuffer=true;
+        }
         LastLocalInputBits = inputBits;
 
         if (inputHistory != null)
         {
-            inputHistory.StoreInput(playerId, frame, inputBits);
+            inputHistory.StoreInput(playerId, sendFrame, inputBits);
         }
+
+        if(useLanInputBuffer)
+            LastLocalInputBits=inputHistory != null && inputHistory.TryGetInput(playerId,frame,out byte scheduled) ? scheduled : (byte)0;
 
         if (transport == null || sessionManager == null)
         {
@@ -107,7 +136,7 @@ public class NetworkInputSender : MonoBehaviour
         NetworkPacket packet = new NetworkPacket(
             NetworkPacketType.Input,
             playerId,
-            frame,
+            sendFrame,
             inputBits,
             0
         );
@@ -115,7 +144,7 @@ public class NetworkInputSender : MonoBehaviour
         transport.Send(packet);
         lastSentFrame = frame;
 
-        FileLogger.WriteLine($"[NetworkInputSender] Sent Input frame={frame} bits={inputBits}");
+        FileLogger.WriteLine($"[NetworkInputSender] Sent Input frame={sendFrame} bits={inputBits}");
     }
 
     private byte ReadCurrentLocalInputBits()
@@ -130,6 +159,7 @@ public class NetworkInputSender : MonoBehaviour
 
     public void ResetSenderState()
     {
+        seededBuffer=false;
         lastSentFrame = -1;
         LastLocalInputBits = 0;
     }

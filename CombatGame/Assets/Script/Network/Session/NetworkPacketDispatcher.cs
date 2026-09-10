@@ -7,7 +7,9 @@ public class NetworkPacketDispatcher : MonoBehaviour
     [SerializeField] private NetworkSessionManager sessionManager;
     [SerializeField] private NetworkInputReceiver inputReceiver;
 
-    private void Update()
+    private void Update() { PumpPackets(); }
+
+    public void PumpPackets()
     {
         if (transport == null)
         {

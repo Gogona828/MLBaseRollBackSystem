@@ -19,6 +19,11 @@ namespace Footsies
             public double clientTime;
             public double serverTime;
             public double startAt;
+            public int delayRevision;
+            public bool delayActive;
+            public double delayUntil;
+            public float delayMs;
+            public bool continuous;
         }
 
         [Header("References")]
@@ -44,13 +49,23 @@ namespace Footsies
         private double lastClockSent = -1;
         private double lastReadySent = -1;
         private int readyRound = -1;
+        private NetworkInputSender lanInputSender;
+        private SimulatedDelayIndicator delayIndicator;
         private UdpP2PTransport relayTransport;
         public void ConfigureRelay(int playerId, UdpP2PTransport transport)
         {
             CloseSocket(); localPlayerId=playerId; relayTransport=transport;
             runtimeConfigured=true; ClearAgreementState();
             if(battleCore == null) battleCore=FindObjectOfType<BattleCore>(true);
+            // FindObjectOfType(true) also finds disabled scene objects. Activate the
+            // control receiver before enabling the round barrier, or End waits forever.
+            lanInputSender=FindObjectOfType<NetworkInputSender>(true);
+            enabled=true;
+            gameObject.SetActive(true);
+            delayIndicator=GetComponent<SimulatedDelayIndicator>();
+            if(delayIndicator == null) delayIndicator=gameObject.AddComponent<SimulatedDelayIndicator>();
             battleCore.SynchronizeNextRound=true;
+            Debug.Log("[LAN] Round synchronization controller active.");
         }
         private UdpClient udp;
         private IPEndPoint receiveEndPoint;
@@ -251,7 +266,7 @@ namespace Footsies
             readyRound=Math.Max(1,roundSchedule.ReleasedRound+1);
             if(roundSchedule.HasClockSample && now-lastReadySent >= resendIntervalSeconds)
             {
-                SendRelayMessage(new RoundResultEnvelope { kind="roundReady", round=readyRound, frame=frameClock.CurrentFrame });
+                SendRelayMessage(new RoundResultEnvelope { kind="roundReady", round=readyRound, frame=Mathf.Max(frameClock.CurrentFrame,lanInputSender != null ? lanInputSender.LastSentInputFrame : 0) });
                 lastReadySent=now;
             }
             if(!roundSchedule.IsDue(now)) return;
@@ -337,6 +352,15 @@ namespace Footsies
             }
         }
 
+        private void UpdateDelayIndicator(RoundResultEnvelope message)
+        {
+            double now=Time.realtimeSinceStartupAsDouble;
+            double expiresAt=message.continuous ? now+2 : roundSchedule.HasClockSample
+                ? message.delayUntil-roundSchedule.ServerOffset
+                : now+Math.Max(0,message.delayUntil-message.serverTime);
+            delayIndicator?.UpdateStatus(message.delayRevision,message.delayActive,expiresAt,message.delayMs);
+        }
+
         private void PollIncomingMessages()
         {
             if(relayTransport != null)
@@ -347,7 +371,11 @@ namespace Footsies
                         var envelope=JsonUtility.FromJson<RoundResultEnvelope>(Encoding.UTF8.GetString(payload));
                         if(envelope == null) continue;
                         if(envelope.kind == "clock")
+                        {
                             roundSchedule.ObserveClock(envelope.clientTime,envelope.serverTime,Time.realtimeSinceStartupAsDouble);
+                            UpdateDelayIndicator(envelope);
+                        }
+                        else if(envelope.kind == "delayStatus") UpdateDelayIndicator(envelope);
                         else if(envelope.kind == "roundStart" && battleCore.WaitingForSynchronizedRound)
                         {
                             int expectedRound=Math.Max(1,roundSchedule.ReleasedRound+1);

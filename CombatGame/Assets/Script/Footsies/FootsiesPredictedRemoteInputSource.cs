@@ -131,11 +131,7 @@ namespace Footsies
             LatestFepPrediction = fep.Predict(Mathf.Max(1, frame-fep.ObservedFrame), fighter.isFaceRight, lastConfirmedBits);
             FepPredictionCount++;
             preparedFrame=frame;
-            if(!networkInputReceiver.TryGetRemoteInput(frame,out _))
-            {
-                inputHistory?.StoreAppliedPrediction(remotePlayerId,frame,LatestFepPrediction);
-                RecordPredictionOnce(frame,LatestFepPrediction);
-            }
+
         }
 
         public FootsiesInputFrame GetCurrentInput()
@@ -166,6 +162,9 @@ namespace Footsies
                 return FootsiesInputFrame.FromBits(confirmedBits);
             }
 
+            // Intro/KO/End do not consume speculative combat commands.
+            if(core != null && core.roundState != BattleCore.RoundStateType.Fight)
+                return FootsiesInputFrame.Empty();
             byte predictedBits = BuildPredictedBits(frame);
             LastReadWasConfirmed = false;
             lastPredictedBits = predictedBits;

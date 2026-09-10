@@ -198,6 +198,7 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         if(sender == null || receiver == null || local == null || predicted == null || router == null)
             throw new InvalidOperationException("LAN requires the CombatGame battle scene with network and rollback components.");
         sender.ConfigureRuntime(playerId, KeyCode.A, KeyCode.D, KeyCode.Space, false);
+        sender.EnableLanInputBuffer();
         local.Configure(FootsiesNetworkPlayerInputSource.ReadMode.LocalSender, 1-playerId);
         predicted.ConfigureReferences(receiver, clock, mismatch);
         predicted.ConfigureRemotePlayer(1-playerId, FootsiesPredictedRemoteInputSource.RemotePredictionMode.FepSupervised, 12);

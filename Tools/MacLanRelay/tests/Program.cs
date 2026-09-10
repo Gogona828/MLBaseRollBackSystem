@@ -43,6 +43,12 @@ mac.MarkReleased();
 if(mac.IsDue(102) || mac.Schedule(1,2,500,408,1003))throw new Exception("Stale round started again");
 if(mac.Schedule(3,2,500,408,1003) || mac.Schedule(2,2,408,408,1003))throw new Exception("Invalid round/frame accepted");
 Console.WriteLine("Round sync: separate clocks, common deadline, duplicate/stale messages and frame validation passed.");
+var notice=new SimulatedDelayState();
+notice.Update(1,true,1.1,100);
+if(!notice.IsActive(1.01) || notice.IsActive(1.2))throw new Exception("Delay HUD expiry failed");
+notice.Update(2,false,1.1,100);notice.Update(1,true,2,100);
+if(notice.IsActive(1.05))throw new Exception("Old notification reactivated delay HUD");
+Console.WriteLine("Delay HUD: active window, expiry without end packet, reordered messages passed.");
 namespace UnityEngine {
  public struct Vector2 { public float x,y;public Vector2(float x,float y){this.x=x;this.y=y;}public float sqrMagnitude=>x*x+y*y;public static Vector2 operator -(Vector2 a,Vector2 b)=>new Vector2(a.x-b.x,a.y-b.y); }
  public class TextAsset {public string text;}

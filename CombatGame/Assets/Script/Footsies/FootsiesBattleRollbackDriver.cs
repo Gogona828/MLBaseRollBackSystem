@@ -14,8 +14,13 @@ namespace Footsies
         [SerializeField] private FootsiesBattleRollbackCoordinator battleRollbackCoordinator;
         [SerializeField] private FootsiesBattleResimulationDriver battleResimulationDriver;
 
+        private NetworkPacketDispatcher packetDispatcher;
         private FootsiesPredictedRemoteInputSource[] predictionSources;
-        private void Start() { predictionSources = FindObjectsOfType<FootsiesPredictedRemoteInputSource>(); }
+        private void Start()
+        {
+            predictionSources = FindObjectsOfType<FootsiesPredictedRemoteInputSource>();
+            packetDispatcher = FindObjectOfType<NetworkPacketDispatcher>();
+        }
         public void BeginSynchronizedRound(int nextFrame)
         {
             FindObjectOfType<FootsiesBattleInputHistory>()?.ClearAll();
@@ -45,6 +50,7 @@ namespace Footsies
                 return;
             }
 
+            packetDispatcher?.PumpPackets();
             int currentFrame = frameClock.CurrentFrame;
 
             battleRollbackCoordinator.BeginStep();
@@ -61,10 +67,6 @@ namespace Footsies
                 inputReceiver.ProcessDelayedInputsForCurrentStep();
             }
 
-            // Update the model on every network simulation frame, even when input arrived.
-            if(predictionSources != null)
-                foreach(var source in predictionSources) source.PreparePredictionForFrame(currentFrame);
-
             // 4. miss があれば rollback request
             if (autoRollbackTrigger != null)
             {
@@ -74,21 +76,16 @@ namespace Footsies
             // 5. rollback 実行
             battleRollbackCoordinator.ProcessRollbackIfNeeded();
 
-            // 6. rollback が起きたら resim、起きていなければ通常 1 frame 進める
-            if (battleRollbackCoordinator.DidRollbackThisStep)
+            // Replay only completed frames. Simulate this frame once, with a fresh
+            // prediction built after correction rather than the pre-rollback state.
+            if (battleRollbackCoordinator.DidRollbackThisStep && battleResimulationDriver != null)
             {
-                if (battleResimulationDriver != null)
-                {
-                    battleResimulationDriver.ProcessResimulationIfNeeded();
-                }
-
-                FileLogger.WriteLine(
-                    $"[FootsiesBattleRollbackDriver] Skipped normal simulation for frame={currentFrame} because rollback occurred this step.");
+                battleResimulationDriver.ProcessResimulationIfNeeded();
+                battleRollbackCoordinator.SaveSnapshotForCurrentFrame();
             }
-            else
-            {
-                battleCore.DoFixedUpdate();
-            }
+            if(predictionSources != null)
+                foreach(var source in predictionSources) source.PreparePredictionForFrame(currentFrame);
+            battleCore.DoFixedUpdate();
 
             // 7. frame を進める
             frameClock.Tick();

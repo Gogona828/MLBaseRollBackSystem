@@ -50,6 +50,9 @@ class Relay:
         self.delivery_at = [0., 0.]
         self.round_ready = {}
         self.round_starts = {}
+        self.delay_revision = 0
+        self.delay_active = False
+        self.delay_until = 0.0
 
     def receive(self, slot, data, address):
         if data.startswith(b'RRA1') and 4 < len(data) <= 4100:
@@ -72,6 +75,9 @@ class Relay:
             self.delay_events.next_event = None
             self.delay_events.release_at = 0
             self.delivery_at = [0., 0.]
+            self.delay_active = False
+            self.delay_until = 0
+            self.delay_revision += 1
             self.peers[slot] = address
             logging.info('P%s registered %s:%s', slot+1, *address)
         self.seen[slot] = now
@@ -84,12 +90,51 @@ class Relay:
         if kind == 3 and slot != 0:
             return
         input_delay = self.delay_events.wait_seconds(now) if kind == 4 else 0
+        if kind == 4:
+            self.update_delay_status(now, input_delay)
         for destination in targets:
             if kind == 4 and random.random()*100 < self.loss:
                 continue
             delay = input_delay
             for repeat in range(3 if kind == 3 else 1):
                 self.schedule(destination, data, delay+repeat*.05, ordered=kind == 4)
+
+    def delay_status(self):
+        return dict(delayRevision=self.delay_revision, delayActive=self.delay_active,
+                    delayUntil=self.delay_until, delayMs=self.delay,
+                    continuous=self.delay_events.mode == 'continuous')
+
+    def broadcast_delay_status(self):
+        for slot in (0, 1):
+            if self.peers[slot]:
+                self.control_reply(slot, dict(kind='delayStatus', serverTime=time.monotonic(), **self.delay_status()))
+
+    def update_delay_status(self, now, delay):
+        if delay <= 0:
+            return
+        self.delay_until = max(self.delay_until, now+delay)
+        if self.delay_active:
+            return
+        self.delay_active = True
+        self.delay_revision += 1
+        self.broadcast_delay_status()
+        self.schedule_delay_end()
+
+    def schedule_delay_end(self):
+        generation = self.generation
+        handle = None
+        def expire():
+            self.pending.discard(handle)
+            if generation != self.generation:
+                return
+            if time.monotonic() < self.delay_until:
+                self.schedule_delay_end()
+                return
+            self.delay_active = False
+            self.delay_revision += 1
+            self.broadcast_delay_status()
+        handle = asyncio.get_running_loop().call_later(max(0, self.delay_until-time.monotonic()), expire)
+        self.pending.add(handle)
 
     def receive_control(self, slot, data):
         try:
@@ -103,7 +148,7 @@ class Relay:
             client_time = message.get('clientTime')
             if not isinstance(client_time, (int, float)) or not math.isfinite(client_time):
                 return
-            self.control_reply(slot, dict(kind='clock', clientTime=client_time, serverTime=time.monotonic()))
+            self.control_reply(slot, dict(kind='clock', clientTime=client_time, serverTime=time.monotonic(), **self.delay_status()))
         elif kind == 'roundReady':
             round_id, frame = message.get('round'), message.get('frame')
             if type(round_id) is not int or type(frame) is not int or not 1 <= round_id <= 10000 or not 0 <= frame < 2147483000:
