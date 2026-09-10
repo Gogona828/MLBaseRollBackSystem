@@ -11,7 +11,7 @@
 2. 両方のPCで同じ変更済みCombatGameプロジェクトをUnity Editor（このプロジェクトは6000.3.17f1）で開き、`CombatGame > LAN Match Settings` を選びます。
 3. `Mac server IPv4` にサーバーMacのLAN IPv4を設定します。IPアドレスは起動スクリプトの表示で確認してください。Wi-Fi変更やDHCP更新で変わることがあります。
 4. 片方は `Server UDP port = 6000`（P1）、もう片方は `6001`（P2）。両方で `Save and enable LAN + FEP` を押します。ポートでプレイヤー番号を決めるため、PC名・相手のIP・ローカル待受ポートの登録は不要です。
-5. 両方で `Assets/Scenes/BattleScene.unity` を開いてPlayします。タイトルから開始する場合はオンラインのVSを選びます。`VS CPU` はオフラインです。操作は両方とも **A=左、D=右、Space=攻撃** です。
+5. 両方で `Assets/Scenes/BattleScene.unity` を開いてPlayします。タイトルから開始する場合はオンラインのVSを選びます。`VS CPU` は同一PCの別CPUクライアントと専用リレーを自動起動します（初回準備は [CombatGame README](../../CombatGame/README.md#vs-cpu同じpcで2クライアント対戦) を参照）。操作は両方とも **A=左、D=右、Space=攻撃** です。
 
 Mac自身も同じLAN IPで参加できます。同じPCの複数Editorで試す場合は、それぞれのPlay開始前に別の接続ポートを保存してください。設定はそのPCのPlayerPrefsに保存されます。既存のPC名プロファイルへ戻す場合は設定画面の `Use existing scene profiles` を押します。
 

@@ -4,12 +4,28 @@
 
 Unityの `CombatGame > LAN Match Settings` でMacのLAN IPと接続ポート（P1: 6000 / P2: 6001）を設定します。起動方法・モデル仕様は [Tools/MacLanRelay/README.md](../Tools/MacLanRelay/README.md) を参照してください。
 
-## Offline play
+## VS CPU（同じPCで2クライアント対戦）
 
-Select **VS CPU** on the title screen to play a complete match without starting the
-relay server. Player 1 uses the normal P1 controls. The CPU chooses only the same
-left, right, and attack inputs available to a player, using distance and the
-opponent's current action to approach, retreat/guard, or attack.
+初回はPlayを停止し、`CombatGame > Build CPU Client` を実行してください。
+以後タイトルの **VS CPU** を選ぶと、同じPCに2P用のゲームプロセスと専用リレーを自動起動します。
+ゲームのコードやシーンを変更した場合はCPU Clientを再ビルドしてください。
+ビルドしたゲームからは自分自身をもう1つ起動します。Mac / Windows / LinuxのStandaloneが対象です。
+`Build CPU Client` のMacビルドは **Intel 64-bit（x86_64）専用**です。
+ビルド中だけアーキテクチャをx64に指定し、終了後（失敗時も含む）は元の設定へ戻します。
+
+リレー用に **Python 3.10以上** が必要です。既定はMac/Linuxで `python3`、Windowsで `python`。
+PATHで見つからない場合はUnity起動前に `COMBATGAME_PYTHON` に実行ファイルの絶対パスを設定してください。
+リレーのスクリプトはビルド時に自動同梱します。
+
+人間は1P（A / D / Space）、別ウィンドウの2Pは既存のBattleAIが操作します。
+CPUの入力はシミュレーションフレームごとに一度生成してUDP送信し、再シミュレーションには記録した入力を使います。
+通常のLAN対戦と同じ3フレーム入力バッファ、FEP推論、入力確定後のロールバック、ラウンド開始同期を使用します。
+FEPは毎フレーム評価し、対戦中に対象フレームの確定入力が未到着の場合だけ予測入力を適用します。
+専用リレーは通常即時転送し、8〜10秒ごとに100msの間欠遅延を発生させます。
+LANの保存設定は変更せず、localhost上の空いている偶数ポートのペアを使います。
+タイトルへ戻る・ゲーム終了・EditorのPlay停止で、起動したCPUとリレーを終了します。
+起動失敗・45秒以内に接続できない場合はタイトルにエラーを表示します。
+CPUのログは `Application.persistentDataPath` の `cpu-client-<port>.log` に出力します。
 
 FOOTSIES is a 2D fighting game where players can control character movement horizontally 
 and use one attack button to perform normal and special moves to defeat their opponent.

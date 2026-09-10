@@ -156,6 +156,18 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
 
     public void Configure()
     {
+        var gameManager = FindObjectOfType<GameManager>();
+        if (gameManager != null && gameManager.isVsCPU)
+        {
+            int playerId = LocalCpuMatch.IsCpuClient ? 1 : 0;
+            var cpu = new MachineProfile { profileName = "Local CPU + FEP", remoteIp = "127.0.0.1",
+                remotePort = gameManager.CpuMatchPort, localPort = 0, playerId = playerId };
+            Application.runInBackground = true;
+            ApplyProfile(cpu, "VS CPU");
+            ConfigureLanBattle(playerId);
+            if (LocalCpuMatch.IsCpuClient) FindObjectOfType<NetworkInputSender>(true).EnableCpuInput();
+            return;
+        }
         if (PlayerPrefs.GetInt("CombatGame.LAN.Enabled", 0) == 1)
         {
             int port = PlayerPrefs.GetInt("CombatGame.LAN.Port", 6000);

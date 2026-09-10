@@ -37,6 +37,14 @@ public class NetworkInputSender : MonoBehaviour
         lanInputBufferFrames=Mathf.Clamp(lanInputBufferFrames,0,12);
         battleCore=FindObjectOfType<Footsies.BattleCore>(true);
     }
+    private Footsies.BattleAI cpu;
+    private bool useCpuInput;
+    public void EnableCpuInput()
+    {
+        useCpuInput = true;
+        battleCore = FindObjectOfType<Footsies.BattleCore>(true);
+        cpu = new Footsies.BattleAI(battleCore);
+    }
     private int lastSentFrame = -1;
 
     public byte LastLocalInputBits { get; private set; }
@@ -75,7 +83,7 @@ public class NetworkInputSender : MonoBehaviour
 
         // 自動入力シーケンスは ProcessSendForFrame() 内だけで進める。
         // ここで進めると render frame 数に依存してしまう。
-        if (useDebugAutoInput)
+        if (useDebugAutoInput || useCpuInput)
         {
             return;
         }
@@ -149,6 +157,7 @@ public class NetworkInputSender : MonoBehaviour
 
     private byte ReadCurrentLocalInputBits()
     {
+        if (useCpuInput) return (byte)cpu.GetNextAIInput();
         if (useDebugAutoInput && debugAutoInputSequence != null)
         {
             return debugAutoInputSequence.GetBits();
@@ -159,6 +168,7 @@ public class NetworkInputSender : MonoBehaviour
 
     public void ResetSenderState()
     {
+        if (useCpuInput) cpu = new Footsies.BattleAI(battleCore);
         seededBuffer=false;
         lastSentFrame = -1;
         LastLocalInputBits = 0;

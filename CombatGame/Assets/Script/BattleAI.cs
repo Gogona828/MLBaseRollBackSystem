@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Footsies
 {
     /// <summary>
-    /// オフライン対戦用のルールベースCPU。
+    /// CPUクライアントとオフライン対戦で使うルールベースCPU。
     /// 距離と相手の行動を見て、プレイヤーと同じ左右・攻撃入力だけを生成する。
     /// </summary>
     public class BattleAI

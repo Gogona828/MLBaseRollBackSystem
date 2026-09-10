@@ -294,7 +294,7 @@ namespace Footsies
                         roundUIAnimator.SetTrigger("RoundStart");
                     }
 
-                    if (isOfflineBattle || GameManager.Instance.isVsCPU)
+                    if (isOfflineBattle || GameManager.Instance.isOfflineMode)
                         battleAI = new BattleAI(this);
 
                     break;
@@ -826,7 +826,7 @@ namespace Footsies
         private bool IsOfflineBattle()
         {
             return isOfflineBattle
-                || (GameManager.Instance != null && GameManager.Instance.isVsCPU);
+                || (GameManager.Instance != null && GameManager.Instance.isOfflineMode);
         }
 
         public FootsiesBattleSnapshot CaptureSnapshot()
