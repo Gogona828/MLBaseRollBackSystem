@@ -4,6 +4,7 @@ using System;
 public class PredictionMismatchDetector : MonoBehaviour
 {
     public event Action<PredictionRecord> PredictionEvaluated;
+    public event Action<PredictionRecord> PredictionCreated;
     [Header("Observation")]
     [SerializeField] private RollbackObservationMonitor rollbackObservationMonitor;
 
@@ -16,14 +17,15 @@ public class PredictionMismatchDetector : MonoBehaviour
     public int TotalHits { get; private set; }
     public int TotalMisses { get; private set; }
 
-    public void RecordPrediction(int frame, byte predictedBits)
+    public void RecordPrediction(int frame, byte predictedBits, Footsies.PredictionTrace trace = null)
     {
         if (historyBuffer.HasPredictionForFrame(frame))
         {
             return;
         }
 
-        historyBuffer.RecordPrediction(frame, predictedBits);
+        historyBuffer.RecordPrediction(frame, predictedBits, trace);
+        if (historyBuffer.TryGetRecord(frame, out var created)) PredictionCreated?.Invoke(created);
         TotalPredictions++;
 
         FileLogger.WriteLine(

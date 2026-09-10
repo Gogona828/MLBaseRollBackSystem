@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -26,6 +26,7 @@ namespace Footsies
         public bool isVsCPU { get { return battleMode == BattleMode.LocalVsCPU; } }
         public bool isOfflineMode { get { return false; } }
         public int CpuMatchPort => LocalCpuMatch.IsCpuClient ? LocalCpuMatch.CpuRelayPort : cpuMatch.Port;
+        public string CpuMatchAddress => LocalCpuMatch.IsCpuClient ? LocalCpuMatch.CpuRelayAddress : cpuMatch.Address;
         private LocalCpuMatch cpuMatch;
         private string cpuError;
         private float cpuStartTime;

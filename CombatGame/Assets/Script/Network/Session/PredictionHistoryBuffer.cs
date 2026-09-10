@@ -4,14 +4,14 @@ public class PredictionHistoryBuffer
 {
     private readonly Dictionary<int, PredictionRecord> records = new Dictionary<int, PredictionRecord>();
 
-    public void RecordPrediction(int frame, byte predictedBits)
+    public void RecordPrediction(int frame, byte predictedBits, Footsies.PredictionTrace trace = null)
     {
         if (records.ContainsKey(frame))
         {
             return;
         }
 
-        records[frame] = new PredictionRecord(frame, predictedBits);
+        records[frame] = new PredictionRecord(frame, predictedBits, trace);
     }
 
     public bool TryGetRecord(int frame, out PredictionRecord record)

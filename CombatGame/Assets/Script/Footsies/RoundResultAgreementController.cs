@@ -9,7 +9,7 @@ namespace Footsies
     public class RoundResultAgreementController : MonoBehaviour
     {
         [Serializable]
-        private class RoundResultEnvelope
+        private class RoundResultEnvelope : RelayDelayStatus
         {
             public RoundResultSignature signature;
             public string kind;
@@ -17,13 +17,7 @@ namespace Footsies
             public int frame;
             public int nextFrame;
             public double clientTime;
-            public double serverTime;
             public double startAt;
-            public int delayRevision;
-            public bool delayActive;
-            public double delayUntil;
-            public float delayMs;
-            public bool continuous;
         }
 
         [Header("References")]
@@ -51,6 +45,9 @@ namespace Footsies
         private int readyRound = -1;
         private NetworkInputSender lanInputSender;
         private SimulatedDelayIndicator delayIndicator;
+        public RelayDelayStatus LatestDelayStatus { get; private set; }
+        public event Action<RelayDelayStatus> DelayStatusReceived;
+        public string RelayEndpoint => relayTransport != null ? relayTransport.RemoteEndpoint : string.Empty;
         private UdpP2PTransport relayTransport;
         public void ConfigureRelay(int playerId, UdpP2PTransport transport)
         {
@@ -355,11 +352,19 @@ namespace Footsies
 
         private void UpdateDelayIndicator(RoundResultEnvelope message)
         {
-            double now=Time.realtimeSinceStartupAsDouble;
-            double expiresAt=message.continuous ? now+2 : roundSchedule.HasClockSample
-                ? message.delayUntil-roundSchedule.ServerOffset
-                : now+Math.Max(0,message.delayUntil-message.serverTime);
-            delayIndicator?.UpdateStatus(message.delayRevision,message.delayActive,expiresAt,message.delayMs);
+            if (LatestDelayStatus != null && (message.delayRevision < LatestDelayStatus.delayRevision ||
+                (message.delayRevision == LatestDelayStatus.delayRevision && message.serverTime < LatestDelayStatus.serverTime))) return;
+            bool changed = LatestDelayStatus == null || message.delayRevision != LatestDelayStatus.delayRevision;
+            LatestDelayStatus = message;
+            double now = Time.realtimeSinceStartupAsDouble;
+            delayIndicator?.UpdateStatus(message.delayRevision, message.delayActive,
+                message.LocalExpiry(now, roundSchedule), message.DisplayMilliseconds);
+            DelayStatusReceived?.Invoke(message);
+            if (changed)
+                Debug.Log($"[RelayDelay] endpoint={RelayEndpoint} configuredDelayMs={message.delayMs} " +
+                    $"eventDelayMs={message.eventDelayMs} active={message.delayActive} " +
+                    $"serverStart={message.delayStartedAt:F6} serverEnd={message.delayUntil:F6} " +
+                    $"mode={(message.continuous ? "continuous" : "intermittent")} revision={message.delayRevision}");
         }
 
         private void PollIncomingMessages()

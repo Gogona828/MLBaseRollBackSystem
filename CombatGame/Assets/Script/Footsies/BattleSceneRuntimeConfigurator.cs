@@ -160,7 +160,7 @@ public class BattleSceneRuntimeConfigurator : MonoBehaviour
         if (gameManager != null && gameManager.isVsCPU)
         {
             int playerId = LocalCpuMatch.IsCpuClient ? 1 : 0;
-            var cpu = new MachineProfile { profileName = "Local CPU + FEP", remoteIp = "127.0.0.1",
+            var cpu = new MachineProfile { profileName = "Local CPU + FEP", remoteIp = gameManager.CpuMatchAddress,
                 remotePort = gameManager.CpuMatchPort, localPort = 0, playerId = playerId };
             Application.runInBackground = true;
             ApplyProfile(cpu, "VS CPU");

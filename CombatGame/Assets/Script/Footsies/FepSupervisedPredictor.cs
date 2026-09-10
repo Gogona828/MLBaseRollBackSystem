@@ -18,6 +18,15 @@ namespace Footsies
         private static Model shared;
         private readonly Model model;
         private float[] belief;
+        private float[] priorBelief;
+        private float[] latestValues, latestCues, latestScores, latestProbabilities;
+        private int latestModelHorizon, latestAction;
+        public PredictionTrace CreateTrace(int latestConfirmedFrame, float fixedDeltaTime, bool facingRight, byte knownBits)
+        {
+            return latestValues == null ? null : new PredictionTrace(lastFrame, latestConfirmedFrame,
+                latestModelHorizon, latestAction, fixedDeltaTime, facingRight, knownBits,
+                model.featureNames, latestValues, priorBelief, latestCues, latestScores, latestProbabilities);
+        }
         private readonly List<float[]> history = new List<float[]>();
         private readonly List<int> frames = new List<int>();
         private int previousAction = -1, previousOne = -1, previousTwo = -1, lastFrame = -1;
@@ -25,8 +34,9 @@ namespace Footsies
         private float[] features;
         private readonly SortedDictionary<int, float[]> snapshots = new SortedDictionary<int, float[]>();
         public int ObservedFrame => lastFrame;
-        public FepSupervisedPredictor()
+        public FepSupervisedPredictor(Model suppliedModel = null)
         {
+            if (suppliedModel != null) { model=suppliedModel; Reset(); return; }
             if (shared == null)
             {
                 var asset = Resources.Load<TextAsset>("FepSupervisedModel");
@@ -39,6 +49,7 @@ namespace Footsies
         public void Reset()
         {
             belief = (float[])model.initial_belief.Clone();
+            priorBelief=(float[])belief.Clone(); latestValues=null;
             history.Clear(); frames.Clear(); lastFrame = -1;
             previousAction = previousOne = previousTwo = -1; previousBits = 0; features = null; snapshots.Clear();
         }
@@ -111,6 +122,7 @@ namespace Footsies
             for(int i=Math.Max(0,history.Count-29);i<history.Count;i++) for(int j=43;j<48;j++) features[j]+=history[i][j];
             history.Add(x); frames.Add(frame); if(history.Count>30){history.RemoveAt(0);frames.RemoveAt(0);}
             belief=Multiply(model.transition,belief,3);
+            priorBelief=(float[])belief.Clone();
             int observation=ActionClass((int)x[14]);
             if(observation>=0){for(int i=0;i<3;i++)belief[i]*=model.observation_likelihood[observation*3+i];Normalize(belief);}
             lastFrame=frame;
@@ -141,6 +153,20 @@ namespace Footsies
             values[59]=Entropy(belief);values[60]=Entropy(utility);
             var scores=EvaluateTrees(h,values);
             int action=0; for(int i=1;i<5;i++)if(scores[i]>scores[action])action=i;
+            latestValues=values; latestCues=cues; latestScores=scores;
+            latestProbabilities=Softmax(scores); latestModelHorizon=h.frames; latestAction=action;
+            return ActionToInputBits(action, facingRight, knownBits);
+        }
+        public static float[] Softmax(float[] scores)
+        {
+            float maximum=float.NegativeInfinity;
+            foreach(float score in scores) maximum=Mathf.Max(maximum,score);
+            var probabilities=new float[scores.Length];
+            for(int i=0;i<scores.Length;i++) probabilities[i]=Mathf.Exp(scores[i]-maximum);
+            Normalize(probabilities); return probabilities;
+        }
+        public static byte ActionToInputBits(int action, bool facingRight, byte knownBits)
+        {
             byte forward=(byte)(facingRight?InputDefine.Right:InputDefine.Left), back=(byte)(facingRight?InputDefine.Left:InputDefine.Right);
             // The learned labels are action classes, not button sequences. Preserve an existing
             // attack hold; initiate a neutral attack for Attack, and use back for Guard.

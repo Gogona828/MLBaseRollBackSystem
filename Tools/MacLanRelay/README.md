@@ -19,6 +19,54 @@ Mac自身も同じLAN IPで参加できます。同じPCの複数Editorで試す
 
 サーバー終了は起動したターミナルでCtrl+C。Macをスリープさせないでください。既に6000/6001で起動中の場合、二重起動はエラーになります。
 
+## VS CPUでも起動済みサーバーの設定を使う
+
+VS CPUは既定では専用リレーを自動起動します。別途起動した6000/6001番のサーバーとは別プロセスです。
+従来は専用リレーの `--delay 100` が固定だったため、別サーバーへ `--delay 1000` を渡してもVS CPUには反映されませんでした。
+
+次のコマンドの設定をVS CPUにも使う場合:
+
+```sh
+Tools/MacLanRelay/start.command --port 6000 --delay 1000 --interval-min 3 --interval-max 5
+```
+
+1. UnityのPlayを停止し、`CombatGame > LAN Match Settings` でサーバーIP（同じMacなら `127.0.0.1`）とポート `6000` を設定します。
+2. **VS CPU relay > Use external LAN relay** をオンにし、**Save VS CPU relay settings** を押します。
+3. **Build CPU Client** で再ビルドし、VS CPUを開始します。人間は6000、CPUは6001へ接続し、専用リレーは起動しません。
+
+通常の2人対戦は従来どおり **Save and enable LAN + FEP** で設定したサーバーを使います。
+モードを切り替えるときは先の対戦を止めてサーバーも再起動してください（1サーバーは1組専用）。
+外部リレーの終了操作は起動したターミナルで行います。
+
+専用リレーを使い続ける場合はチェックをオフにし、**Dedicated relay delay (ms)** を設定して保存します。
+この方式の間隔は既定の8〜10秒です。3〜5秒など起動引数を指定する実験には上記の外部リレー方式を使ってください。
+
+## 設定値・イベント・ログの確認
+
+Unityログの `[RelayDelay]` に、実際の接続先とサーバーから受け取った `configuredDelayMs`、
+`eventDelayMs`、開始・終了時刻、状態を出力します。サーバー起動引数に1000を指定した実験では、
+ここが `configuredDelayMs=1000` になっていることを確認できます。
+
+各ラウンドの対戦ログに **`relay_delay.csv`** を追加しました。
+開始時点の最新通知と、対戦中の開始・終了通知／0.5秒ごとの時計応答を記録します。
+主な列は `relay_endpoint`、`configured_delay_ms`、`event_delay_ms`、`delay_active`、
+`interval_min_seconds`、`interval_max_seconds`、`server_start_time`、`server_end_time` です。
+`configured_delay_ms` は起動設定、`event_delay_ms` はjitter込みのそのイベントの停止時間です。
+サーバー時刻は単調時計の秒数で、PCの日時ではありません。イベントの開始・終了差で秒数を確認できます。
+ラウンド終了がイベント終了より早い場合でも、開始通知に予定終了時刻が含まれます。
+
+既存の `network.csv` の `packet_delay_frames` は受信時のネットワークフレームと入力適用フレームの差です。
+**サーバーの設定msや実測の片道通信時間ではありません。** 入力を3フレーム先送りするため負値もあります。
+間欠停止では停止直後の入力ほど長く待ち、解除直前の入力は短時間だけ待つため、全パケットが1000ms遅れる方式ではありません。
+
+画面の表示はサーバーの絶対終了時刻をローカル時計へ変換して制御します。
+時計応答のたびに1秒の表示をやり直さず、同じ停止イベントの終了時刻を維持します。
+`jitter` 指定時は起動設定値ではなく、通知されたイベントの停止時間を表示します。
+Unity自体の描画停止や通知到着の遅れがある場合、表示を実際に見られる時間は短くなることがあります。
+
+追加項目を利用するには **サーバー再起動・両クライアント更新・CPU Client再ビルド** が必要です。
+古いログにはこれらの情報を遡って追加できません。
+
 ## MacLanRelayの役割と間欠遅延
 
 MacLanRelayはP1/P2のUDP通信を受け取り、相手へ転送する中継サーバーです。ゲーム状態の計算、FEP推論、ロールバックは各PCのUnityが行います。サーバーは接続枠の管理、通信条件の再現、次ラウンドの開始調整を担当します。
@@ -107,6 +155,74 @@ BattleSceneの `FootsiesBattleRollbackCoordinator` のInspectorで、`State-base
 比較用の計算ではダメージ演出、ラウンド演出、試合ログ、録画配列への書き込みを抑止します。**比較用再シミュレーションのCPUコストは発生します**。相手からHP/位置を受信する方式ではなく、受信した入力からローカルに訂正状態を計算する方式です。ラウンド境界や比較不能な状態では省略せず、通常のロールバックへ進みます。
 
 `Skip Rollback When State Matches` で省略判定を切り替えられます。ログの `[Rollback] Continue without rollback` と `StateMatchedContinuations` が省略回数、予測ソースの `FepPredictionCount` が推論更新回数です。
+
+## predictions.csv の研究用ログ
+
+予測を実際に入力へ適用した時点で行を作成し、その時点の情報をコピーして保持します。
+FEPの毎フレームの事前評価でも、確定入力を使ったフレームは予測行に含めません。
+`prediction_timestamp` は予測入力を登録した時刻、`confirmation_timestamp` はその入力を
+Unityの受信処理が確定させた時刻（両方ISO 8601 UTC）です。後者はソケットへの到着時刻そのものではありません。
+旧 `timestamp` は予測時刻の別名です。
+
+| 列 | 意味 |
+|---|---|
+| `network_frame` | 予測対象フレーム |
+| `observation_frame` | 最後に確定入力と対応付けてFEPへ取り込んだ観測のフレーム |
+| `prediction_horizon_frames` | network_frame − observation_frame。12で打ち切らない実ホライズン |
+| `prediction_horizon_ms` | 実ホライズン × 予測時のfixedDeltaTime × 1000。小数1桁 |
+| `prediction_horizon` | 互換用のフレーム数。従来の固定0を廃止 |
+| `latest_confirmed_input_frame` / `input_age_frames` | 最新受信入力とその古さ。欠落があるとFEP観測の古さとは異なる |
+| `model_horizon_frames` / `model_horizon_ms` | 選択した学習済みモデルのホライズン（3／6／12フレーム） |
+| `prediction_status` | Pending／Hit／Miss。未確定行も保存 |
+| `observation_*` | モデルに渡した観測特徴量48列。入力、両者の位置・行動・HP、距離、履歴など |
+| `belief_prior_*` | 最新観測を取り込む直前、状態遷移後のbelief |
+| `belief_*` | 最新観測を取り込んだ後のbelief。aggressive／defensive／approaching |
+| `projected_belief_*` | 選択したモデルのホライズンへ投影したbelief |
+| `fep_policy_prob_*` | FEPが算出し、XGBoostの特徴量として使った5行動の確率 |
+| `action_prob_*` | XGBoostの5クラスlogitをsoftmaxした最終確率（0〜1） |
+| `predicted_action` | 最終確率が最大のWait／Approach／Retreat／Attack／Guard |
+| `prediction_confidence` / `selected_action_probability_percent` | 選択行動の確率（0〜1）／百分率（0〜100） |
+| `cue_predictive_prob_0..3` | モデル内部で予測したcue分布。外部から受信したcueではない |
+| `logit_*` / `belief_entropy` / `fep_policy_entropy` | 木の出力と内部のエントロピー |
+| `facing_right` / `known_input_bits` | 行動を入力ビットに変換するときの向き／最後の確定入力 |
+
+`*_forward` はApproach、`*_backward` はRetreatに対応します。選択は確率的な抽選ではなく
+`selection_rule=argmax` です。確率値は校正済みの正解率を保証するものではありません。
+実装で算出していないfree_energy／expected_free_energyの空欄は廃止し、算出した値だけを名前付きで出力します。
+観測状態はそのフレームでローカルに計算した状態であり、後から確定状態に置き換えません。
+特徴量のNaN（履歴不足）は空欄、最初の確定観測前は `has_confirmed_observation=false` で実ホライズンも空欄です。
+
+60Hzで最後の観測が727なら、次のようになります。
+
+```csv
+network_frame,prediction_horizon_frames,prediction_horizon_ms
+728,1,16.7
+729,2,33.3
+730,3,50.0
+757,30,500.0
+785,58,966.7
+```
+
+これはシミュレーション時間に換算した情報の古さであり、実測の片道ネットワーク遅延ではありません。
+58フレーム欠落中も使用モデルは12フレーム先のものです。この差を隠さず出力します。
+情報断中は観測・beliefが更新されず、12フレームモデルが選択された後は同じ確率・行動が続くことがあります。
+
+`prediction_correct` は **入力ビット一致**で、`correctness_basis=input_bits` です。
+GuardとRetreatなどは同じボタン入力になるため、受信ビットだけから真の行動クラスを復元しません。
+`confirmed_action` は空欄のままです。`confirmed_input_bits` で入力予測の正解を確認してください。
+Pending行では確定時刻・確定ビット・一致判定を空欄にします。ホライズン別集計ではPendingの件数も併記し、
+確定済み行だけを分母にした正解率と未確定率を分けてください。
+ラウンド終了後の確定は元ラウンドの行へ反映し、次ラウンド開始または終了処理時にまとめて再保存します。
+セッション終了まで未確定の行はPendingのまま残ります。
+
+`predicted_input_bits=2` はRightで、モデルのデフォルト値ではありません。
+左向きのP2ならRetreat／GuardをRightへ変換します。右向きならApproachがRightになります。
+Waitは0、Attackは既知入力とAttackビットのORです。過去ログには確率や選択クラスがないため、
+RightがRetreat由来かGuard由来かは後から断定できません。
+
+VS CPU時は既存ファイル **`matches.csv`** のP2を `player_type=cpu`、`controller_id=BattleAI`、
+`battle_mode=cpu` と記録します。ネットワーク対戦のログは従来どおり両者分を残します。
+古いログは変更せず、更新後の実験から新形式になります。CPU Clientも再ビルドしてください。
 
 ## 検証・モデル更新
 

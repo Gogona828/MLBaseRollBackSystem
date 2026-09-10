@@ -53,6 +53,8 @@ class Relay:
         self.delay_revision = 0
         self.delay_active = False
         self.delay_until = 0.0
+        self.delay_started_at = 0.0
+        self.event_delay_ms = 0.0
 
     def receive(self, slot, data, address):
         if data.startswith(b'RRA1') and 4 < len(data) <= 4100:
@@ -77,6 +79,8 @@ class Relay:
             self.delivery_at = [0., 0.]
             self.delay_active = False
             self.delay_until = 0
+            self.delay_started_at = 0
+            self.event_delay_ms = 0
             self.delay_revision += 1
             self.peers[slot] = address
             logging.info('P%s registered %s:%s', slot+1, *address)
@@ -102,7 +106,11 @@ class Relay:
     def delay_status(self):
         return dict(delayRevision=self.delay_revision, delayActive=self.delay_active,
                     delayUntil=self.delay_until, delayMs=self.delay,
-                    continuous=self.delay_events.mode == 'continuous')
+                    continuous=self.delay_events.mode == 'continuous',
+                    delayStartedAt=self.delay_started_at, eventDelayMs=self.event_delay_ms,
+                    delayJitterMs=self.jitter, lossPercent=self.loss,
+                    intervalMinSeconds=self.delay_events.interval_min,
+                    intervalMaxSeconds=self.delay_events.interval_max, delayProtocolVersion=2)
 
     def broadcast_delay_status(self):
         for slot in (0, 1):
@@ -116,6 +124,8 @@ class Relay:
         if self.delay_active:
             return
         self.delay_active = True
+        self.delay_started_at = now
+        self.event_delay_ms = delay * 1000
         self.delay_revision += 1
         self.broadcast_delay_status()
         self.schedule_delay_end()

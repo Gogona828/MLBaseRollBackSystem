@@ -218,7 +218,10 @@ namespace Footsies
         {
             if (predictionMismatchDetector != null && lastPredictionFrame != frame)
             {
-                predictionMismatchDetector.RecordPrediction(frame, bits);
+                var trace = predictionMode == RemotePredictionMode.FepSupervised && fep != null
+                    ? fep.CreateTrace(lastConfirmedFrame, Time.fixedDeltaTime,
+                        (remotePlayerId == 0 ? core.fighter1 : core.fighter2).isFaceRight, lastConfirmedBits) : null;
+                predictionMismatchDetector.RecordPrediction(frame, bits, trace);
                 lastPredictionFrame = frame;
             }
         }

@@ -21,8 +21,14 @@ PATHで見つからない場合はUnity起動前に `COMBATGAME_PYTHON` に実�
 CPUの入力はシミュレーションフレームごとに一度生成してUDP送信し、再シミュレーションには記録した入力を使います。
 通常のLAN対戦と同じ3フレーム入力バッファ、FEP推論、入力確定後のロールバック、ラウンド開始同期を使用します。
 FEPは毎フレーム評価し、対戦中に対象フレームの確定入力が未到着の場合だけ予測入力を適用します。
-専用リレーは通常即時転送し、8〜10秒ごとに100msの間欠遅延を発生させます。
-LANの保存設定は変更せず、localhost上の空いている偶数ポートのペアを使います。
+専用リレーは通常即時転送し、既定では8〜10秒ごとに100msの間欠遅延を発生させます。
+`LAN Match Settings` の `Dedicated relay delay (ms)` で停止時間を変更できます。
+専用リレーはlocalhost上の空いている偶数ポートのペアを使います。
+手動起動したサーバーの `--delay` / `--interval-min` / `--interval-max` を使う場合は、
+同画面の **Use external LAN relay** をオンにし **Save VS CPU relay settings** で保存してください。
+人間とCPUが指定サーバーの偶数ポート／次のポートに接続します。
+対戦ログの `relay_delay.csv` で適用された設定・遅延イベント・接続先を確認できます。
+詳しい手順は [MacLanRelay README](../Tools/MacLanRelay/README.md) に記載しています。
 タイトルへ戻る・ゲーム終了・EditorのPlay停止で、起動したCPUとリレーを終了します。
 起動失敗・45秒以内に接続できない場合はタイトルにエラーを表示します。
 CPUのログは `Application.persistentDataPath` の `cpu-client-<port>.log` に出力します。

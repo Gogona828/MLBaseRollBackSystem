@@ -39,6 +39,7 @@ public class UdpP2PTransport : MonoBehaviour
     }
 
     public bool IsStarted => started;
+    public string RemoteEndpoint => remoteIp + ":" + remotePort;
 
     public void Configure(string remoteIp, int localPort, int remotePort)
     {

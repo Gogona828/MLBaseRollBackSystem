@@ -13,6 +13,8 @@ namespace Footsies
         public static readonly bool IsCpuClient = Array.IndexOf(Environment.GetCommandLineArgs(), "-cpuClient") >= 0;
         public static int CpuRelayPort => int.Parse(Argument("-cpuRelayPort"));
         public int Port { get; private set; }
+        public string Address { get; private set; } = "127.0.0.1";
+        public static string CpuRelayAddress => Argument("-cpuRelayAddress") ?? "127.0.0.1";
         private Process relay;
         private Process opponent;
         public bool HasExited => (relay != null && relay.HasExited) || (opponent != null && opponent.HasExited);
@@ -40,13 +42,31 @@ namespace Footsies
             string script = Application.isEditor
                 ? Path.GetFullPath(Path.Combine(Application.dataPath, "../../Tools/MacLanRelay/server.py"))
                 : Path.Combine(Application.streamingAssetsPath, "CpuRelay/server.py");
-            if (!File.Exists(script)) throw new FileNotFoundException("CPU relay script is missing. Rebuild the client.", script);
-            Port = FindPortPair();
+            bool externalRelay = PlayerPrefs.GetInt("CombatGame.CPU.UseExternalRelay", 0) == 1;
+            if (externalRelay)
+            {
+                Address = PlayerPrefs.GetString("CombatGame.LAN.IP", "127.0.0.1");
+                Port = PlayerPrefs.GetInt("CombatGame.LAN.Port", 6000);
+                Port -= Port % 2;
+                if (!IPAddress.TryParse(Address, out var ip) || ip.AddressFamily != AddressFamily.InterNetwork || Port < 1024 || Port > 65534)
+                    throw new InvalidOperationException("LAN Match SettingsのサーバーIPとポートを確認してください。");
+            }
+            else
+            {
+                if (!File.Exists(script)) throw new FileNotFoundException("CPU relay script is missing. Rebuild the client.", script);
+                Port = FindPortPair();
+            }
             try
             {
-                string python = Environment.GetEnvironmentVariable("COMBATGAME_PYTHON");
-                if (string.IsNullOrEmpty(python)) python = Application.platform == RuntimePlatform.WindowsPlayer ? "python" : "python3";
-                relay = Launch(python, Quote(script) + " --bind 127.0.0.1 --port " + Port + " --delay 100");
+                if (!externalRelay)
+                {
+                    string python = Environment.GetEnvironmentVariable("COMBATGAME_PYTHON");
+                    if (string.IsNullOrEmpty(python)) python = Application.platform == RuntimePlatform.WindowsPlayer ? "python" : "python3";
+                    int delayMs = Mathf.Clamp(PlayerPrefs.GetInt("CombatGame.CPU.DelayMs", 100), 0, 10000);
+                    relay = Launch(python, Quote(script) + " --bind 127.0.0.1 --port " + Port + " --delay " + delayMs);
+                    UnityEngine.Debug.Log($"[VS CPU] Dedicated relay {Address}:{Port}/{Port + 1}, configuredDelayMs={delayMs}");
+                }
+                else UnityEngine.Debug.Log($"[VS CPU] External relay {Address}:{Port}/{Port + 1}; delay comes from that server's startup arguments.");
                 string graphicsArgs =
                     Application.platform == RuntimePlatform.OSXEditor ||
                     Application.platform == RuntimePlatform.OSXPlayer
@@ -56,7 +76,7 @@ namespace Footsies
                 opponent = Launch(
                     executable,
                     graphicsArgs
-                    + "-cpuClient -machineProfile CPU -cpuRelayPort " + (Port + 1)
+                    + "-cpuClient -machineProfile CPU -cpuRelayAddress " + Quote(Address) + " -cpuRelayPort " + (Port + 1)
                     + " -cpuParent " + Process.GetCurrentProcess().Id
                     + " -screen-fullscreen 0 -screen-width 640 -screen-height 360 -logFile "
                     + Quote(Path.Combine(

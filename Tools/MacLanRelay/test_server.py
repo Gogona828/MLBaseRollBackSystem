@@ -1,6 +1,9 @@
 import asyncio
 import unittest
 import json
+import sys
+import socket
+from pathlib import Path
 from unittest.mock import patch
 from server import Relay, Port, PACKET, DelayEvents
 
@@ -116,6 +119,66 @@ class RelayTests(unittest.IsolatedAsyncioTestCase):
             self.assertGreater(ended['delayRevision'],active['delayRevision'])
         self.send_control(0,kind='clock',clientTime=22)
         self.assertFalse((await self.get_control(0))['delayActive'])
+
+    async def test_cli_1000ms_applies_to_packets_status_and_clock(self):
+        # Launch the actual CLI rather than setting Relay fields in a unit test.
+        for port in range(24000, 32000, 2):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as a, socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as b:
+                    a.bind(('127.0.0.1', port)); b.bind(('127.0.0.1', port+1))
+                break
+            except OSError:
+                continue
+        else:
+            self.fail('No free test port pair')
+        process = await asyncio.create_subprocess_exec(sys.executable, str(Path(__file__).with_name('server.py')),
+            '--bind', '127.0.0.1', '--port', str(port), '--delay', '1000',
+            '--interval-min', '3', '--interval-max', '5', stderr=asyncio.subprocess.PIPE)
+        try:
+            ready = await asyncio.wait_for(process.stderr.readline(), 3)
+            self.assertIn(b'delay=1000.0ms', ready)
+            self.ports = [('127.0.0.1', port), ('127.0.0.1', port+1)]
+            await self.register()
+            self.send_control(0, kind='clock', clientTime=1)
+            config = await self.get_control(0)
+            self.assertEqual(config['delayMs'], 1000)
+            self.assertEqual(config['intervalMinSeconds'], 3)
+            self.assertEqual(config['intervalMaxSeconds'], 5)
+            self.assertFalse(config['delayActive'])
+            # Outside the event, packets have no added delay.
+            for slot in (0,1): self.send(slot,4,0,1)
+            for _, client in self.clients:
+                self.assertEqual(PACKET.unpack(await asyncio.wait_for(client.received.get(), .15))[2], 0)
+            await asyncio.sleep(5.05)
+            begin = asyncio.get_running_loop().time()
+            for slot in (0,1): self.send(slot,4,1,2)
+            for _, client in self.clients:
+                status = await asyncio.wait_for(client.notices.get(), .2)
+                self.assertTrue(status['delayActive'])
+                self.assertEqual(status['delayMs'], 1000)
+                self.assertAlmostEqual(status['eventDelayMs'], 1000, places=3)
+                self.assertAlmostEqual(status['delayUntil'] - status['delayStartedAt'], 1, places=5)
+            await asyncio.sleep(.35)
+            for _, client in self.clients: self.assertTrue(client.received.empty())
+            for slot in (0,1): self.send(slot,4,2,4)
+            # Clock replies report the same deadline during the 1s hold.
+            self.send_control(0, kind='clock', clientTime=2)
+            heartbeat = await self.get_control(0)
+            self.assertTrue(heartbeat['delayActive'])
+            self.assertEqual(heartbeat['delayUntil'], status['delayUntil'])
+            for _, client in self.clients:
+                for frame in (1,2):
+                    self.assertEqual(PACKET.unpack(await asyncio.wait_for(client.received.get(), 1.5))[2], frame)
+                ended = await asyncio.wait_for(client.notices.get(), .3)
+                self.assertFalse(ended['delayActive'])
+                self.assertEqual(ended['delayUntil'], status['delayUntil'])
+            elapsed = asyncio.get_running_loop().time() - begin
+            self.assertGreaterEqual(elapsed, .95)
+            self.assertLess(elapsed, 1.8)
+            print(f'CLI --delay 1000: measured hold {elapsed*1000:.1f}ms, both directions/status/clock agree')
+        finally:
+            if process.returncode is None: process.terminate()
+            await asyncio.wait_for(process.communicate(), 3)
 
     async def test_invalid_and_slot_collision(self):
         await self.register()

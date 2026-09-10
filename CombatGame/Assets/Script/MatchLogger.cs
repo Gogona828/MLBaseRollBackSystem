@@ -27,11 +27,24 @@ namespace Footsies
         private readonly List<FrameRecord> frameRecords = new List<FrameRecord>();
         private readonly List<CombatEventRecord> eventRecords = new List<CombatEventRecord>();
         private readonly List<NetworkPacketRecord> networkRecords = new List<NetworkPacketRecord>();
-        private readonly List<PredictionLogRecord> predictionRecords = new List<PredictionLogRecord>();
+        private sealed class PredictionOwner
+        {
+            public string MatchId, Directory;
+            public int RoundId;
+            public bool Closed;
+            public List<PredictionLogEntry> Entries;
+        }
+        private PredictionOwner predictionOwner;
+        private readonly HashSet<PredictionOwner> dirtyPredictionOwners = new HashSet<PredictionOwner>();
+        private readonly Dictionary<int, (PredictionLogEntry Entry, PredictionOwner Owner)> predictionIndex
+            = new Dictionary<int, (PredictionLogEntry, PredictionOwner)>();
+        private bool isCpuMatch;
         private readonly List<RollbackLogRecord> rollbackRecords = new List<RollbackLogRecord>();
         private readonly Dictionary<int, int> simulationPassByFrame = new Dictionary<int, int>();
         private readonly object callbackLock = new object();
 
+        private readonly RoundResultAgreementController relayController;
+        private StringBuilder relayDelayCsv;
         private bool roundActive;
         private bool isOffline;
         private int roundId;
@@ -53,6 +66,8 @@ namespace Footsies
             this.inputReceiver = inputReceiver;
             this.frameClock = frameClock;
             this.predictionDetector = predictionDetector;
+            relayController = UnityEngine.Object.FindObjectOfType<RoundResultAgreementController>(true);
+            if (relayController != null) relayController.DelayStatusReceived += RecordRelayDelayStatus;
 
             if (this.inputReceiver != null)
             {
@@ -61,6 +76,7 @@ namespace Footsies
 
             if (this.predictionDetector != null)
             {
+                this.predictionDetector.PredictionCreated += OnPredictionCreated;
                 this.predictionDetector.PredictionEvaluated += OnPredictionEvaluated;
             }
         }
@@ -72,7 +88,9 @@ namespace Footsies
                 return;
             }
 
+            FlushLatePredictionConfirmations();
             isOffline = offline;
+            isCpuMatch = offline || (GameManager.Instance != null && GameManager.Instance.isVsCPU);
             roundId++;
             matchStartedAt = DateTimeOffset.Now;
 
@@ -87,10 +105,26 @@ namespace Footsies
             frameRecords.Clear();
             eventRecords.Clear();
             networkRecords.Clear();
-            predictionRecords.Clear();
+            predictionOwner = new PredictionOwner { MatchId=matchId, RoundId=roundId, Directory=matchDirectory,
+                Entries=new List<PredictionLogEntry>() };
             rollbackRecords.Clear();
             simulationPassByFrame.Clear();
             roundActive = true;
+            relayDelayCsv = new StringBuilder("match_id,round_id,timestamp,network_frame,relay_endpoint,protocol_version,delay_revision,delay_active,configured_delay_ms,event_delay_ms,jitter_ms,loss_percent,delay_mode,interval_min_seconds,interval_max_seconds,server_time,server_start_time,server_end_time\n");
+            if (relayController != null && relayController.LatestDelayStatus != null)
+                RecordRelayDelayStatus(relayController.LatestDelayStatus);
+        }
+
+        private void RecordRelayDelayStatus(RelayDelayStatus status)
+        {
+            if (!roundActive || isOffline) return;
+            AppendRow(relayDelayCsv, matchId, roundId, DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture),
+                frameClock != null ? frameClock.CurrentFrame : -1, relayController.RelayEndpoint,
+                status.delayProtocolVersion, status.delayRevision, status.delayActive, status.delayMs,
+                status.delayProtocolVersion >= 2 ? (object)status.eventDelayMs : null,
+                status.delayJitterMs, status.lossPercent, status.continuous ? "continuous" : "intermittent",
+                status.intervalMinSeconds, status.intervalMaxSeconds,
+                status.serverTime, status.delayStartedAt, status.delayUntil);
         }
 
         public void RecordFrame(
@@ -130,7 +164,7 @@ namespace Footsies
             {
                 AddFrameRecord(
                     2,
-                    "human",
+                    isCpuMatch ? "cpu" : "human",
                     GetInputSource(2, isResimulation),
                     battleCore.fighter2,
                     frame,
@@ -260,6 +294,7 @@ namespace Footsies
             }
 
             roundActive = false;
+            predictionOwner.Closed = true;
 
             try
             {
@@ -270,6 +305,7 @@ namespace Footsies
                 if (!isOffline)
                 {
                     WriteNetwork();
+                    WriteCsv("relay_delay.csv", relayDelayCsv);
                     WritePredictions();
                     WriteRollback();
                 }
@@ -284,11 +320,13 @@ namespace Footsies
 
         public void Dispose()
         {
+            if (relayController != null) relayController.DelayStatusReceived -= RecordRelayDelayStatus;
             if (roundActive)
             {
                 EndRound("aborted");
             }
 
+            FlushLatePredictionConfirmations();
             if (inputReceiver != null)
             {
                 inputReceiver.InputPacketReceived -= OnInputPacketReceived;
@@ -296,6 +334,7 @@ namespace Footsies
 
             if (predictionDetector != null)
             {
+                predictionDetector.PredictionCreated -= OnPredictionCreated;
                 predictionDetector.PredictionEvaluated -= OnPredictionEvaluated;
             }
         }
@@ -376,30 +415,35 @@ namespace Footsies
             }
         }
 
+        private void OnPredictionCreated(PredictionRecord record)
+        {
+            if (!roundActive || isOffline) return;
+            var entry = new PredictionLogEntry { Record=record,
+                TargetPlayerId=inputRouter != null ? inputRouter.GetPredictedRemotePlayerId()+1 : 0,
+                Mode=inputRouter != null ? inputRouter.GetPredictionMode() : string.Empty };
+            predictionOwner.Entries.Add(entry);
+            predictionIndex[record.Frame]=(entry,predictionOwner);
+        }
+
         private void OnPredictionEvaluated(PredictionRecord record)
         {
-            if (!roundActive || isOffline)
-            {
-                return;
-            }
+            if (!predictionIndex.TryGetValue(record.Frame, out var found) ||
+                found.Entry.Record.PredictionTimestamp != record.PredictionTimestamp) return;
+            found.Entry.Record=record;
+            predictionIndex.Remove(record.Frame);
+            // Late arrivals must update the original round, not disappear or enter a new round.
+            if(found.Owner.Closed) dirtyPredictionOwners.Add(found.Owner);
+        }
 
-            lock (callbackLock)
+        private void FlushLatePredictionConfirmations()
+        {
+            // Batch at round boundaries/shutdown: no CSV rewrite per arriving packet.
+            foreach (var owner in dirtyPredictionOwners)
             {
-                predictionRecords.Add(new PredictionLogRecord
-                {
-                    Timestamp = DateTimeOffset.Now,
-                    NetworkFrame = record.Frame,
-                    TargetPlayerId = inputRouter != null
-                        ? inputRouter.GetPredictedRemotePlayerId() + 1
-                        : 0,
-                    PredictedBits = record.PredictedBits,
-                    ConfirmedBits = record.ConfirmedBits,
-                    Correct = record.ResultState == PredictionResultState.Hit,
-                    PredictionMode = inputRouter != null
-                        ? inputRouter.GetPredictionMode()
-                        : string.Empty
-                });
+                try { WritePredictionOwner(owner); }
+                catch(Exception ex) { Debug.LogError($"[MatchLogger] Late prediction confirmation write failed: {ex}"); }
             }
+            dirtyPredictionOwners.Clear();
         }
 
         private void WriteMatches(string result)
@@ -412,11 +456,11 @@ namespace Footsies
                 : battleCore.fighter2.isDead && !battleCore.fighter1.isDead
                     ? 1
                     : 0;
-            string battleMode = isOffline ? "cpu" : "online";
+            string battleMode = isCpuMatch ? "cpu" : "online";
             string gitCommit = ResolveGitCommit();
 
             AppendMatchRow(csv, 1, "human", isOffline ? "local_input" : "network_input", battleMode, result, winnerId, gitCommit);
-            AppendMatchRow(csv, 2, isOffline ? "rule_cpu" : "human", isOffline ? "BattleAI" : "network_input", battleMode, result, winnerId, gitCommit);
+            AppendMatchRow(csv, 2, isCpuMatch ? "cpu" : "human", isCpuMatch ? "BattleAI" : "network_input", battleMode, result, winnerId, gitCommit);
             WriteCsv("matches.csv", csv);
         }
 
@@ -592,45 +636,12 @@ namespace Footsies
             WriteCsv("network.csv", csv);
         }
 
-        private void WritePredictions()
+        private void WritePredictions() => WritePredictionOwner(predictionOwner);
+
+        private static void WritePredictionOwner(PredictionOwner owner)
         {
-            StringBuilder csv = new StringBuilder();
-            csv.AppendLine("match_id,round_id,timestamp,network_frame,ai_prediction_target,observation,cue,predicted_action,confirmed_action,prediction_correct,prediction_confidence,prediction_horizon,belief_aggressive,belief_defensive,belief_approaching,action_prob_wait,action_prob_forward,action_prob_backward,action_prob_attack,action_prob_guard,free_energy,expected_free_energy,predicted_input_bits,confirmed_input_bits,prediction_model");
-
-            lock (callbackLock)
-            {
-                foreach (PredictionLogRecord record in predictionRecords)
-                {
-                    AppendRow(csv,
-                        matchId,
-                        roundId,
-                        record.Timestamp.ToString("O", CultureInfo.InvariantCulture),
-                        record.NetworkFrame,
-                        record.TargetPlayerId > 0 ? "P" + record.TargetPlayerId : string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        record.Correct,
-                        string.Empty,
-                        0,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        string.Empty,
-                        record.PredictedBits,
-                        record.ConfirmedBits,
-                        record.PredictionMode);
-                }
-            }
-
-            WriteCsv("predictions.csv", csv);
+            File.WriteAllText(Path.Combine(owner.Directory,"predictions.csv"),
+                PredictionCsv.Build(owner.MatchId, owner.RoundId, owner.Entries), new UTF8Encoding(false));
         }
 
         private void WriteRollback()
@@ -995,17 +1006,6 @@ namespace Footsies
             public int LatestConfirmedRemoteFrame;
             public bool RemoteInputConfirmed;
             public bool RemoteInputPredicted;
-        }
-
-        private sealed class PredictionLogRecord
-        {
-            public DateTimeOffset Timestamp;
-            public int NetworkFrame;
-            public int TargetPlayerId;
-            public byte PredictedBits;
-            public byte ConfirmedBits;
-            public bool Correct;
-            public string PredictionMode;
         }
 
         private sealed class RollbackLogRecord
