@@ -47,10 +47,22 @@ namespace Footsies
                 string python = Environment.GetEnvironmentVariable("COMBATGAME_PYTHON");
                 if (string.IsNullOrEmpty(python)) python = Application.platform == RuntimePlatform.WindowsPlayer ? "python" : "python3";
                 relay = Launch(python, Quote(script) + " --bind 127.0.0.1 --port " + Port + " --delay 100");
-                opponent = Launch(executable, "-cpuClient -machineProfile CPU -cpuRelayPort " + (Port + 1)
+                string graphicsArgs =
+                    Application.platform == RuntimePlatform.OSXEditor ||
+                    Application.platform == RuntimePlatform.OSXPlayer
+                        ? "-force-metal "
+                        : "";
+
+                opponent = Launch(
+                    executable,
+                    graphicsArgs
+                    + "-cpuClient -machineProfile CPU -cpuRelayPort " + (Port + 1)
                     + " -cpuParent " + Process.GetCurrentProcess().Id
                     + " -screen-fullscreen 0 -screen-width 640 -screen-height 360 -logFile "
-                    + Quote(Path.Combine(Application.persistentDataPath, "cpu-client-" + Port + ".log")));
+                    + Quote(Path.Combine(
+                        Application.persistentDataPath,
+                        "cpu-client-" + Port + ".log"))
+                );
             }
             catch { Dispose(); throw; }
         }
